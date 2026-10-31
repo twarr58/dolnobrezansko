@@ -46,7 +46,7 @@ async def run(boards_path: Path, kinds: set[str]) -> None:
         pass
     by_ip: dict[str, list[str]] = defaultdict(list)
     tcp_ok = http_ok = 0
-    async with httpx.AsyncClient(headers={"User-Agent": USER_AGENT}, timeout=httpx.Timeout(30, connect=30),
+    async with httpx.AsyncClient(headers={"User-Agent": USER_AGENT}, timeout=httpx.Timeout(20, connect=10),
                                  follow_redirects=True) as client:
         for b in failed:
             url = b.get("used_url") or b["access_url"]
@@ -56,7 +56,7 @@ async def run(boards_path: Path, kinds: set[str]) -> None:
             v4 = [ip for ip in ips if "." in ip and not ip.startswith("DNS")]
             for ip in v4:
                 by_ip[ip].append(host)
-            tcp = await asyncio.to_thread(_tcp, v4[0], port, 15) if v4 else "bez IPv4"
+            tcp = await asyncio.to_thread(_tcp, v4[0], port, 8) if v4 else "bez IPv4"
             tcp_ok += tcp.startswith("ok")
             try:
                 started = time.monotonic()
@@ -65,6 +65,7 @@ async def run(boards_path: Path, kinds: set[str]) -> None:
                 http_ok += r.status_code < 400
             except httpx.HTTPError as exc:
                 http = f"{type(exc).__name__}: {str(exc)[:120]}"
+            print(flush=True)
             print(f"- {b.get('name') or b['publisher']} | {url}\n    původně: [{b.get('kind')}] {b.get('error')}\n    IP: {', '.join(ips)}\n    TCP {port}: {tcp}\n    {http}")
     print(f"\nShrnutí: TCP spojení ok {tcp_ok}/{len(failed)}, HTTP ok {http_ok}/{len(failed)}")
     shared = {ip: hosts for ip, hosts in by_ip.items() if len(hosts) > 1}
