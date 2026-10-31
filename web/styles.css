@@ -42,7 +42,10 @@ h1 { font-family: var(--serif); font-size: clamp(26px, 3.2vw, 34px); letter-spac
 
 /* Search */
 .search { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) auto; gap: 8px; margin: 24px 0 12px; }
-@media (max-width: 640px) { .search { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) {
+  .search { grid-template-columns: minmax(0, 1fr); }
+  .search button { display: none; } /* hledá se průběžně při psaní */
+}
 input[type="search"], input[type="text"], select {
   font: inherit; color: var(--ink); background: var(--paper);
   border: 1px solid #9c9a93; border-radius: 2px; height: 44px; padding: 0 12px; width: 100%;
@@ -56,6 +59,12 @@ button, .button {
 button.link { background: none; border: 0; color: var(--link); font-weight: 400; padding: 0; height: auto; text-decoration: underline; text-underline-offset: 2px; }
 
 /* Filter line */
+.filterbox summary { display: none; }
+@media (max-width: 640px) {
+  .filterbox { border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+  .filterbox summary { display: list-item; cursor: pointer; color: var(--link); padding: 10px 0; font-size: 15px; }
+  .filterbox .filters { border: 0; padding-top: 0; }
+}
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 20px; font-size: 15px; padding: 10px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
 .topics { display: flex; flex-wrap: wrap; gap: 2px 12px; align-items: baseline; }
 .topics button { background: none; border: 0; color: var(--link); height: auto; padding: 4px 0; font-weight: 400; text-decoration: none; }
@@ -83,11 +92,11 @@ button.link { background: none; border: 0; color: var(--link); font-weight: 400;
 .row__meta { font-size: 14px; color: var(--muted); margin-top: 2px; }
 .row__until { font-size: 14px; text-align: right; color: var(--muted); padding-top: 2px; }
 .row__until .warn { display: block; }
+.row__meta.narrow { display: none; }
 @media (max-width: 720px) {
   .row { grid-template-columns: minmax(0, 1fr); gap: 2px; }
-  .row__who { order: -1; }
-  .row__until { text-align: left; }
-  .row__until .warn { display: inline; margin-left: 6px; }
+  .row .wide { display: none; }
+  .row__meta.narrow { display: block; }
 }
 .more { margin: 20px 0 8px; }
 .empty { padding: 32px 0; color: var(--muted); }

@@ -194,13 +194,17 @@ function filterRecent(f) {
 
 function noticeRow(it) {
   const soon = endsIn(it.u);
+  const until = it.u ? `do ${dateCz(it.u, false)}` : '';
+  // Na mobilu se termín zobrazuje v řádku s přílohami (.row__meta), na širokém displeji ve vlastním sloupci.
+  const meta = [attachments(it.d), until].filter(Boolean).join(' · ');
   return h('li', { class: 'row' },
     h('div', { class: 'row__who' }, h('a', { href: `#/deska/${it.b}` }, boardName(it.b))),
     h('div', { class: 'row__what' },
       h('a', { href: `#/deska/${it.b}/${it.id}` }, it.t),
-      it.d ? h('div', { class: 'row__meta' }, attachments(it.d)) : null),
-    h('div', { class: 'row__until' },
-      it.u ? `do ${dateCz(it.u, false)}` : '',
+      it.d ? h('div', { class: 'row__meta wide' }, attachments(it.d)) : null,
+      meta || soon ? h('div', { class: 'row__meta narrow' }, meta, soon ? h('span', { class: 'warn' }, `${meta ? ' · ' : ''}${soon}`) : null) : null),
+    h('div', { class: 'row__until wide' },
+      until,
       soon ? h('span', { class: 'warn' }, soon) : null));
 }
 
@@ -304,12 +308,14 @@ function renderHome(params) {
       h('input', { id: 'obec', type: 'text', list: 'board-names', value: f.obec, placeholder: 'Obec nebo úřad', autocomplete: 'off', oninput: onText('obec') }),
       h('button', { type: 'submit' }, 'Hledat'),
       names),
-    h('div', { class: 'filters' },
+    h('details', { class: 'filterbox', open: matchMedia('(min-width: 641px)').matches },
+      h('summary', {}, 'Filtry'),
+      h('div', { class: 'filters' },
       h('div', { class: 'topics' }, h('span', { class: 'muted' }, 'Téma:'), topicButtons),
       h('label', {}, h('span', { class: 'vh' }, 'Období'), period),
       h('label', {}, h('input', { type: 'checkbox', checked: f.prilohy, onchange: (e) => { f.prilohy = e.target.checked; update(); } }), 's přílohami'),
       h('label', {}, h('input', { type: 'checkbox', checked: f.konci, onchange: (e) => { f.konci = e.target.checked; update(); } }), `končí do ${SOON_DAYS} dnů`),
-      h('label', {}, h('span', { class: 'vh' }, 'Řazení'), order)),
+      h('label', {}, h('span', { class: 'vh' }, 'Řazení'), order))),
     summary, register, more);
   update();
 }
