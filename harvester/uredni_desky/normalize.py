@@ -63,7 +63,7 @@ def date_of(value: Any) -> str | None:
         return None
     for key in ("datum", "datum_a_čas"):
         raw = value.get(key)
-        if isinstance(raw, str) and _ISO_DATE.match(raw):
+        if isinstance(raw, str) and _ISO_DATE.match(raw) and 1990 <= int(raw[:4]) <= 2100:
             return raw[:10]
     return None
 
@@ -89,9 +89,13 @@ def item_id(board: str, raw: dict, title: str, posted: str | None) -> str:
 
 
 def parse_payload(content: bytes) -> dict:
-    """Dekóduje JSON; toleruje UTF-8 BOM, který některé servery posílají."""
+    """Dekóduje JSON; toleruje UTF-8 BOM a soubory v cp1250, které některé servery posílají."""
     try:
-        data = json.loads(content.decode("utf-8-sig"))
+        try:
+            text = content.decode("utf-8-sig")
+        except UnicodeDecodeError:
+            text = content.decode("cp1250")
+        data = json.loads(text)
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise BoardFormatError(f"Neplatný JSON: {exc}") from exc
     if not isinstance(data, dict):

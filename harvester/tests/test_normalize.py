@@ -57,3 +57,8 @@ def test_parse_payload_rejects_garbage(raw):
 def test_informace_must_be_list():
     with pytest.raises(BoardFormatError):
         normalize_board("b1", {"informace": {"název": "x"}})
+
+
+def test_parse_payload_cp1250_fallback():
+    raw = '{"informace": [{"název": {"cs": "Žádost"}}]}'.encode("cp1250")
+    assert parse_payload(raw)["informace"][0]["název"]["cs"] == "Žádost"

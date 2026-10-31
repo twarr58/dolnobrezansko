@@ -9,7 +9,7 @@ on:
     paths: ["web/**", "harvester/**", ".github/workflows/harvest.yml"]
 
 permissions:
-  contents: write # stav (items.json) se ukládá do větve `data`
+  contents: write # plný stav (items.json) se ukládá do větve `data`
   pages: write
   id-token: write
 
@@ -52,7 +52,7 @@ jobs:
           fi
 
       - name: Sběr
-        run: python -m uredni_desky harvest --out site/data --previous state
+        run: python -m uredni_desky harvest --out site/data --state state
 
       - name: Sestavit web
         run: rsync -a --exclude data web/ site/
@@ -63,7 +63,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # Větev drží jen poslední stav (jeden commit bez historie), aby repozitář nebobtnal.
           git worktree add --orphan -b data-next out
-          cp site/data/*.json out/
+          cp state/items.json out/
           cd out
           git add -A
           git commit -qm "Stav sběru $(date -u +%FT%TZ)"

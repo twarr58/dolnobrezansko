@@ -22,11 +22,11 @@ GitHub Actions (cron každou hodinu)
        2. paralelní stažení JSON všech desek (timeouty, retry, limit velikosti)
        3. normalizace OFN → kompaktní model, sanitace URL
        4. sloučení s předchozím stavem → first_seen / removed (archiv sejmutých)
-       5. výstup site/data/{boards,items,meta}.json
-  ├─ stav se ukládá do větve `data` (jeden commit, bez historie)
+       5. výstup pro web: site/data/boards.json, recent.json (30 dní), boards/<id>.json, meta.json
+  ├─ plný stav state/items.json se ukládá do větve `data` (jeden commit, bez historie)
   └─ web/ + data → GitHub Pages
 web/ (statický frontend, bez buildu, vanilla JS)
-  └─ vyhledávání, filtry, detail obce, detail oznámení, pokrytí dat
+  └─ hledání v oznámeních za 30 dní, stránka desky (aktuální i sejmuté), detail, seznam desek, pokrytí
 ```
 
 Žádný běžící server ani databáze. Hosting zdarma.
@@ -46,30 +46,20 @@ make serve         # http://localhost:8000
 1. Settings → Pages → Source: **GitHub Actions**.
 2. Workflow `.github/workflows/harvest.yml` běží při push do `main`, každou hodinu a ručně.
 
-## Návrh UI
+## Formát dat pro web
 
-Návrh obrazovek (přehled, deska obce, detail oznámení, mobil):
-<https://claude.ai/artifact/38iZP7WvtQvdLX8MqGHn9B>
+- `boards.json` – desky: `id`, `name` (zobrazovaný název), `publisher`, `title`, `access_url`, `dataset_iri`, `ok`, `error`, `count`, `fetched_at`
+- `recent.json` – odlehčené položky za posledních 30 dní: `id`, `b` (deska), `t` (název), `p` (vyvěšeno), `u` (do), `d` (počet příloh)
+- `boards/<id>.json` – všechny položky desky: `id`, `title`, `url`, `posted`, `until`, `cj`, `sz`, `agendas`, `docs[{name,url}]`, `first_seen`, `last_seen`, `removed`
 
-## Formát výstupu
-
-`items.json` – pole položek:
-
-| pole | význam |
-|---|---|
-| `id` | stabilní hash (deska + IRI/URL položky) |
-| `board` | id desky (hash IRI datové sady v NKOD) |
-| `title`, `url` | název a odkaz na originál |
-| `posted`, `until` | vyvěšení / relevantní do (`YYYY-MM-DD`; chybí = nespecifikováno) |
-| `cj`, `sz` | číslo jednací, spisová značka |
-| `agendas`, `docs` | agendy, dokumenty `{name, url}` |
-| `first_seen`, `last_seen`, `removed` | historie ze sběrů |
+První ostrý sběr (31. 10. 2026): 560 desek v NKOD, 449 načteno, 148 248 oznámení,
+z toho 40 569 vyvěšených za posledních 30 dní (`recent.json` ≈ 6 MB, gzip ≈ 1 MB).
 
 ## TODO
 
-- [ ] Ověřit dotaz proti živému NKOD (stránkování `offset`, aktuální počet desek)
-- [ ] Ověřit normalizaci proti JSON schématu OFN a reálným deskám
+- [ ] Ověřit normalizaci proti JSON schématu OFN
+- [ ] 73 desek na runneru GitHubu vyprší při připojení – zjistit, zda jde o blokování zahraničních IP
 - [ ] Kraj/okres: mapování IČO poskytovatele → obec (RÚIAN / RPP), filtry a mapa
-- [ ] Rozdělení `items.json` po krajích nebo index (sql.js-httpvfs / Pagefind), až data narostou
+- [ ] Fulltext i ve starších oznámeních (index po deskách nebo sql.js-httpvfs)
 - [ ] RSS/Atom pro obec a hledání, „sledovat obec“
 - [ ] Stránka pokrytí: chyby v čase, kontakt na poskytovatele

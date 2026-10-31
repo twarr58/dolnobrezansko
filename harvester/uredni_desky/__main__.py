@@ -20,7 +20,7 @@ FIXTURE = Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "deska
 
 async def _harvest(args: argparse.Namespace) -> None:
     limits = httpx.Limits(max_connections=args.concurrency, max_keepalive_connections=args.concurrency)
-    timeout = httpx.Timeout(args.timeout, connect=10)
+    timeout = httpx.Timeout(args.timeout, connect=20)
     async with httpx.AsyncClient(
         headers={"User-Agent": USER_AGENT, "Accept": "application/json, application/ld+json;q=0.9, */*;q=0.1"},
         follow_redirects=True, timeout=timeout, limits=limits,
@@ -29,7 +29,7 @@ async def _harvest(args: argparse.Namespace) -> None:
         if args.limit:
             sources = sources[: args.limit]
         results = await fetch_all(client, sources, concurrency=args.concurrency, retries=args.retries)
-    run_build(sources, results, Path(args.out), Path(args.previous) if args.previous else None)
+    run_build(sources, results, Path(args.out), Path(args.state))
 
 
 def _sample(args: argparse.Namespace) -> None:
@@ -47,7 +47,7 @@ def main() -> None:
 
     h = sub.add_parser("harvest", help="Stáhne všechny desky z NKOD a vytvoří statická data")
     h.add_argument("--out", default="site/data")
-    h.add_argument("--previous", help="Adresář s předchozím items.json (kvůli historii)")
+    h.add_argument("--state", default="state", help="Adresář se stavem (items.json); čte se i zapisuje")
     h.add_argument("--concurrency", type=int, default=32)
     h.add_argument("--timeout", type=float, default=30)
     h.add_argument("--retries", type=int, default=2)

@@ -15,7 +15,7 @@ sample:
 
 # Skutečný sběr z NKOD (LIMIT=50 pro rychlý test)
 harvest:
-	$(PY) -m uredni_desky harvest --out web/data --previous web/data $(if $(LIMIT),--limit $(LIMIT))
+	$(PY) -m uredni_desky harvest --out web/data --state .state $(if $(LIMIT),--limit $(LIMIT))
 
 serve:
 	$(PY) -m http.server -d web 8000

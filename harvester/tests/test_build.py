@@ -56,3 +56,45 @@ def test_parse_datasets_prefers_json_distribution():
     }, {"iri": "https://example.org/ds/2", "distribution": []}]
     srcs = parse_datasets(raw)
     assert len(srcs) == 1 and srcs[0].access_url.endswith(".json") and srcs[0].publisher == "Obec A"
+
+
+def test_display_name_for_shared_publisher():
+    from uredni_desky.build import display_name
+    s = BoardSource("x", "i", "Obsah úřední desky organizace Okresní soud v Náchodě", "Ministerstvo spravedlnosti", "u")
+    assert display_name(s, True) == "Okresní soud v Náchodě"
+    assert display_name(s, False) == "Ministerstvo spravedlnosti"
+    assert display_name(BoardSource("x", "i", "Úřední deska", "Obec A", "u"), True) == "Obec A"
+
+
+def test_write_outputs_layout(tmp_path):
+    from uredni_desky.build import run_build
+    now = datetime(2026, 10, 31, 12, tzinfo=timezone.utc)
+    p = {"informace": [
+        {"název": {"cs": "Nové"}, "vyvěšení": {"datum": "2026-10-30"}},
+        {"název": {"cs": "Staré"}, "vyvěšení": {"datum": "2025-01-01"}},
+        {"název": {"cs": "Nulové datum"}, "vyvěšení": {"datum": "0000-00-00"}},
+    ]}
+    meta = run_build([SRC], {"b1": FetchResult(True, p)}, tmp_path / "out", tmp_path / "state", now)
+    import json
+    recent = json.loads((tmp_path / "out" / "recent.json").read_text())
+    board = json.loads((tmp_path / "out" / "boards" / "b1.json").read_text())
+    state = json.loads((tmp_path / "state" / "items.json").read_text())
+    assert [r["t"] for r in recent] == ["Nové"]
+    assert len(board) == 3 and len(state) == 3
+    assert next(i for i in board if i["title"] == "Nulové datum").get("posted") is None
+    assert meta["items_recent"] == 1
+
+
+def test_display_name_rules():
+    from uredni_desky.build import display_name
+    cases = {
+        ("Úřední deska 2025", "Ministerstvo pro místní rozvoj"): "Ministerstvo pro místní rozvoj (2025)",
+        ("Úřední deska úřadu: Katastrální úřad pro Zlínský kraj [770]", "ČÚZK"): "Katastrální úřad pro Zlínský kraj",
+        ("Úřední deska městské části Brno-sever", "Statutární město Brno"): "Brno-sever",
+        ("Úřední deska města Brna", "Statutární město Brno"): "Statutární město Brno",
+        ("Úřad městského obvodu Plzeň 3 - elektronická úřední deska", "Statutární město Plzeň"): "Úřad městského obvodu Plzeň 3",
+        ("Obsah úřední desky organizace Okresní soud v\xa0Teplicích", "Ministerstvo spravedlnosti"): "Okresní soud v Teplicích",
+    }
+    cases[("Úřední deska", "HLAVNÍ MĚSTO PRAHA")] = "Hlavní město Praha"
+    for (title, pub), expected in cases.items():
+        assert display_name(BoardSource("x", "i", title, pub, "u"), True) == expected
