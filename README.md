@@ -46,13 +46,17 @@ make serve         # http://localhost:8000
 1. Settings → Pages → Source: **GitHub Actions**.
 2. Workflow `.github/workflows/harvest.yml` běží při push do `main`, každou hodinu a ručně.
 
-## Obce mimo katalog (iMunis eDeska)
+## Obce mimo katalog (iMunis eDeska, Galileo)
 
 Do NKOD má desku zapsanou jen zlomek obcí. Obce na službě **iMunis eDeska**
 (`<obec>.imunis.cz/edeska`, např. Dolní Břežany) se načítají z jejího RSS kanálu a stránek
 detailu (data vyvěšení, značka, přílohy). Seznam je v
 `harvester/uredni_desky/data/extra_sources.json` – další obec se přidá řádkem
 `{"subdomain": "…", "publisher": "Obec …"}`.
+
+Weby obcí na systému **Galileo Corporation** (deska na `<web>/urad/uredni-deska/`, např. Semtěš,
+Bílé Podolí) se čtou z HTML seznamu a detailu položek – v sekci `galileo` stejného souboru:
+`{"url": "https://www.obec.cz/urad/uredni-deska/", "publisher": "Obec …"}`.
 
 ## Servery blokující zahraniční IP
 

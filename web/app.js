@@ -365,8 +365,10 @@ async function renderBoard(id, params, seq) {
     h('p', { class: 'lede' }, b.publisher && b.publisher !== b.name ? `${b.publisher} · ` : '', b.title),
     h('p', { class: 'facts' }, status, ' ',
       source ? h('a', { href: source, rel: 'noopener noreferrer' }, 'Zdrojová data') : null,
-      ' · ', b.fmt === 'imunis'
-        ? h('span', { class: 'muted' }, 'Obec desku nezveřejňuje v katalogu otevřených dat, údaje jsou převzaty z její eDesky (iMunis).')
+      ' · ', b.fmt && b.fmt !== 'ofn'
+        ? h('span', { class: 'muted' }, b.fmt === 'imunis'
+          ? 'Obec desku nezveřejňuje v katalogu otevřených dat, údaje jsou převzaty z její eDesky (iMunis).'
+          : 'Obec desku nezveřejňuje v katalogu otevřených dat, údaje jsou převzaty z jejích webových stránek.')
         : h('a', { href: nkod, rel: 'noopener noreferrer' }, 'Záznam v katalogu')),
     h('nav', { class: 'tabs', 'aria-label': 'Výběr' },
       h('a', { href: `#/deska/${id}`, 'aria-current': archive ? null : 'page' }, `Vyvěšeno (${num(active.length)})`),
@@ -522,7 +524,7 @@ function renderAbout() {
       h('p', {}, 'Obce a městské části mohou (a podle zákona o svobodném přístupu k informacím by měly) zveřejňovat obsah své úřední desky také jako otevřená data a evidovat ji v Národním katalogu otevřených dat. Každá deska je ale samostatný soubor na serveru obce, takže je pracné sledovat víc než jednu.'),
       h('p', {}, 'Tento web každou hodinu stáhne všechny desky obcí a městských částí z katalogu, sjednotí je a umožní v nich hledat najednou. Desky krajů, ministerstev a soudů nesbírá. Oznámení, která z desky zmizí, zůstávají rok v záložce Sejmuto.'),
       h('p', {}, 'Hledání na úvodní stránce prochází oznámení vyvěšená za posledních 30 dní. Starší najdete na stránce konkrétní desky.'),
-      h('p', {}, 'Obce, které desku do katalogu nezapsaly, ale používají službu iMunis eDeska (například Dolní Břežany), se načítají z jejího RSS kanálu a stránek oznámení.'),
+      h('p', {}, 'Některé obce, které desku do katalogu nezapsaly, se načítají přímo z jejich úřední desky na webu: služba iMunis eDeska (například Dolní Břežany) a weby na systému Galileo (například Semtěš a Bílé Podolí).'),
       h('p', {}, 'Zdrojový kód: ', h('a', { href: 'https://github.com/twarr58/uredni_desky' }, 'github.com/twarr58/uredni_desky'), '.')));
 }
 

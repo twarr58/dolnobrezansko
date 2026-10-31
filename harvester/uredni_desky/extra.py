@@ -27,4 +27,17 @@ def load_extra_sources() -> list[BoardSource]:
             access_url=f"{base}/rss.asp",
             fmt="imunis",
         ))
+    for entry in raw.get("galileo", []):
+        url = entry["url"].strip()
+        if not url.startswith("https://") or not url.rstrip("/").endswith("/urad/uredni-deska"):
+            raise ValueError(f"Neplatná adresa desky Galileo: {url!r}")
+        url = url.rstrip("/") + "/"
+        sources.append(BoardSource(
+            id=board_id(f"galileo:{url}"),
+            dataset_iri=url,
+            title="Úřední deska (web obce)",
+            publisher=entry["publisher"],
+            access_url=url,
+            fmt="galileo",
+        ))
     return sources

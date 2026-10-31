@@ -1,6 +1,10 @@
 {
-  "_poznamka": "Desky obcí mimo Národní katalog otevřených dat. type=imunis: <subdomain>.imunis.cz/edeska (RSS + detail).",
+  "_poznamka": "Desky obcí mimo Národní katalog otevřených dat. imunis: <subdomain>.imunis.cz/edeska (RSS + detail). galileo: weby na systému Galileo Corporation, adresa <web>/urad/uredni-deska/.",
   "imunis": [
     {"subdomain": "brezany", "publisher": "Obec Dolní Břežany"}
+  ],
+  "galileo": [
+    {"url": "https://www.semtes.cz/urad/uredni-deska/", "publisher": "Obec Semtěš"},
+    {"url": "https://www.bilepodoli.cz/urad/uredni-deska/", "publisher": "Městys Bílé Podolí"}
   ]
 }
