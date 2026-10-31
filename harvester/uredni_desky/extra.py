@@ -20,6 +20,8 @@ def load_extra_sources(discovered: Path | None = None) -> list[BoardSource]:
         raw["imunis"] = raw.get("imunis", []) + [s for s in found if s.get("fmt") == "imunis"]
         raw["galileo"] = raw.get("galileo", []) + [s for s in found if s.get("fmt") == "galileo"]
         raw["ofn"] = [s for s in found if s.get("fmt") == "ofn"]
+        raw["rss"] = [s for s in found if s.get("fmt") == "rss"]
+        raw["vismo"] = [s for s in found if s.get("fmt") == "vismo"]
     sources = []
     for entry in raw.get("imunis", []):
         sub = entry["subdomain"].strip().lower()
@@ -53,6 +55,13 @@ def load_extra_sources(discovered: Path | None = None) -> list[BoardSource]:
             sources.append(BoardSource(id=board_id(f"web:{url}"), dataset_iri=url,
                                        title="Úřední deska (otevřená data na webu obce)",
                                        publisher=entry["publisher"], access_url=url))
+    titles = {"rss": "Úřední deska (RSS kanál webu obce)", "vismo": "Úřední deska (web obce)"}
+    for fmt, title in titles.items():
+        for entry in raw.get(fmt, []):
+            url = entry["url"].strip()
+            if url.startswith(("https://", "http://")):
+                sources.append(BoardSource(id=board_id(f"{fmt}:{url}"), dataset_iri=url, title=title,
+                                           publisher=entry["publisher"], access_url=url, fmt=fmt))
     unique: dict[str, BoardSource] = {}
     for src in sources:
         unique.setdefault(src.id, src)

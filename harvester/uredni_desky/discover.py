@@ -19,10 +19,12 @@ import re
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urljoin, urlsplit
+from xml.etree import ElementTree
 
 import httpx
 
 from . import USER_AGENT
+from .feed import parse_feed
 from .normalize import BoardFormatError, decode_board
 
 log = logging.getLogger(__name__)
@@ -105,6 +107,46 @@ def classify_html(html: str, base: str) -> dict:
     return info
 
 
+_FEED_LINK = re.compile(r'<link[^>]+type="application/(?:rss|atom)\+xml"[^>]*href="([^"]+)"', re.I)
+_FEED_A = re.compile(r'href="([^"]*(?:rss|atom|feed)[^"]*)"', re.I)
+
+
+def feed_candidates(html: str, board_url: str) -> list[str]:
+    """Možné adresy RSS/Atom kanálu úřední desky (z HTML stránky desky)."""
+    host = urlsplit(board_url).hostname or ""
+    if host == "urednideska.alis.cz":  # ALIS: urednideska.alis.cz/<obec>/rss
+        seg = urlsplit(board_url).path.strip("/").split("/")[0]
+        return [f"https://urednideska.alis.cz/{seg}/rss"] if seg else []
+    found = [urljoin(board_url, h) for h in _FEED_LINK.findall(html)]
+    found += [urljoin(board_url, h) for h in _FEED_A.findall(html)
+              if not h.lower().endswith((".css", ".js")) and "co-je-rss" not in h.lower()]
+    found.append(board_url.split("?")[0].rstrip("/") + "?action=atom")
+    return list(dict.fromkeys(u.replace("&amp;", "&") for u in found if u.startswith("http")))[:5]
+
+
+async def _probe_board(client: httpx.AsyncClient, info: dict) -> None:
+    """U nerozpoznaného webu prozkoumá stránku desky: RSS/Atom kanál nebo deska Vismo."""
+    board = info.get("board_link")
+    if not board:
+        return
+    try:
+        r = await client.get(board, timeout=20)
+        r.raise_for_status()
+    except httpx.HTTPError:
+        return
+    if info.get("cms", "").startswith("Vismo") and "site_board" in r.text:
+        info.update(fmt="vismo", url=str(r.url))
+        return
+    for cand in feed_candidates(r.text, str(r.url)):
+        try:
+            fr = await client.get(cand, timeout=20)
+            if fr.status_code == 200 and parse_feed(fr.content, str(fr.url)):
+                info.update(fmt="rss", url=cand)
+                return
+        except (httpx.HTTPError, ElementTree.ParseError):
+            continue
+
+
 async def _probe_vismo_ofn(client: httpx.AsyncClient, base: str) -> str | None:
     url = "{0.scheme}://{0.netloc}/opendata-uredni-deska".format(urlsplit(base))
     try:
@@ -131,6 +173,8 @@ async def classify_municipality(client: httpx.AsyncClient, m: dict, sem: asyncio
             if info.get("cms", "").startswith("Vismo") and not info.get("fmt"):
                 if ofn := await _probe_vismo_ofn(client, str(r.url)):
                     info.update(fmt="ofn", url=ofn)
+            if not info.get("fmt"):
+                await _probe_board(client, info)
             result.update(info)
             result["status"] = "ok"
         except httpx.TimeoutException:
