@@ -442,7 +442,7 @@ function renderIndex() {
   };
   mount('Seznam desek',
     h('h1', {}, 'Seznam desek'),
-    h('p', { class: 'lede' }, `${num(all.length)} úředních desek evidovaných v Národním katalogu otevřených dat. Číslo udává počet vyvěšených oznámení.`),
+    h('p', { class: 'lede' }, `${num(all.length)} úředních desek obcí a městských částí evidovaných v Národním katalogu otevřených dat. Číslo udává počet vyvěšených oznámení.`),
     h('div', { class: 'boardfilter' },
       h('label', { class: 'vh', for: 'iq' }, 'Hledat desku'),
       h('input', { id: 'iq', type: 'search', placeholder: 'Hledat obec nebo úřad', oninput: (e) => paint(e.target.value) })),
@@ -502,7 +502,7 @@ function renderCoverage() {
   mount('Pokrytí',
     h('h1', {}, 'Pokrytí'),
     h('div', { class: 'prose' },
-      h('p', {}, `V katalogu je ${num(m.boards_total)} úředních desek. Při posledním stažení (${dateTimeCz(m.generated_at)}) se podařilo načíst ${num(m.boards_ok)} z nich (${share} %), dohromady ${num(m.items_active)} vyvěšených oznámení.`),
+      h('p', {}, `V katalogu je ${num(m.boards_total)} úředních desek obcí a městských částí. Při posledním stažení (${dateTimeCz(m.generated_at)}) se podařilo načíst ${num(m.boards_ok)} z nich (${share} %), dohromady ${num(m.items_active)} vyvěšených oznámení.`),
       h('p', {}, 'Desky, které se nepodařilo načíst, se zobrazují ve stavu z posledního úspěšného stažení. Obce, které úřední desku jako otevřená data nezveřejňují nebo ji neevidují v katalogu, tu chybí úplně.')),
     [...groups].sort((x, y) => y[1].length - x[1].length).map(failedSection),
     warned.length ? h('section', {},
@@ -517,8 +517,8 @@ function renderAbout() {
   mount('O projektu',
     h('h1', {}, 'O projektu'),
     h('div', { class: 'prose' },
-      h('p', {}, 'Obce, kraje a další úřady mají od února 2022 povinnost zveřejňovat obsah své úřední desky také jako otevřená data a evidovat ji v Národním katalogu otevřených dat. Každá deska je ale samostatný soubor na serveru úřadu, takže je pracné sledovat víc než jednu.'),
-      h('p', {}, 'Tento web každou hodinu stáhne všechny desky z katalogu, sjednotí je a umožní v nich hledat najednou. Oznámení, která z desky zmizí, zůstávají rok v záložce Sejmuto.'),
+      h('p', {}, 'Obce a městské části mohou (a podle zákona o svobodném přístupu k informacím by měly) zveřejňovat obsah své úřední desky také jako otevřená data a evidovat ji v Národním katalogu otevřených dat. Každá deska je ale samostatný soubor na serveru obce, takže je pracné sledovat víc než jednu.'),
+      h('p', {}, 'Tento web každou hodinu stáhne všechny desky obcí a městských částí z katalogu, sjednotí je a umožní v nich hledat najednou. Desky krajů, ministerstev a soudů nesbírá. Oznámení, která z desky zmizí, zůstávají rok v záložce Sejmuto.'),
       h('p', {}, 'Hledání na úvodní stránce prochází oznámení vyvěšená za posledních 30 dní. Starší najdete na stránce konkrétní desky.'),
       h('p', {}, 'Zdrojový kód: ', h('a', { href: 'https://github.com/twarr58/uredni_desky' }, 'github.com/twarr58/uredni_desky'), '.')));
 }

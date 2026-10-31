@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import re
 from dataclasses import dataclass
 
 import httpx
@@ -33,6 +34,20 @@ class BoardSource:
 
     def urls(self) -> list[str]:
         return [self.access_url, *[u for u in self.alt_urls if u != self.access_url]]
+
+
+_MUNICIPAL = re.compile(
+    r"^(obec|město|městys|statutární\s+město|hlavní\s+město\s+praha|městská\s+část|městský\s+obvod)\b",
+    re.IGNORECASE,
+)
+
+
+def is_municipal(src: BoardSource) -> bool:
+    """Deska obce, města, městyse, statutárního města nebo jeho městské části/obvodu.
+
+    Rozhoduje název poskytovatele z NKOD (kraje, ministerstva, soudy apod. sem nepatří).
+    """
+    return bool(_MUNICIPAL.match(" ".join(src.publisher.split())))
 
 
 def board_id(dataset_iri: str) -> str:

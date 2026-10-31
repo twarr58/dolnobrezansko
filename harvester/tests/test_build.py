@@ -99,3 +99,13 @@ def test_display_name_rules():
     cases[("Úřední deska", "HLAVNÍ MĚSTO PRAHA")] = "Hlavní město Praha"
     for (title, pub), expected in cases.items():
         assert display_name(BoardSource("x", "i", title, pub, "u"), True) == expected
+
+
+def test_is_municipal():
+    from uredni_desky.nkod import is_municipal
+    yes = ["Obec Dolní Břežany", "OBEC CHVALEČ", "Město Kolín", "MĚSTO NÁCHOD", "Městys Pecka",
+           "Statutární město Brno", "HLAVNÍ MĚSTO PRAHA", "Městská část Praha 7", "Městský obvod Nová Bělá"]
+    no = ["Ministerstvo spravedlnosti", "Jihomoravský kraj", "Vojenský újezd Libavá", "Ústavní soud",
+          "Český úřad zeměměřický a katastrální"]
+    assert all(is_municipal(BoardSource("x", "i", "t", p, "u")) for p in yes)
+    assert not any(is_municipal(BoardSource("x", "i", "t", p, "u")) for p in no)

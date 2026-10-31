@@ -1,0 +1,37 @@
+name: Průzkum katalogu NKOD
+
+on:
+  workflow_dispatch:
+    inputs:
+      find:
+        description: "Hledané obce oddělené čárkou"
+        default: "Břežany"
+        required: false
+      probe:
+        description: "URL k vyzkoušení oddělené mezerou (např. web obce)"
+        default: ""
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  explore:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ./harvester
+      - run: python -m uredni_desky explore --find "${{ inputs.find }}"
+      - name: Zkusit URL
+        if: inputs.probe != ''
+        run: |
+          for u in ${{ inputs.probe }}; do
+            echo "== $u"
+            curl -sS -m 20 -L -o /tmp/body -w 'HTTP %{http_code} %{content_type} %{size_download} B\n' "$u" || true
+            head -c 300 /tmp/body | tr '\n' ' '; echo
+          done
