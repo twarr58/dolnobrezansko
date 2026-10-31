@@ -56,6 +56,8 @@ def _format_kind(message: str) -> str:
         return KIND_HTML
     if message.startswith("Prázdná odpověď"):
         return KIND_EMPTY
+    if message.startswith("Server vrací místo dat chybovou hlášku"):
+        return KIND_SERVER
     if message.startswith("Neplatný JSON"):
         return KIND_INVALID
     return KIND_FORMAT

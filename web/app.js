@@ -461,7 +461,7 @@ const KINDS = {
   not_found: { title: 'Odkaz v katalogu nefunguje', who: 'úřad',
     text: 'Úřad má v Národním katalogu otevřených dat zapsanou adresu, na které data nejsou (HTTP 404). Opravit ji musí úřad v katalogu.' },
   server: { title: 'Chyba serveru úřadu', who: 'úřad',
-    text: 'Server úřadu vrací chybu 5xx. Bývá to dočasné.' },
+    text: 'Server úřadu vrací chybu (HTTP 5xx nebo chybovou hlášku místo dat). Bývá to dočasné.' },
   http: { title: 'Server odmítl přístup', who: 'úřad',
     text: 'Server vrací jinou chybu HTTP, nejčastěji 403 (zakázaný přístup).' },
   html: { title: 'Místo dat webová stránka', who: 'úřad',

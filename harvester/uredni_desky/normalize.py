@@ -142,6 +142,8 @@ def decode_board(content: bytes) -> tuple[dict, list[str]]:
         raise BoardFormatError("Prázdná odpověď")
     if text.startswith("<"):
         raise BoardFormatError("Místo dat vrací HTML stránku")
+    if len(text) < 500 and not text.startswith(("{", "[")):
+        raise BoardFormatError(f"Server vrací místo dat chybovou hlášku: {text[:80]!r}")
 
     try:
         return _as_board(json.loads(text, strict=False), warnings), warnings

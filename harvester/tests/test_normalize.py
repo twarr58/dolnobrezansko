@@ -97,3 +97,8 @@ def test_decode_trailing_garbage():
     from uredni_desky.normalize import decode_board
     data, warnings = decode_board(b'{"informace": []}\n{"x": 1}')
     assert data == {"informace": []} and warnings
+
+
+def test_short_error_text_is_reported():
+    with pytest.raises(BoardFormatError, match="chybovou hlášku"):
+        parse_payload(b"Oops, an error occurred! Request: d3755651692fc")
