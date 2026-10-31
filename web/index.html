@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Úřední desky</title>
+  <meta name="description" content="Oznámení z úředních desek obcí a městských částí na jednom místě.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#app">Přeskočit na obsah</a>
+  <header class="topbar">
+    <div class="wrap topbar__inner">
+      <a class="brand" href="#/">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true"><rect x="4" y="5" width="20" height="19" rx="2" stroke="currentColor" stroke-width="2"/><path d="M9 11h10M9 15h10M9 19h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="14" cy="4.5" r="2.5" fill="var(--warn)"/></svg>
+        <span>Úřední desky</span>
+      </a>
+      <nav aria-label="Hlavní navigace" class="nav">
+        <a href="#/" data-nav="home">Oznámení</a>
+        <a href="#/obce" data-nav="obce">Obce</a>
+        <a href="#/pokryti" data-nav="pokryti">Pokrytí dat</a>
+        <a href="#/o-projektu" data-nav="about">O projektu</a>
+      </nav>
+    </div>
+  </header>
+  <main id="app" tabindex="-1"><p class="wrap loading">Načítám data…</p></main>
+  <footer class="footer">
+    <div class="wrap footer__inner">
+      <span>Zdroj: <a href="https://data.gov.cz">Národní katalog otevřených dat</a>, data dle <a href="https://ofn.gov.cz/úřední-desky/2021-07-20/">OFN Úřední desky</a>. Právně závazné je znění na originální úřední desce.</span>
+      <span>Poslední sběr dat: <span class="mono" id="generated">–</span></span>
+    </div>
+  </footer>
+</body>
+</html>

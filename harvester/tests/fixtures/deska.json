@@ -1,0 +1,48 @@
+{
+  "@context": "https://ofn.gov.cz/úřední-desky/2021-07-20/kontexty/úřední-deska.jsonld",
+  "typ": "Úřední deska",
+  "iri": "https://example.org/úřední-deska",
+  "stránka": "https://example.org/uredni-deska",
+  "provozovatel": {
+    "typ": "Osoba",
+    "ičo": "00000001"
+  },
+  "informace": [
+    {
+      "typ": "Digitální objekt",
+      "iri": "https://example.org/úřední-deska/1",
+      "url": "https://example.org/uredni-deska/1",
+      "název": {"cs": "Oznámení o konání zasedání zastupitelstva obce"},
+      "vyvěšení": {"typ": "Časový okamžik", "datum": "2026-10-30"},
+      "relevantní_do": {"typ": "Časový okamžik", "datum": "2026-11-12"},
+      "číslo_jednací": "OÚ/123/2026",
+      "agenda": [{"typ": "Agenda", "název": {"cs": "Samospráva"}}],
+      "dokument": [
+        {"typ": "Digitální objekt", "název": {"cs": "Pozvánka"}, "url": "https://example.org/dokumenty/pozvanka.pdf"}
+      ]
+    },
+    {
+      "typ": "Digitální objekt",
+      "iri": "https://example.org/úřední-deska/2",
+      "url": "https://example.org/uredni-deska/2",
+      "název": {"cs": "Veřejná vyhláška – oznámení o zahájení řízení o změně územního plánu"},
+      "vyvěšení": {"typ": "Časový okamžik", "datum_a_čas": "2026-10-29T08:00:00+01:00"},
+      "relevantní_do": {"typ": "Časový okamžik", "nespecifikovaný": true},
+      "spisová_značka": "SZ/45/2026",
+      "dokument": [
+        {"typ": "Digitální objekt", "název": {"cs": "Vyhláška"}, "url": "https://example.org/dokumenty/vyhlaska.pdf"},
+        {"typ": "Digitální objekt", "název": {"cs": "Škodlivý odkaz"}, "url": "javascript:alert(1)"}
+      ]
+    },
+    {
+      "typ": "Digitální objekt",
+      "název": {"cs": "Záměr pronájmu pozemku"},
+      "vyvěšení": {"typ": "Časový okamžik", "datum": "2026-10-17"},
+      "relevantní_do": {"typ": "Časový okamžik", "datum": "2026-11-02"}
+    },
+    {
+      "typ": "Digitální objekt",
+      "vyvěšení": {"typ": "Časový okamžik", "datum": "2026-10-01"}
+    }
+  ]
+}

@@ -1,0 +1,84 @@
+name: Sběr úředních desek a nasazení
+
+on:
+  schedule:
+    - cron: "17 * * * *" # každou hodinu
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["web/**", "harvester/**", ".github/workflows/harvest.yml"]
+
+permissions:
+  contents: write # stav (items.json) se ukládá do větve `data`
+  pages: write
+  id-token: write
+
+concurrency:
+  group: harvest
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: harvester/pyproject.toml
+      - run: pip install -e "harvester[dev]"
+      - run: pytest -q harvester
+
+  harvest:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: harvester/pyproject.toml
+      - run: pip install ./harvester
+
+      - name: Načíst předchozí stav z větve data
+        run: |
+          if git fetch --depth 1 origin data; then
+            git worktree add --detach state FETCH_HEAD
+          else
+            mkdir -p state
+          fi
+
+      - name: Sběr
+        run: python -m uredni_desky harvest --out site/data --previous state
+
+      - name: Sestavit web
+        run: rsync -a --exclude data web/ site/
+
+      - name: Uložit stav do větve data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Větev drží jen poslední stav (jeden commit bez historie), aby repozitář nebobtnal.
+          git worktree add --orphan -b data-next out
+          cp site/data/*.json out/
+          cd out
+          git add -A
+          git commit -qm "Stav sběru $(date -u +%FT%TZ)"
+          git push -fq origin HEAD:data
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: harvest
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
