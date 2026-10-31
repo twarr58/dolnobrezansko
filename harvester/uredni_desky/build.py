@@ -11,6 +11,7 @@ Stav (state_dir):
 
 from __future__ import annotations
 
+import gzip
 import json
 import logging
 import re
@@ -34,6 +35,13 @@ def _load_json(path: Path, default):
         return json.loads(path.read_text("utf-8"))
     except (FileNotFoundError, json.JSONDecodeError):
         return default
+
+
+def load_state(state_dir: Path) -> list[dict]:
+    gz = state_dir / "items.json.gz"
+    if gz.exists():
+        return json.loads(gzip.decompress(gz.read_bytes()).decode("utf-8"))
+    return _load_json(state_dir / "items.json", [])  # starší formát stavu
 
 
 def _item_from_json(d: dict) -> Item:
@@ -65,14 +73,15 @@ def merge(
     out: dict[str, Item] = {}
     for src in sources:
         res = results.get(src.id) or FetchResult(False, error="nestaženo")
-        board = {**asdict(src), "ok": res.ok, "error": res.error, "http_status": res.http_status,
-                 "elapsed_ms": res.elapsed_ms, "fetched_at": stamp, "count": 0}
+        board = {**asdict(src), "ok": res.ok, "error": res.error, "kind": res.kind, "http_status": res.http_status,
+                 "elapsed_ms": res.elapsed_ms, "fetched_at": stamp, "count": 0, "warnings": res.warnings,
+                 "used_url": res.url}
         current: list[Item] = []
         if res.ok:
             try:
                 current = normalize_board(src.id, res.payload or {})
             except BoardFormatError as exc:
-                board.update(ok=False, error=str(exc))
+                board.update(ok=False, error=str(exc), kind="format")
         if not board["ok"]:
             for it in by_board.get(src.id, []):
                 out[it.id] = it
@@ -201,11 +210,15 @@ def run_build(
     now: datetime | None = None,
 ) -> dict:
     now = now or datetime.now(timezone.utc)
-    previous = _load_json(state_dir / "items.json", []) if state_dir else []
+    previous = load_state(state_dir) if state_dir else []
     boards, items = merge(sources, results, previous, now)
     meta = write_outputs(out_dir, boards, items, now)
     if state_dir:
         state_dir.mkdir(parents=True, exist_ok=True)
-        _dump(state_dir / "items.json", [i.to_json() for i in items])
+        # Komprimovaně: GitHub odmítá soubory nad 100 MB a nekomprimovaný stav má desítky MB.
+        data = json.dumps([i.to_json() for i in items], ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+        (state_dir / "items.json.gz").write_bytes(gzip.compress(data, mtime=0))
+        (state_dir / "items.json").unlink(missing_ok=True)
+        _dump(state_dir / "boards.json", boards)
     log.info("Hotovo: %s", meta)
     return meta

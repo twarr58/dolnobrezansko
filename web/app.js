@@ -357,7 +357,7 @@ async function renderBoard(id, params, seq) {
   const nkod = `https://data.gov.cz/datová-sada?iri=${encodeURIComponent(b.dataset_iri)}`;
   const status = b.ok
     ? h('span', {}, `Staženo ${dateTimeCz(b.fetched_at)}.`)
-    : h('span', { class: 'bad' }, `Poslední stažení se nepovedlo (${b.error || 'neznámá chyba'}). Zobrazuje se stav z dřívějška.`);
+    : h('span', { class: 'bad' }, `Poslední stažení se nepovedlo: ${KINDS[b.kind]?.title || 'chyba'} (${b.error || 'bez podrobností'}). Zobrazuje se stav z dřívějška. `, h('a', { href: '#/pokryti' }, 'Co to znamená'), '.');
 
   mount(b.name,
     h('p', { class: 'crumbs' }, h('a', { href: '#/desky' }, 'Seznam desek'), ' / '),
@@ -450,29 +450,66 @@ function renderIndex() {
   paint('');
 }
 
+// Vysvětlení druhů chyb (pole `kind` z harvesteru). `who` říká, kdo může problém odstranit.
+const KINDS = {
+  timeout: { title: 'Server neodpovídá', who: 'zjišťujeme',
+    text: 'Server úřadu nepřijal spojení ani po opakovaných pokusech. Sběr běží na serverech GitHubu v zahraničí a část hostingů takové přístupy blokuje.' },
+  connect: { title: 'Nelze se připojit', who: 'úřad',
+    text: 'Spojení se serverem úřadu selhalo (neexistující adresa, odmítnuté spojení).' },
+  tls: { title: 'Chyba zabezpečeného spojení', who: 'úřad',
+    text: 'Certifikát HTTPS serveru je neplatný nebo neúplný a nepodařilo se ho automaticky doplnit.' },
+  not_found: { title: 'Odkaz v katalogu nefunguje', who: 'úřad',
+    text: 'Úřad má v Národním katalogu otevřených dat zapsanou adresu, na které data nejsou (HTTP 404). Opravit ji musí úřad v katalogu.' },
+  server: { title: 'Chyba serveru úřadu', who: 'úřad',
+    text: 'Server úřadu vrací chybu 5xx. Bývá to dočasné.' },
+  http: { title: 'Server odmítl přístup', who: 'úřad',
+    text: 'Server vrací jinou chybu HTTP, nejčastěji 403 (zakázaný přístup).' },
+  html: { title: 'Místo dat webová stránka', who: 'úřad',
+    text: 'Na zapsané adrese je běžná webová stránka, ne data podle normy. Úřad v katalogu uvedl špatný odkaz.' },
+  empty: { title: 'Prázdná odpověď', who: 'úřad',
+    text: 'Server vrací prázdný soubor.' },
+  invalid: { title: 'Poškozená data', who: 'úřad',
+    text: 'Soubor není platný JSON a nepodařilo se ho ani automaticky opravit.' },
+  format: { title: 'Data neodpovídají normě', who: 'úřad',
+    text: 'Soubor je čitelný, ale nemá strukturu podle OFN Úřední desky.' },
+};
+
 function renderCoverage() {
   setNav('pokryti');
   const m = state.meta;
-  const failed = [...state.boards.values()].filter((b) => !b.ok);
-  const byReason = new Map();
+  const boards = [...state.boards.values()];
+  const failed = boards.filter((b) => !b.ok);
+  const warned = boards.filter((b) => b.ok && b.warnings?.length);
+  const groups = new Map();
   for (const b of failed) {
-    const reason = (b.error || 'neznámá chyba').replace(/:.*$/, '').replace(/^ConnectTimeout$/, 'Server neodpověděl včas')
-      .replace(/^ConnectError$/, 'Nelze se připojit').replace(/^Neplatný JSON$/, 'Neplatný JSON');
-    if (!byReason.has(reason)) byReason.set(reason, []);
-    byReason.get(reason).push(b);
+    const kind = KINDS[b.kind] ? b.kind : 'format';
+    if (!groups.has(kind)) groups.set(kind, []);
+    groups.get(kind).push(b);
   }
-  const sorted = [...byReason].sort((x, y) => y[1].length - x[1].length);
+  const byName = (x, y) => x.name.localeCompare(y.name, 'cs');
+  const share = m.boards_total ? Math.round((m.boards_ok / m.boards_total) * 100) : 0;
+
+  const failedSection = ([kind, list]) => h('section', {},
+    h('h2', { class: 'section' }, `${KINDS[kind].title} (${list.length})`),
+    h('p', { class: 'note' }, KINDS[kind].text, KINDS[kind].who === 'úřad' ? ' Náprava je na straně úřadu.' : ''),
+    h('ul', { class: 'docs' }, list.sort(byName).map((b) => {
+      const url = safeUrl(b.used_url || b.access_url);
+      return h('li', {}, h('a', { href: `#/deska/${b.id}` }, b.name),
+        h('span', { class: 'ext' }, ` ${b.error || ''}`),
+        url ? [' · ', h('a', { href: url, rel: 'noopener noreferrer', class: 'ext' }, 'adresa dat')] : null);
+    })));
 
   mount('Pokrytí',
     h('h1', {}, 'Pokrytí'),
     h('div', { class: 'prose' },
-      h('p', {}, `V katalogu je ${num(m.boards_total)} úředních desek. Při posledním stažení (${dateTimeCz(m.generated_at)}) se podařilo načíst ${num(m.boards_ok)} z nich, dohromady ${num(m.items_active)} vyvěšených oznámení.`),
-      h('p', {}, 'Desky, které se nepodařilo načíst, se zobrazují ve stavu z posledního úspěšného stažení. Nejčastější příčinou je server, který neodpovídá, nebo soubor, který neodpovídá normě.'),
-      h('p', {}, 'Obce, které úřední desku jako otevřená data nezveřejňují nebo ji neevidují v katalogu, tu chybí úplně.')),
-    sorted.map(([reason, list]) => h('section', {},
-      h('h2', { class: 'section' }, `${reason} (${list.length})`),
-      h('ul', { class: 'docs' }, list.sort((x, y) => x.name.localeCompare(y.name, 'cs')).map((b) =>
-        h('li', {}, h('a', { href: `#/deska/${b.id}` }, b.name), h('span', { class: 'ext' }, ` ${b.error || ''}`)))))));
+      h('p', {}, `V katalogu je ${num(m.boards_total)} úředních desek. Při posledním stažení (${dateTimeCz(m.generated_at)}) se podařilo načíst ${num(m.boards_ok)} z nich (${share} %), dohromady ${num(m.items_active)} vyvěšených oznámení.`),
+      h('p', {}, 'Desky, které se nepodařilo načíst, se zobrazují ve stavu z posledního úspěšného stažení. Obce, které úřední desku jako otevřená data nezveřejňují nebo ji neevidují v katalogu, tu chybí úplně.')),
+    [...groups].sort((x, y) => y[1].length - x[1].length).map(failedSection),
+    warned.length ? h('section', {},
+      h('h2', { class: 'section' }, `Načteno s výhradami (${warned.length})`),
+      h('p', { class: 'note' }, 'Tyto desky se načetly, ale jejich data nebo server neodpovídají normě. Harvester je opravil automaticky.'),
+      h('ul', { class: 'docs' }, warned.sort(byName).map((b) => h('li', {},
+        h('a', { href: `#/deska/${b.id}` }, b.name), h('span', { class: 'ext' }, ` ${b.warnings.join('; ')}`))))) : null);
 }
 
 function renderAbout() {

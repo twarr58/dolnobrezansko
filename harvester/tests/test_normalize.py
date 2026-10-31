@@ -48,7 +48,7 @@ def test_parse_payload_tolerates_bom():
     assert parse_payload(b'\xef\xbb\xbf{"informace": []}') == {"informace": []}
 
 
-@pytest.mark.parametrize("raw", [b"<html>", b"[]", b"\xff\xfe"])
+@pytest.mark.parametrize("raw", [b"<html>", b"", b"  \n", b"\xff\xfe", b"[1, 2]"])
 def test_parse_payload_rejects_garbage(raw):
     with pytest.raises(BoardFormatError):
         parse_payload(raw)
@@ -62,3 +62,38 @@ def test_informace_must_be_list():
 def test_parse_payload_cp1250_fallback():
     raw = '{"informace": [{"název": {"cs": "Žádost"}}]}'.encode("cp1250")
     assert parse_payload(raw)["informace"][0]["název"]["cs"] == "Žádost"
+
+
+def test_decode_zip():
+    import io, zipfile
+    from uredni_desky.normalize import decode_board
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr("ODTURD02.json", '{"informace": []}')
+    data, warnings = decode_board(buf.getvalue())
+    assert data == {"informace": []} and "ZIP" in warnings[0]
+
+
+def test_decode_control_characters_in_strings():
+    from uredni_desky.normalize import decode_board
+    data, _ = decode_board('{"informace": [{"název": {"cs": "a\tb\nc"}}]}'.replace("\\t", "\t").encode())
+    assert data["informace"][0]["název"]["cs"].startswith("a")
+
+
+def test_decode_repairs_broken_json():
+    from uredni_desky.normalize import decode_board
+    raw = b'{"informace": [{"n\xc3\xa1zev": {"cs": "Oznameni "Tisk" obce"}}]}'
+    data, warnings = decode_board(raw)
+    assert len(data["informace"]) == 1 and any("opraven" in w for w in warnings)
+
+
+def test_decode_list_root():
+    from uredni_desky.normalize import decode_board
+    data, warnings = decode_board(b'[{"informace": [{"n\xc3\xa1zev": {"cs": "A"}}]}]')
+    assert len(data["informace"]) == 1
+
+
+def test_decode_trailing_garbage():
+    from uredni_desky.normalize import decode_board
+    data, warnings = decode_board(b'{"informace": []}\n{"x": 1}')
+    assert data == {"informace": []} and warnings

@@ -78,7 +78,8 @@ def test_write_outputs_layout(tmp_path):
     import json
     recent = json.loads((tmp_path / "out" / "recent.json").read_text())
     board = json.loads((tmp_path / "out" / "boards" / "b1.json").read_text())
-    state = json.loads((tmp_path / "state" / "items.json").read_text())
+    from uredni_desky.build import load_state
+    state = load_state(tmp_path / "state")
     assert [r["t"] for r in recent] == ["Nové"]
     assert len(board) == 3 and len(state) == 3
     assert next(i for i in board if i["title"] == "Nulové datum").get("posted") is None

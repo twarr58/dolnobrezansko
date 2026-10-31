@@ -29,6 +29,10 @@ class BoardSource:
     title: str
     publisher: str
     access_url: str
+    alt_urls: tuple[str, ...] = ()
+
+    def urls(self) -> list[str]:
+        return [self.access_url, *[u for u in self.alt_urls if u != self.access_url]]
 
 
 def board_id(dataset_iri: str) -> str:
@@ -44,18 +48,18 @@ def _query(limit: int, offset: int | None) -> str:
     return f"query {{ datasets({', '.join(args)}) {{ {_FIELDS} }} }}"
 
 
-def _pick_access_url(distributions: list[dict]) -> str | None:
-    urls = [d.get("accessURL") for d in distributions or [] if d.get("accessURL")]
-    json_like = [u for u in urls if "json" in u.lower()]
-    return (json_like or urls or [None])[0]
+def _access_urls(distributions: list[dict]) -> list[str]:
+    """Všechny URL distribucí; ty, které vypadají jako JSON, napřed."""
+    urls = list(dict.fromkeys(d.get("accessURL") for d in distributions or [] if d.get("accessURL")))
+    return sorted(urls, key=lambda u: "json" not in u.lower())
 
 
 def parse_datasets(raw: list[dict]) -> list[BoardSource]:
     sources: list[BoardSource] = []
     for ds in raw:
         iri = ds.get("iri")
-        url = _pick_access_url(ds.get("distribution") or [])
-        if not iri or not url:
+        urls = _access_urls(ds.get("distribution") or [])
+        if not iri or not urls:
             log.warning("Datová sada bez IRI nebo distribuce: %s", iri)
             continue
         sources.append(
@@ -64,7 +68,8 @@ def parse_datasets(raw: list[dict]) -> list[BoardSource]:
                 dataset_iri=iri,
                 title=((ds.get("title") or {}).get("cs") or "").strip(),
                 publisher=(((ds.get("publisher") or {}).get("title") or {}).get("cs") or "").strip(),
-                access_url=url,
+                access_url=urls[0],
+                alt_urls=tuple(urls[1:]),
             )
         )
     return sources

@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import re
+import zipfile
 from dataclasses import asdict, dataclass, field
 from typing import Any
+
+import json_repair
 
 _ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}")
 
@@ -88,19 +92,76 @@ def item_id(board: str, raw: dict, title: str, posted: str | None) -> str:
     return hashlib.sha1(f"{board}|{key}".encode("utf-8")).hexdigest()[:16]
 
 
-def parse_payload(content: bytes) -> dict:
-    """Dekóduje JSON; toleruje UTF-8 BOM a soubory v cp1250, které některé servery posílají."""
-    try:
+def _unzip(content: bytes, warnings: list[str]) -> bytes:
+    """Některé úřady registrují místo JSON souboru ZIP archiv – vezme se první JSON uvnitř."""
+    with zipfile.ZipFile(io.BytesIO(content)) as zf:
+        names = [n for n in zf.namelist() if not n.endswith("/")]
+        json_names = [n for n in names if n.lower().endswith((".json", ".jsonld"))] or names
+        if not json_names:
+            raise BoardFormatError("ZIP archiv neobsahuje žádný soubor")
+        warnings.append("data jsou v ZIP archivu")
+        return zf.read(json_names[0])
+
+
+def _as_board(data: Any, warnings: list[str]) -> dict:
+    if isinstance(data, dict):
+        return data
+    if isinstance(data, list):
+        boards = [d for d in data if isinstance(d, dict) and isinstance(d.get("informace"), list)]
+        if boards:
+            if len(boards) > 1 or len(data) > 1:
+                warnings.append("kořen JSON je pole desek místo objektu")
+            return {"informace": [i for b in boards for i in b["informace"]]}
+        if data and all(isinstance(d, dict) for d in data) and any("název" in d for d in data):
+            warnings.append("kořen JSON je pole položek místo objektu desky")
+            return {"informace": data}
+        if not data:
+            return {"informace": []}
+    raise BoardFormatError("Kořen JSON není objekt úřední desky")
+
+
+def decode_board(content: bytes) -> tuple[dict, list[str]]:
+    """Dekóduje data desky co nejtolerantněji a vrátí (data, upozornění).
+
+    Zvládá: UTF-8 BOM, cp1250, ZIP archiv, řídicí znaky v řetězcích, data za koncem JSON,
+    pole místo objektu a jako poslední možnost automatickou opravu poškozeného JSON.
+    """
+    warnings: list[str] = []
+    if content[:4] == b"PK\x03\x04":
         try:
-            text = content.decode("utf-8-sig")
-        except UnicodeDecodeError:
-            text = content.decode("cp1250")
-        data = json.loads(text)
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise BoardFormatError(f"Neplatný JSON: {exc}") from exc
-    if not isinstance(data, dict):
-        raise BoardFormatError("Kořen JSON není objekt")
-    return data
+            content = _unzip(content, warnings)
+        except zipfile.BadZipFile as exc:
+            raise BoardFormatError(f"Poškozený ZIP archiv: {exc}") from exc
+    try:
+        text = content.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        text = content.decode("cp1250", errors="replace")
+        warnings.append("soubor není v UTF-8 (načten jako cp1250)")
+    text = text.strip()
+    if not text:
+        raise BoardFormatError("Prázdná odpověď")
+    if text.startswith("<"):
+        raise BoardFormatError("Místo dat vrací HTML stránku")
+
+    try:
+        return _as_board(json.loads(text, strict=False), warnings), warnings
+    except json.JSONDecodeError as exc:
+        first_error = exc
+    try:
+        data, end = json.JSONDecoder(strict=False).raw_decode(text)
+        warnings.append("za koncem JSON jsou nadbytečná data")
+        return _as_board(data, warnings), warnings
+    except json.JSONDecodeError:
+        pass
+    repaired = json_repair.loads(text)
+    if isinstance(repaired, (dict, list)) and repaired:
+        warnings.append(f"nevalidní JSON opraven automaticky ({first_error.msg}, řádek {first_error.lineno})")
+        return _as_board(repaired, warnings), warnings
+    raise BoardFormatError(f"Neplatný JSON: {first_error}")
+
+
+def parse_payload(content: bytes) -> dict:
+    return decode_board(content)[0]
 
 
 def normalize_board(board: str, payload: dict) -> list[Item]:

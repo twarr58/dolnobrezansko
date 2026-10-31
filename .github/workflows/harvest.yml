@@ -63,7 +63,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # Větev drží jen poslední stav (jeden commit bez historie), aby repozitář nebobtnal.
           git worktree add --orphan -b data-next out
-          cp state/items.json out/
+          cp state/items.json.gz state/boards.json out/
           cd out
           git add -A
           git commit -qm "Stav sběru $(date -u +%FT%TZ)"

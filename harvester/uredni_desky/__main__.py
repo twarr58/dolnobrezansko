@@ -20,7 +20,7 @@ FIXTURE = Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "deska
 
 async def _harvest(args: argparse.Namespace) -> None:
     limits = httpx.Limits(max_connections=args.concurrency, max_keepalive_connections=args.concurrency)
-    timeout = httpx.Timeout(args.timeout, connect=20)
+    timeout = httpx.Timeout(args.timeout, connect=30)
     async with httpx.AsyncClient(
         headers={"User-Agent": USER_AGENT, "Accept": "application/json, application/ld+json;q=0.9, */*;q=0.1"},
         follow_redirects=True, timeout=timeout, limits=limits,
@@ -48,10 +48,14 @@ def main() -> None:
     h = sub.add_parser("harvest", help="Stáhne všechny desky z NKOD a vytvoří statická data")
     h.add_argument("--out", default="site/data")
     h.add_argument("--state", default="state", help="Adresář se stavem (items.json); čte se i zapisuje")
-    h.add_argument("--concurrency", type=int, default=32)
+    h.add_argument("--concurrency", type=int, default=24)
     h.add_argument("--timeout", type=float, default=30)
     h.add_argument("--retries", type=int, default=2)
     h.add_argument("--limit", type=int, help="Zpracovat jen prvních N desek (ladění)")
+
+    d = sub.add_parser("diagnose", help="Postupně ověří nedostupné desky (DNS, TCP, HTTP)")
+    d.add_argument("--boards", default="state/boards.json")
+    d.add_argument("--kinds", default="timeout,connect", help="Druhy chyb oddělené čárkou; prázdné = všechny")
 
     s = sub.add_parser("sample", help="Ukázková data z fixture (bez sítě)")
     s.add_argument("--out", default="web/data")
@@ -60,6 +64,9 @@ def main() -> None:
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     if args.cmd == "harvest":
         asyncio.run(_harvest(args))
+    elif args.cmd == "diagnose":
+        from .diagnose import run
+        asyncio.run(run(Path(args.boards), {k for k in args.kinds.split(",") if k}))
     else:
         _sample(args)
 
