@@ -89,8 +89,18 @@ def merge(
             continue
 
         seen = set()
+        current_ids = {it.id for it in current}
+        # Záložní párování podle (název, vyvěšeno): některé desky mezi exporty mění URL položky
+        # (např. stránka oznámení ↔ přímý odkaz na PDF), a tím i její identifikátor.
+        by_key: dict[tuple, list[Item]] = {}
+        for old in by_board.get(src.id, []):
+            if old.id not in current_ids and not old.removed:
+                by_key.setdefault((old.title, old.posted), []).append(old)
         for it in current:
             old = prev.get(it.id)
+            if old is None and (candidates := by_key.get((it.title, it.posted))):
+                old = candidates.pop()
+                seen.add(old.id)
             it.first_seen = old.first_seen if old else stamp
             it.last_seen = stamp
             out[it.id] = it
@@ -105,9 +115,12 @@ def merge(
     # Desky, které z NKOD zmizely, a příliš staré archivní položky zahodit.
     known = {s.id for s in sources}
     cutoff = (now - timedelta(days=archive_days)).isoformat(timespec="seconds")
+    active_keys = {(it.board, it.title, it.posted) for it in out.values() if not it.removed}
     items = [
         it for it in out.values()
         if it.board in known and not (it.removed and it.removed < cutoff)
+        # „Sejmutá“ položka, která má aktivní dvojče, vznikla změnou URL – nepatří do archivu.
+        and not (it.removed and (it.board, it.title, it.posted) in active_keys)
     ]
     items.sort(key=lambda i: (i.posted or "", i.first_seen or ""), reverse=True)
     return boards, items

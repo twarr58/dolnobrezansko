@@ -119,32 +119,44 @@ SPARQL_URL = "https://data.gov.cz/sparql"
 
 # Doplňkové hledání: desky, které soulad s OFN nedeklarují vůbec, nebo jen s překlepem či jinou
 # variantou URI normy (procentové kódování, bez lomítka, URL schématu…). GraphQL filtr je nenajde.
-SPARQL_QUERY = """
+# Jeden velký dotaz s distribucemi přes celý katalog končí na 504, proto tři lehké kroky.
+_PREFIXES = """
 PREFIX dcat: <http://www.w3.org/ns/dcat#>
 PREFIX dct: <http://purl.org/dc/terms/>
 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-SELECT DISTINCT ?ds ?title ?pubName ?access ?download WHERE {
-  ?ds a dcat:Dataset ; dct:title ?title ; dcat:distribution ?dist .
-  OPTIONAL { ?ds dct:conformsTo ?c }
-  FILTER(CONTAINS(LCASE(STR(?title)), "úřední desk")
-         || CONTAINS(LCASE(STR(?c)), "desky") || CONTAINS(STR(?c), "%C3%BA%C5%99edn%C3%AD"))
-  FILTER(!CONTAINS(STR(?ds), "podněty"))
+"""
+SPARQL_BY_TITLE = _PREFIXES + """
+SELECT DISTINCT ?ds ?title ?pubName WHERE {
+  ?ds a dcat:Dataset ; dct:title ?title .
+  FILTER(CONTAINS(LCASE(STR(?title)), "úřední desk"))
+  OPTIONAL { ?ds dct:publisher ?p . ?p foaf:name|skos:prefLabel ?pubName }
+}"""
+SPARQL_BY_CONFORMS = _PREFIXES + """
+SELECT DISTINCT ?ds ?title ?pubName WHERE {
+  ?ds dct:conformsTo ?c .
+  FILTER(CONTAINS(STR(?c), "desky") || CONTAINS(STR(?c), "%C3%BA%C5%99edn"))
+  ?ds dct:title ?title .
+  OPTIONAL { ?ds dct:publisher ?p . ?p foaf:name|skos:prefLabel ?pubName }
+}"""
+SPARQL_DISTRIBUTIONS = _PREFIXES + """
+SELECT DISTINCT ?ds ?access ?download WHERE {
+  VALUES ?ds { %s }
+  ?ds dcat:distribution ?dist .
   OPTIONAL { ?dist dcat:accessURL ?access }
   OPTIONAL { ?dist dcat:downloadURL ?download }
-  OPTIONAL { ?ds dct:publisher ?p . ?p foaf:name|skos:prefLabel ?pubName }
-}
-"""
+}"""
 
 
 def parse_sparql(bindings: list[dict]) -> list[BoardSource]:
+    """Řádky (ds, title, pubName, access, download) → zdroje; řádky mohou být rozdělené přes dotazy."""
     by_ds: dict[str, dict] = {}
     for b in bindings:
         iri = b["ds"]["value"]
         d = by_ds.setdefault(iri, {"title": "", "publisher": "", "urls": []})
         title = b.get("title", {})
-        if title.get("xml:lang", "cs") == "cs" or not d["title"]:
-            d["title"] = title.get("value", d["title"]).strip()
+        if title and (title.get("xml:lang", "cs") == "cs" or not d["title"]):
+            d["title"] = title["value"].strip()
         pub = b.get("pubName", {})
         if pub and (pub.get("xml:lang", "cs") == "cs" or not d["publisher"]):
             d["publisher"] = pub["value"].strip()
@@ -160,15 +172,28 @@ def parse_sparql(bindings: list[dict]) -> list[BoardSource]:
     return sources
 
 
+async def _sparql(client: httpx.AsyncClient, query: str) -> list[dict]:
+    resp = await client.post(SPARQL_URL, data={"query": query},
+                             headers={"Accept": "application/sparql-results+json"}, timeout=90)
+    resp.raise_for_status()
+    return resp.json()["results"]["bindings"]
+
+
 async def discover_extra(client: httpx.AsyncClient, known: set[str]) -> list[BoardSource]:
     """Desky dohledané přes SPARQL, které GraphQL dotaz na OFN nevrátil. Při chybě vrátí []."""
     try:
-        resp = await client.post(SPARQL_URL, data={"query": SPARQL_QUERY},
-                                 headers={"Accept": "application/sparql-results+json"}, timeout=120)
-        resp.raise_for_status()
-        extra = [s for s in parse_sparql(resp.json()["results"]["bindings"]) if s.dataset_iri not in known]
+        rows = await _sparql(client, SPARQL_BY_TITLE) + await _sparql(client, SPARQL_BY_CONFORMS)
+        rows = [r for r in rows if r["ds"]["value"] not in known and "podněty" not in r["ds"]["value"]]
+        candidates = sorted({r["ds"]["value"] for r in rows})
+        for i in range(0, len(candidates), 40):
+            chunk = candidates[i:i + 40]
+            values = " ".join(f"<{iri}>" for iri in chunk if ">" not in iri and " " not in iri)
+            if values:
+                rows += await _sparql(client, SPARQL_DISTRIBUTIONS % values)
+        extra = parse_sparql(rows)
     except Exception as exc:  # noqa: BLE001 – doplňkový zdroj, sběr nesmí kvůli němu spadnout
         log.warning("NKOD SPARQL: doplňkové hledání selhalo: %s", exc)
         return []
-    log.info("NKOD SPARQL: navíc %d desek bez (správné) deklarace OFN", len(extra))
+    log.info("NKOD SPARQL: navíc %d desek bez (správné) deklarace OFN: %s", len(extra),
+             ", ".join(sorted(s.publisher for s in extra))[:2000])
     return extra

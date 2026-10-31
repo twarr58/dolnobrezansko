@@ -125,3 +125,47 @@ def test_parse_sparql_prefers_download_url_and_czech_title():
     [s] = parse_sparql(rows)
     assert s.title == "Úřední deska města Kolín" and s.publisher == "Město Kolín"
     assert s.access_url.endswith("deska.json") and s.alt_urls == ("https://www.kolin.cz/uredni-deska/",)
+
+
+def test_discover_extra_merges_three_queries():
+    import asyncio
+    import httpx
+    from uredni_desky.nkod import discover_extra
+    ds_new = "https://data.gov.cz/zdroj/datové-sady/00235440/1"
+    ds_known = "https://data.gov.cz/zdroj/datové-sady/1/known"
+
+    def handler(request):
+        q = request.content.decode()
+        if "VALUES" in q:
+            rows = [{"ds": {"value": ds_new}, "download": {"value": "https://www.kolin.cz/deska.json"}}]
+        elif "conformsTo" in q:
+            rows = [{"ds": {"value": ds_known}, "title": {"value": "Úřední deska"}}]
+        else:
+            rows = [{"ds": {"value": ds_new}, "title": {"value": "Úřední deska města Kolín", "xml:lang": "cs"},
+                     "pubName": {"value": "Město Kolín"}},
+                    {"ds": {"value": "https://data.gov.cz/zdroj/podněty-na-data-k-otevření/R1"},
+                     "title": {"value": "Úřední deska X"}}]
+        return httpx.Response(200, json={"results": {"bindings": rows}})
+
+    async def go():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as c:
+            return await discover_extra(c, {ds_known})
+
+    [s] = asyncio.run(go())
+    assert s.publisher == "Město Kolín" and s.access_url == "https://www.kolin.cz/deska.json"
+
+
+def test_url_change_does_not_archive_item():
+    def p(url):
+        return {"informace": [{"název": {"cs": "Vyhláška"}, "url": url, "vyvěšení": {"datum": "2026-10-30"}}]}
+    _, items0 = merge([SRC], {"b1": FetchResult(True, p("https://x/detail?id=1"))}, [], T0)
+    _, items1 = merge([SRC], {"b1": FetchResult(True, p("https://x/files/1.pdf"))}, as_json(items0), T1)
+    assert len(items1) == 1 and items1[0].removed is None
+    assert items1[0].first_seen == T0.isoformat(timespec="seconds")
+
+
+def test_stale_archived_twins_are_dropped():
+    _, items0 = merge([SRC], {"b1": FetchResult(True, payload("A"))}, [], T0)
+    twin = as_json(items0)[0] | {"id": "stary", "removed": T0.isoformat(timespec="seconds")}
+    _, items1 = merge([SRC], {"b1": FetchResult(True, payload("A"))}, as_json(items0) + [twin], T1)
+    assert [i.id for i in items1] == [items0[0].id]
