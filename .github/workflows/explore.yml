@@ -15,6 +15,10 @@ on:
         description: "Kolik bajtů odpovědi vypsat (číslo)"
         default: "300"
         required: false
+      grep:
+        description: "Vypsat z odpovědí text kolem tohoto regexu (např. Vyvěšeno|rss)"
+        default: ""
+        required: false
       subdomains_of:
         description: "Vypsat subdomény domény z logů certifikátů (crt.sh), např. imunis.cz"
         default: ""
@@ -43,6 +47,7 @@ jobs:
         env:
           PROBE: ${{ inputs.probe }}
           BYTES: ${{ inputs.bytes }}
+          GREP: ${{ inputs.grep }}
         run: |
           case "$BYTES" in ''|*[!0-9]*) BYTES=300 ;; esac
           for u in $PROBE; do
@@ -50,6 +55,10 @@ jobs:
             echo "== $u"
             curl -sS -m 20 -L -o /tmp/body -w 'HTTP %{http_code} %{content_type} %{size_download} B\n' -- "$u" || true
             head -c "$BYTES" /tmp/body | tr '\n' ' '; echo
+            if [ -n "$GREP" ]; then
+              echo "-- kontext pro: $GREP"
+              tr '\n' ' ' < /tmp/body | grep -oiE ".{0,250}(${GREP}).{0,250}" | head -30 || true
+            fi
             echo "-- odkazy:"
             grep -oiE 'href="[^"]*(desk|uredni|opendata|json|rss|xml|export|api)[^"]*"' /tmp/body | sort -u | head -40 || true
           done
