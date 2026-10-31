@@ -52,6 +52,9 @@ jobs:
           fi
 
       - name: Sběr
+        env:
+          # Volitelné: proxy v ČR pro servery, které blokují zahraniční IP (viz README).
+          HARVEST_FALLBACK_PROXY: ${{ secrets.HARVEST_FALLBACK_PROXY }}
         run: python -m uredni_desky harvest --out site/data --state state
 
       - name: Sestavit web

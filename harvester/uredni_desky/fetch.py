@@ -42,6 +42,7 @@ class FetchResult:
     kind: str | None = None
     url: str | None = None
     warnings: list[str] = field(default_factory=list)
+    via_proxy: bool = False
 
 
 class _Failure(Exception):
@@ -123,8 +124,13 @@ async def _fetch_url(client: httpx.AsyncClient, url: str, retries: int) -> Fetch
 
 
 async def _fetch_board(client: httpx.AsyncClient, src: BoardSource, retries: int,
-                       host_locks: dict[str, asyncio.Semaphore]) -> FetchResult:
-    """Zkusí postupně všechny distribuce datové sady; vrátí první úspěch, jinak chybu první z nich."""
+                       host_locks: dict[str, asyncio.Semaphore],
+                       fallback: httpx.AsyncClient | None = None) -> FetchResult:
+    """Zkusí postupně všechny distribuce datové sady; vrátí první úspěch, jinak chybu první z nich.
+
+    Pokud žádná nejde kvůli síti (timeout, odmítnuté spojení) a je k dispozici záložní klient
+    (proxy v ČR – část hostingů blokuje zahraniční IP), zkusí se hlavní distribuce přes něj.
+    """
     first: FetchResult | None = None
     for url in src.urls():
         host = urlsplit(url).hostname or ""
@@ -137,6 +143,11 @@ async def _fetch_board(client: httpx.AsyncClient, src: BoardSource, retries: int
             return res
         first = first or res
     assert first is not None
+    if fallback is not None and first.kind in (KIND_TIMEOUT, KIND_CONNECT):
+        res = await _fetch_url(fallback, src.access_url, retries=1)
+        if res.ok:
+            res.via_proxy = True
+            return res
     return first
 
 
@@ -145,13 +156,14 @@ async def fetch_all(
     sources: list[BoardSource],
     concurrency: int = 24,
     retries: int = 2,
+    fallback: httpx.AsyncClient | None = None,
 ) -> dict[str, FetchResult]:
     sem = asyncio.Semaphore(concurrency)
     host_locks: dict[str, asyncio.Semaphore] = {}
 
     async def run(src: BoardSource) -> tuple[str, FetchResult]:
         async with sem:
-            res = await _fetch_board(client, src, retries, host_locks)
+            res = await _fetch_board(client, src, retries, host_locks, fallback)
             if not res.ok:
                 log.info("Chyba [%s] %s (%s): %s", res.kind, src.publisher or src.title, res.url, res.error)
             elif res.warnings:

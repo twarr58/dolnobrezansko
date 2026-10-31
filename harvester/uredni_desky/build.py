@@ -75,7 +75,7 @@ def merge(
         res = results.get(src.id) or FetchResult(False, error="nestaženo")
         board = {**asdict(src), "ok": res.ok, "error": res.error, "kind": res.kind, "http_status": res.http_status,
                  "elapsed_ms": res.elapsed_ms, "fetched_at": stamp, "count": 0, "warnings": res.warnings,
-                 "used_url": res.url}
+                 "used_url": res.url, "via_proxy": res.via_proxy}
         current: list[Item] = []
         if res.ok:
             try:

@@ -51,3 +51,18 @@ def test_missing_issuer_detection():
     err = Exception("[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1000)")
     assert is_missing_issuer(err)
     assert not is_missing_issuer(Exception("certificate has expired"))
+
+
+def test_fallback_proxy_used_on_timeout():
+    def via_proxy(request):
+        return httpx.Response(200, content=b'{"informace": []}')
+
+    async def go():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client, \
+                httpx.AsyncClient(transport=httpx.MockTransport(via_proxy)) as fallback:
+            return await fetch_all(client, [src(1, "https://x/slow"), src(2, "https://x/missing")],
+                                   retries=0, fallback=fallback)
+
+    res = asyncio.run(go())
+    assert res["b1"].ok and res["b1"].via_proxy
+    assert not res["b2"].ok and res["b2"].kind == "not_found"  # 404 se přes proxy nezkouší

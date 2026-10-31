@@ -46,6 +46,17 @@ make serve         # http://localhost:8000
 1. Settings → Pages → Source: **GitHub Actions**.
 2. Workflow `.github/workflows/harvest.yml` běží při push do `main`, každou hodinu a ručně.
 
+## Servery blokující zahraniční IP
+
+Diagnostika (`diagnose.yml`, 31. 10. 2026) ukázala, že 73 desek nepřijme z runneru GitHubu (USA)
+ani TCP spojení. 54 z nich běží u jednoho českého hostingu (78.156.158.x), zbytek na vlastních
+serverech úřadů. Z Česka fungují, jde o blokování zahraničních IP.
+
+Řešení: harvester umí pro tyto servery použít záložní proxy v ČR. Stačí v repozitáři nastavit
+secret `HARVEST_FALLBACK_PROXY` (např. `http://uzivatel:heslo@proxy.example.cz:3128`).
+Proxy se použije jen pro desky, které selžou na timeout nebo chybu spojení.
+Alternativa: spouštět celý sběr z ČR (self-hosted runner, CronJob v OpenShiftu apod.).
+
 ## Formát dat pro web
 
 - `boards.json` – desky: `id`, `name` (zobrazovaný název), `publisher`, `title`, `access_url`, `dataset_iri`, `ok`, `error`, `count`, `fetched_at`
@@ -58,7 +69,7 @@ z toho 40 569 vyvěšených za posledních 30 dní (`recent.json` ≈ 6 MB, gzip
 ## TODO
 
 - [ ] Ověřit normalizaci proti JSON schématu OFN
-- [ ] 73 desek na runneru GitHubu vyprší při připojení – zjistit, zda jde o blokování zahraničních IP
+- [ ] Proxy / runner v ČR pro 73 desek blokujících zahraniční IP
 - [ ] Kraj/okres: mapování IČO poskytovatele → obec (RÚIAN / RPP), filtry a mapa
 - [ ] Fulltext i ve starších oznámeních (index po deskách nebo sql.js-httpvfs)
 - [ ] RSS/Atom pro obec a hledání, „sledovat obec“

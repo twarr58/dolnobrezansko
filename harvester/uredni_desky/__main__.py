@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import contextlib
+import os
 import json
 import logging
 from pathlib import Path
@@ -20,15 +22,20 @@ FIXTURE = Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "deska
 
 async def _harvest(args: argparse.Namespace) -> None:
     limits = httpx.Limits(max_connections=args.concurrency, max_keepalive_connections=args.concurrency)
-    timeout = httpx.Timeout(args.timeout, connect=30)
-    async with httpx.AsyncClient(
+    timeout = httpx.Timeout(args.timeout, connect=20)
+    common = dict(
         headers={"User-Agent": USER_AGENT, "Accept": "application/json, application/ld+json;q=0.9, */*;q=0.1"},
         follow_redirects=True, timeout=timeout, limits=limits,
-    ) as client:
+    )
+    # Záložní proxy (např. http://uzivatel:heslo@proxy.example.cz:3128) pro servery, které blokují zahraniční IP.
+    proxy = os.environ.get("HARVEST_FALLBACK_PROXY") or None
+    async with httpx.AsyncClient(**common) as client, \
+            httpx.AsyncClient(**common, proxy=proxy) if proxy else contextlib.nullcontext() as fallback:
         sources = await discover_boards(client)
         if args.limit:
             sources = sources[: args.limit]
-        results = await fetch_all(client, sources, concurrency=args.concurrency, retries=args.retries)
+        results = await fetch_all(client, sources, concurrency=args.concurrency, retries=args.retries,
+                                  fallback=fallback)
     run_build(sources, results, Path(args.out), Path(args.state))
 
 
@@ -50,7 +57,7 @@ def main() -> None:
     h.add_argument("--state", default="state", help="Adresář se stavem (items.json); čte se i zapisuje")
     h.add_argument("--concurrency", type=int, default=24)
     h.add_argument("--timeout", type=float, default=30)
-    h.add_argument("--retries", type=int, default=2)
+    h.add_argument("--retries", type=int, default=1)
     h.add_argument("--limit", type=int, help="Zpracovat jen prvních N desek (ladění)")
 
     d = sub.add_parser("diagnose", help="Postupně ověří nedostupné desky (DNS, TCP, HTTP)")

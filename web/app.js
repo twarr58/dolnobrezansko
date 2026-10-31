@@ -452,8 +452,8 @@ function renderIndex() {
 
 // Vysvětlení druhů chyb (pole `kind` z harvesteru). `who` říká, kdo může problém odstranit.
 const KINDS = {
-  timeout: { title: 'Server neodpovídá', who: 'zjišťujeme',
-    text: 'Server úřadu nepřijal spojení ani po opakovaných pokusech. Sběr běží na serverech GitHubu v zahraničí a část hostingů takové přístupy blokuje.' },
+  timeout: { title: 'Server blokuje přístup ze zahraničí', who: 'my',
+    text: 'Server úřadu nepřijímá spojení ze zahraničí. Sběr zatím běží na serverech GitHubu v USA a tyto weby (většinou u jednoho českého poskytovatele hostingu) přístup z nich blokují. Pracujeme na stahování přes server v Česku.' },
   connect: { title: 'Nelze se připojit', who: 'úřad',
     text: 'Spojení se serverem úřadu selhalo (neexistující adresa, odmítnuté spojení).' },
   tls: { title: 'Chyba zabezpečeného spojení', who: 'úřad',
