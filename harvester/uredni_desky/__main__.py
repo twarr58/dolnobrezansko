@@ -38,6 +38,7 @@ async def _harvest(args: argparse.Namespace) -> None:
         known_ids = {s.id for s in sources}
         sources += [s for s in load_extra_sources(Path(args.state) / "discovered.json") if s.id not in known_ids]
         cache.load_from_state(load_state(Path(args.state)))
+        cache.reset_budget(args.detail_budget)
         if not args.all_publishers:
             sources = [s for s in sources if is_municipal(s)]
             logging.info("Jen obce a městské části: %d desek", len(sources))
@@ -68,6 +69,7 @@ def main() -> None:
     h.add_argument("--timeout", type=float, default=30)
     h.add_argument("--retries", type=int, default=1)
     h.add_argument("--limit", type=int, help="Zpracovat jen prvních N desek (ladění)")
+    h.add_argument("--detail-budget", type=int, default=6000, help="Max. počet stažených detailů oznámení za běh")
     h.add_argument("--all-publishers", action="store_true", help="Sbírat i desky krajů, ministerstev, soudů apod.")
 
     d = sub.add_parser("diagnose", help="Postupně ověří nedostupné desky (DNS, TCP, HTTP)")

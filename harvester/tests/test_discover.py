@@ -65,3 +65,9 @@ def test_classify_galileo_other_paths():
     assert classify_html(html, "https://www.obec.cz/") == {"fmt": "galileo", "url": "https://www.obec.cz/obecni-urad/uredni-deska/"}
     html2 = '<a href="https://www.obec2.cz/urad-2/uredni-deska-1/">Deska</a> igalileo.cz'
     assert classify_html(html2, "https://www.obec2.cz/")["url"] == "https://www.obec2.cz/urad-2/uredni-deska-1/"
+
+
+def test_detail_budget():
+    cache.reset_budget(2)
+    assert cache.take_detail_slot() and cache.take_detail_slot() and not cache.take_detail_slot()
+    cache.reset_budget()

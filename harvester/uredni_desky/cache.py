@@ -8,6 +8,24 @@ from __future__ import annotations
 
 DETAILS: dict[str, dict] = {}
 
+# Rozpočet stažení detailů na jeden běh sběru. Při prvním průchodu stovek nových desek by jinak
+# sběr stahoval desítky tisíc stránek a nevešel se do limitu; zbytek se doplní v dalších bězích.
+DETAIL_BUDGET = 6000
+_used = 0
+
+
+def take_detail_slot() -> bool:
+    global _used
+    if _used >= DETAIL_BUDGET:
+        return False
+    _used += 1
+    return True
+
+
+def reset_budget(budget: int = DETAIL_BUDGET) -> None:
+    global _used, DETAIL_BUDGET
+    _used, DETAIL_BUDGET = 0, budget
+
 
 def load_from_state(items: list[dict]) -> None:
     DETAILS.clear()

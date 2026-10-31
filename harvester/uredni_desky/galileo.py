@@ -169,8 +169,8 @@ async def fetch_board(client: httpx.AsyncClient, list_url: str, detail_concurren
     sem = asyncio.Semaphore(detail_concurrency)
 
     async def detail(item: ListItem) -> Detail | None:
-        if item.url in cache.DETAILS:
-            return None  # doplní se z mezipaměti níže
+        if item.url in cache.DETAILS or not cache.take_detail_slot():
+            return None  # doplní se z mezipaměti níže, případně v příštím běhu
         async with sem:
             try:
                 r = await client.get(item.url)
