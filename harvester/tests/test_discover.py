@@ -56,3 +56,12 @@ def test_cache_apply():
     assert info["relevantní_do"] == {"datum": "2026-11-30"}
     assert not cache.apply({"url": "https://x/2"})
     cache.DETAILS.clear()
+
+
+def test_classify_galileo_other_paths():
+    html = ('<a href="/obecni-urad/uredni-deska/">Úřední deska</a>'
+            '<a href="/obecni-urad/uredni-deska/oznameni-123.html">x</a>'
+            '<a href="/obecni-urad/uredni-deska/">Více</a> <a href="//www.igalileo.cz">Galileo</a>')
+    assert classify_html(html, "https://www.obec.cz/") == {"fmt": "galileo", "url": "https://www.obec.cz/obecni-urad/uredni-deska/"}
+    html2 = '<a href="https://www.obec2.cz/urad-2/uredni-deska-1/">Deska</a> igalileo.cz'
+    assert classify_html(html2, "https://www.obec2.cz/")["url"] == "https://www.obec2.cz/urad-2/uredni-deska-1/"

@@ -44,6 +44,8 @@ _IMUNIS = re.compile(r"https?://([a-z0-9-]+)\.imunis\.cz/edeska", re.I)
 _BOARD_LINK = re.compile(r'href="([^"]*(?:uredni[-_]?desk|edesk|e-desk|uredni%20desk)[^"]*)"', re.I)
 _GENERATOR = re.compile(r'<meta[^>]+name="generator"[^>]+content="([^"]+)"', re.I)
 _VISMO = re.compile(r'data-application="(Vismo[^"]*)"', re.I)
+# Galileo: deska bývá na /urad/uredni-deska/, /obecni-urad/uredni-deska/, /urad-obce/uredni-deska-1/ …
+_GALILEO_BOARD = re.compile(r'href="((?:https?://[^"/]+)?/(?:[a-z0-9-]+/){0,3}uredni-deska(?:-\d+)?/)"', re.I)
 
 
 def publisher_name(name: str, types: str) -> str:
@@ -85,8 +87,12 @@ def classify_html(html: str, base: str) -> dict:
         return {"fmt": "imunis", "subdomain": m.group(1).lower()}
     low = html.lower()
     origin = "{0.scheme}://{0.netloc}".format(urlsplit(base))
-    if "igalileo.cz" in low and "/urad/uredni-deska/" in low:
-        return {"fmt": "galileo", "url": origin + "/urad/uredni-deska/"}
+    if "igalileo.cz" in low:
+        paths = [urlsplit(urljoin(base, m)).path for m in _GALILEO_BOARD.findall(html)]
+        if paths:
+            # nejčastější cesta (stránka desky je v menu i v náhledu na titulní stránce)
+            best = max(set(paths), key=lambda p: (paths.count(p), -len(p)))
+            return {"fmt": "galileo", "url": origin + best}
     info: dict = {"fmt": None}
     if m := _VISMO.search(html):
         info["cms"] = m.group(1)

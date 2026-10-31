@@ -36,7 +36,7 @@ def load_extra_sources(discovered: Path | None = None) -> list[BoardSource]:
         ))
     for entry in raw.get("galileo", []):
         url = entry["url"].strip()
-        if not url.startswith("https://") or not url.rstrip("/").endswith("/urad/uredni-deska"):
+        if not url.startswith(("https://", "http://")) or not re.search(r"/uredni-deska(-\d+)?/?$", url):
             raise ValueError(f"Neplatná adresa desky Galileo: {url!r}")
         url = url.rstrip("/") + "/"
         sources.append(BoardSource(
