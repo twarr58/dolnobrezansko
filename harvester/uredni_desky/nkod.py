@@ -31,6 +31,7 @@ class BoardSource:
     publisher: str
     access_url: str
     alt_urls: tuple[str, ...] = ()
+    fmt: str = "ofn"  # "ofn" = data podle normy z NKOD, "imunis" = RSS + detail iMunis eDesky
 
     def urls(self) -> list[str]:
         return [self.access_url, *[u for u in self.alt_urls if u != self.access_url]]

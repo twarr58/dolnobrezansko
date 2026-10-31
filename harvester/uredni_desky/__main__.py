@@ -14,6 +14,7 @@ import httpx
 
 from . import USER_AGENT
 from .build import run_build
+from .extra import load_extra_sources
 from .fetch import FetchResult, fetch_all
 from .nkod import BoardSource, board_id, discover_boards, discover_extra, is_municipal
 
@@ -33,6 +34,7 @@ async def _harvest(args: argparse.Namespace) -> None:
             httpx.AsyncClient(**common, proxy=proxy) if proxy else contextlib.nullcontext() as fallback:
         sources = await discover_boards(client)
         sources += await discover_extra(client, {s.dataset_iri for s in sources})
+        sources += load_extra_sources()
         if not args.all_publishers:
             sources = [s for s in sources if is_municipal(s)]
             logging.info("Jen obce a městské části: %d desek", len(sources))

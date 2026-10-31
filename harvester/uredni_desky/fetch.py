@@ -10,7 +10,7 @@ from urllib.parse import urlsplit
 
 import httpx
 
-from . import tls
+from . import imunis, tls
 from .nkod import BoardSource
 from .normalize import BoardFormatError, decode_board
 
@@ -125,6 +125,27 @@ async def _fetch_url(client: httpx.AsyncClient, url: str, retries: int) -> Fetch
     return FetchResult(False, None, str(failure), failure.status, ms(), failure.kind, url)
 
 
+async def _fetch_imunis(client: httpx.AsyncClient, src: BoardSource,
+                        host_locks: dict[str, asyncio.Semaphore]) -> FetchResult:
+    started = time.monotonic()
+    ms = lambda: int((time.monotonic() - started) * 1000)  # noqa: E731
+    host = urlsplit(src.access_url).hostname or ""
+    async with host_locks.setdefault(host, asyncio.Semaphore(PER_HOST)):
+        try:
+            payload = await imunis.fetch_board(client, src.access_url)
+            return FetchResult(True, payload, None, 200, ms(), None, src.access_url)
+        except httpx.HTTPStatusError as exc:
+            code = exc.response.status_code
+            kind = KIND_NOT_FOUND if code in (404, 410) else KIND_SERVER if code >= 500 else KIND_HTTP
+            return FetchResult(False, None, f"HTTP {code}", code, ms(), kind, src.access_url)
+        except httpx.TimeoutException:
+            return FetchResult(False, None, "Vypršel čas na připojení", None, ms(), KIND_TIMEOUT, src.access_url)
+        except httpx.HTTPError as exc:
+            return FetchResult(False, None, f"{type(exc).__name__}: {exc}"[:200], None, ms(), KIND_CONNECT, src.access_url)
+        except Exception as exc:  # noqa: BLE001 – neplatné RSS apod.
+            return FetchResult(False, None, f"Neplatné RSS: {exc}"[:200], None, ms(), KIND_FORMAT, src.access_url)
+
+
 async def _fetch_board(client: httpx.AsyncClient, src: BoardSource, retries: int,
                        host_locks: dict[str, asyncio.Semaphore],
                        fallback: httpx.AsyncClient | None = None) -> FetchResult:
@@ -133,6 +154,8 @@ async def _fetch_board(client: httpx.AsyncClient, src: BoardSource, retries: int
     Pokud žádná nejde kvůli síti (timeout, odmítnuté spojení) a je k dispozici záložní klient
     (proxy v ČR – část hostingů blokuje zahraniční IP), zkusí se hlavní distribuce přes něj.
     """
+    if src.fmt == "imunis":
+        return await _fetch_imunis(client, src, host_locks)
     first: FetchResult | None = None
     for url in src.urls():
         host = urlsplit(url).hostname or ""

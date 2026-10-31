@@ -46,6 +46,14 @@ make serve         # http://localhost:8000
 1. Settings → Pages → Source: **GitHub Actions**.
 2. Workflow `.github/workflows/harvest.yml` běží při push do `main`, každou hodinu a ručně.
 
+## Obce mimo katalog (iMunis eDeska)
+
+Do NKOD má desku zapsanou jen zlomek obcí. Obce na službě **iMunis eDeska**
+(`<obec>.imunis.cz/edeska`, např. Dolní Břežany) se načítají z jejího RSS kanálu a stránek
+detailu (data vyvěšení, značka, přílohy). Seznam je v
+`harvester/uredni_desky/data/extra_sources.json` – další obec se přidá řádkem
+`{"subdomain": "…", "publisher": "Obec …"}`.
+
 ## Servery blokující zahraniční IP
 
 Diagnostika (`diagnose.yml`, 31. 10. 2026) ukázala, že 73 desek nepřijme z runneru GitHubu (USA)
@@ -70,6 +78,7 @@ z toho 40 569 vyvěšených za posledních 30 dní (`recent.json` ≈ 6 MB, gzip
 
 - [ ] Ověřit normalizaci proti JSON schématu OFN
 - [ ] Proxy / runner v ČR pro 73 desek blokujících zahraniční IP
+- [ ] Seznam obcí na iMunis eDesce (zatím ručně v extra_sources.json)
 - [ ] Kraj/okres: mapování IČO poskytovatele → obec (RÚIAN / RPP), filtry a mapa
 - [ ] Fulltext i ve starších oznámeních (index po deskách nebo sql.js-httpvfs)
 - [ ] RSS/Atom pro obec a hledání, „sledovat obec“
