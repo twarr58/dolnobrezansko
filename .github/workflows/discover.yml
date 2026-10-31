@@ -1,0 +1,42 @@
+name: Hledání desek všech obcí
+
+on:
+  schedule:
+    - cron: "41 3 * * 1" # jednou týdně
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: harvest # sdílí větev data se sběrem
+  cancel-in-progress: false
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ./harvester
+      - name: Stav z větve data
+        run: |
+          git fetch --depth 1 origin data
+          git worktree add --detach state FETCH_HEAD
+      - name: Hledání
+        run: python -m uredni_desky discover --out state/discovered.json --nkod state/boards.json
+      - name: Uložit do větve data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git worktree add --orphan -b data-next out
+          cp state/*.json state/*.gz out/ 2>/dev/null || true
+          cd out
+          git add -A
+          git commit -qm "Hledání desek obcí $(date -u +%FT%TZ)"
+          git push -fq origin HEAD:data

@@ -18,6 +18,8 @@ from xml.etree import ElementTree
 
 import httpx
 
+from . import cache
+
 _DATE = re.compile(r"(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})")
 
 
@@ -152,6 +154,8 @@ async def fetch_board(client: httpx.AsyncClient, rss_url: str, detail_concurrenc
     sem = asyncio.Semaphore(detail_concurrency)
 
     async def detail(item: RssItem) -> Detail | None:
+        if item.url in cache.DETAILS:
+            return None  # doplní se z mezipaměti níže
         async with sem:
             try:
                 r = await client.get(item.url)
@@ -161,4 +165,8 @@ async def fetch_board(client: httpx.AsyncClient, rss_url: str, detail_concurrenc
                 return None  # bez detailu zůstanou údaje z RSS
 
     details = await asyncio.gather(*(detail(i) for i in items))
-    return {"informace": [to_informace(i, d) for i, d in zip(items, details)]}
+    infos = [to_informace(i, d) for i, d in zip(items, details)]
+    for info, d in zip(infos, details):
+        if d is None:
+            cache.apply(info)
+    return {"informace": infos}

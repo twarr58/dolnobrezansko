@@ -13,7 +13,8 @@ from pathlib import Path
 import httpx
 
 from . import USER_AGENT
-from .build import run_build
+from . import cache
+from .build import load_state, run_build
 from .extra import load_extra_sources
 from .fetch import FetchResult, fetch_all
 from .nkod import BoardSource, board_id, discover_boards, discover_extra, is_municipal
@@ -34,7 +35,9 @@ async def _harvest(args: argparse.Namespace) -> None:
             httpx.AsyncClient(**common, proxy=proxy) if proxy else contextlib.nullcontext() as fallback:
         sources = await discover_boards(client)
         sources += await discover_extra(client, {s.dataset_iri for s in sources})
-        sources += load_extra_sources()
+        known_ids = {s.id for s in sources}
+        sources += [s for s in load_extra_sources(Path(args.state) / "discovered.json") if s.id not in known_ids]
+        cache.load_from_state(load_state(Path(args.state)))
         if not args.all_publishers:
             sources = [s for s in sources if is_municipal(s)]
             logging.info("Jen obce a městské části: %d desek", len(sources))
@@ -75,6 +78,12 @@ def main() -> None:
     e.add_argument("--title", default="úřední desk")
     e.add_argument("--find", default="", help="Hledané názvy oddělené čárkou, např. Břežany")
 
+    g = sub.add_parser("discover", help="Najde desky všech obcí (Wikidata + rozpoznání systému webu)")
+    g.add_argument("--out", default="state/discovered.json")
+    g.add_argument("--nkod", default="state/boards.json", help="boards.json z posledního sběru (desky v NKOD)")
+    g.add_argument("--concurrency", type=int, default=32)
+    g.add_argument("--limit", type=int)
+
     s = sub.add_parser("sample", help="Ukázková data z fixture (bez sítě)")
     s.add_argument("--out", default="web/data")
 
@@ -82,6 +91,9 @@ def main() -> None:
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     if args.cmd == "harvest":
         asyncio.run(_harvest(args))
+    elif args.cmd == "discover":
+        from .discover import run as discover
+        asyncio.run(discover(Path(args.out), Path(args.nkod), args.concurrency, args.limit))
     elif args.cmd == "explore":
         from .explore import run as explore
         explore(args.title, [x for x in args.find.split(",") if x])

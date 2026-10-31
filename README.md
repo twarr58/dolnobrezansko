@@ -58,6 +58,14 @@ Weby obcí na systému **Galileo Corporation** (deska na `<web>/urad/uredni-desk
 Bílé Podolí) se čtou z HTML seznamu a detailu položek – v sekci `galileo` stejného souboru:
 `{"url": "https://www.obec.cz/urad/uredni-deska/", "publisher": "Obec …"}`.
 
+## Hledání desek všech obcí
+
+Workflow `discover.yml` (týdně a ručně) vezme z Wikidat všechny obce ČR a jejich weby, stáhne
+titulní stránky a rozpozná systém desky (iMunis, Galileo, Vismo s exportem OFN). Nalezené zdroje
+uloží do `discovered.json` ve větvi `data`, harvester je přidá ke zdrojům z NKOD. Statistika
+nepodporovaných systémů ukazuje, pro které systémy psát další adaptéry. Detail oznámení se
+u adaptérů stahuje jen u nových položek (mezipaměť ze stavu), aby sběr nezatěžoval weby obcí.
+
 ## Servery blokující zahraniční IP
 
 Diagnostika (`diagnose.yml`, 31. 10. 2026) ukázala, že 73 desek nepřijme z runneru GitHubu (USA)

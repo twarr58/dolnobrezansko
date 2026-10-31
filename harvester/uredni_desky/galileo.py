@@ -16,6 +16,7 @@ from urllib.parse import parse_qs, urljoin, urlsplit, urlunsplit
 
 import httpx
 
+from . import cache
 from .imunis import czech_date
 
 
@@ -168,6 +169,8 @@ async def fetch_board(client: httpx.AsyncClient, list_url: str, detail_concurren
     sem = asyncio.Semaphore(detail_concurrency)
 
     async def detail(item: ListItem) -> Detail | None:
+        if item.url in cache.DETAILS:
+            return None  # doplní se z mezipaměti níže
         async with sem:
             try:
                 r = await client.get(item.url)
@@ -177,7 +180,11 @@ async def fetch_board(client: httpx.AsyncClient, list_url: str, detail_concurren
                 return None
 
     details = await asyncio.gather(*(detail(i) for i in items))
-    return {"informace": [to_informace(i, d) for i, d in zip(items, details)]}
+    infos = [to_informace(i, d) for i, d in zip(items, details)]
+    for info, d in zip(infos, details):
+        if d is None:
+            cache.apply(info)
+    return {"informace": infos}
 
 
 GALILEO_PATH = re.compile(r"^https?://[^/]+/urad/uredni-deska/?$")

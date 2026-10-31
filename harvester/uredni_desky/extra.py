@@ -5,14 +5,21 @@ from __future__ import annotations
 import json
 import re
 from importlib import resources
+from pathlib import Path
 
 from .nkod import BoardSource, board_id
 
 _SUBDOMAIN = re.compile(r"^[a-z0-9-]{1,63}$")
 
 
-def load_extra_sources() -> list[BoardSource]:
+def load_extra_sources(discovered: Path | None = None) -> list[BoardSource]:
+    """Ručně vedené zdroje (data/extra_sources.json) + automaticky nalezené (discovered.json)."""
     raw = json.loads(resources.files(__package__).joinpath("data/extra_sources.json").read_text("utf-8"))
+    if discovered and discovered.exists():
+        found = json.loads(discovered.read_text("utf-8")).get("sources", [])
+        raw["imunis"] = raw.get("imunis", []) + [s for s in found if s.get("fmt") == "imunis"]
+        raw["galileo"] = raw.get("galileo", []) + [s for s in found if s.get("fmt") == "galileo"]
+        raw["ofn"] = [s for s in found if s.get("fmt") == "ofn"]
     sources = []
     for entry in raw.get("imunis", []):
         sub = entry["subdomain"].strip().lower()
@@ -40,4 +47,13 @@ def load_extra_sources() -> list[BoardSource]:
             access_url=url,
             fmt="galileo",
         ))
-    return sources
+    for entry in raw.get("ofn", []):  # export OFN na webu obce, který není v NKOD (např. Vismo)
+        url = entry["url"].strip()
+        if url.startswith("https://") or url.startswith("http://"):
+            sources.append(BoardSource(id=board_id(f"web:{url}"), dataset_iri=url,
+                                       title="Úřední deska (otevřená data na webu obce)",
+                                       publisher=entry["publisher"], access_url=url))
+    unique: dict[str, BoardSource] = {}
+    for src in sources:
+        unique.setdefault(src.id, src)
+    return list(unique.values())
