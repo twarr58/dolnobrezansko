@@ -11,6 +11,14 @@ on:
         description: "URL k vyzkoušení oddělené mezerou (např. web obce)"
         default: ""
         required: false
+      bytes:
+        description: "Kolik bajtů odpovědi vypsat (číslo)"
+        default: "300"
+        required: false
+      subdomains_of:
+        description: "Vypsat subdomény domény z logů certifikátů (crt.sh), např. imunis.cz"
+        default: ""
+        required: false
 
 permissions:
   contents: read
@@ -26,14 +34,30 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install ./harvester
-      - run: python -m uredni_desky explore --find "${{ inputs.find }}"
+      - name: Hledání v NKOD
+        env:
+          FIND: ${{ inputs.find }}
+        run: python -m uredni_desky explore --find "$FIND"
       - name: Zkusit URL
         if: inputs.probe != ''
+        env:
+          PROBE: ${{ inputs.probe }}
+          BYTES: ${{ inputs.bytes }}
         run: |
-          for u in ${{ inputs.probe }}; do
+          case "$BYTES" in ''|*[!0-9]*) BYTES=300 ;; esac
+          for u in $PROBE; do
+            case "$u" in https://*|http://*) ;; *) echo "přeskočeno: $u"; continue ;; esac
             echo "== $u"
-            curl -sS -m 20 -L -o /tmp/body -w 'HTTP %{http_code} %{content_type} %{size_download} B\n' "$u" || true
-            head -c 300 /tmp/body | tr '\n' ' '; echo
-            echo "-- odkazy obsahující desk/uredni/opendata:"
+            curl -sS -m 20 -L -o /tmp/body -w 'HTTP %{http_code} %{content_type} %{size_download} B\n' -- "$u" || true
+            head -c "$BYTES" /tmp/body | tr '\n' ' '; echo
+            echo "-- odkazy:"
             grep -oiE 'href="[^"]*(desk|uredni|opendata|json|rss|xml|export|api)[^"]*"' /tmp/body | sort -u | head -40 || true
           done
+      - name: Subdomény z logů certifikátů
+        if: inputs.subdomains_of != ''
+        env:
+          DOMAIN: ${{ inputs.subdomains_of }}
+        run: |
+          case "$DOMAIN" in *[!a-z0-9.-]*|'') echo "neplatná doména"; exit 1 ;; esac
+          curl -sS -m 120 "https://crt.sh/?q=%25.${DOMAIN}&output=json" -o /tmp/crt.json || true
+          python3 -c "import json,sys; d=json.load(open('/tmp/crt.json')); names=sorted({n.strip().lower() for r in d for n in r['name_value'].split() if n.endswith(sys.argv[1]) and '*' not in n}); print(len(names), 'subdomén'); print('\n'.join(names))" "$DOMAIN"
