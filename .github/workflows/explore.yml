@@ -35,5 +35,5 @@ jobs:
             curl -sS -m 20 -L -o /tmp/body -w 'HTTP %{http_code} %{content_type} %{size_download} B\n' "$u" || true
             head -c 300 /tmp/body | tr '\n' ' '; echo
             echo "-- odkazy obsahující desk/uredni/opendata:"
-            grep -oiE 'href="[^"]*(desk|uredni|opendata)[^"]*"' /tmp/body | sort -u | head -20 || true
+            grep -oiE 'href="[^"]*(desk|uredni|opendata|json|rss|xml|export|api)[^"]*"' /tmp/body | sort -u | head -40 || true
           done
