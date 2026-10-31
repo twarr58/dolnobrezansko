@@ -112,3 +112,62 @@ async def discover_boards(client: httpx.AsyncClient) -> list[BoardSource]:
         raw.extend(page["data"])
     log.info("NKOD: nalezeno %d datových sad (totalCount=%d)", len(raw), total)
     return parse_datasets(raw)
+
+
+SPARQL_URL = "https://data.gov.cz/sparql"
+
+# Doplňkové hledání: desky, které soulad s OFN nedeklarují vůbec, nebo jen s překlepem či jinou
+# variantou URI normy (procentové kódování, bez lomítka, URL schématu…). GraphQL filtr je nenajde.
+SPARQL_QUERY = """
+PREFIX dcat: <http://www.w3.org/ns/dcat#>
+PREFIX dct: <http://purl.org/dc/terms/>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+SELECT DISTINCT ?ds ?title ?pubName ?access ?download WHERE {
+  ?ds a dcat:Dataset ; dct:title ?title ; dcat:distribution ?dist .
+  OPTIONAL { ?ds dct:conformsTo ?c }
+  FILTER(CONTAINS(LCASE(STR(?title)), "úřední desk")
+         || CONTAINS(LCASE(STR(?c)), "desky") || CONTAINS(STR(?c), "%C3%BA%C5%99edn%C3%AD"))
+  FILTER(!CONTAINS(STR(?ds), "podněty"))
+  OPTIONAL { ?dist dcat:accessURL ?access }
+  OPTIONAL { ?dist dcat:downloadURL ?download }
+  OPTIONAL { ?ds dct:publisher ?p . ?p foaf:name|skos:prefLabel ?pubName }
+}
+"""
+
+
+def parse_sparql(bindings: list[dict]) -> list[BoardSource]:
+    by_ds: dict[str, dict] = {}
+    for b in bindings:
+        iri = b["ds"]["value"]
+        d = by_ds.setdefault(iri, {"title": "", "publisher": "", "urls": []})
+        title = b.get("title", {})
+        if title.get("xml:lang", "cs") == "cs" or not d["title"]:
+            d["title"] = title.get("value", d["title"]).strip()
+        pub = b.get("pubName", {})
+        if pub and (pub.get("xml:lang", "cs") == "cs" or not d["publisher"]):
+            d["publisher"] = pub["value"].strip()
+        for key in ("download", "access"):  # downloadURL je přímo soubor, accessURL bývá stránka
+            u = b.get(key, {}).get("value")
+            if u and u.startswith(("http://", "https://")) and u not in d["urls"]:
+                d["urls"].append(u)
+    sources = []
+    for iri, d in by_ds.items():
+        urls = sorted(d["urls"], key=lambda u: "json" not in u.lower())
+        if urls:
+            sources.append(BoardSource(board_id(iri), iri, d["title"], d["publisher"], urls[0], tuple(urls[1:])))
+    return sources
+
+
+async def discover_extra(client: httpx.AsyncClient, known: set[str]) -> list[BoardSource]:
+    """Desky dohledané přes SPARQL, které GraphQL dotaz na OFN nevrátil. Při chybě vrátí []."""
+    try:
+        resp = await client.post(SPARQL_URL, data={"query": SPARQL_QUERY},
+                                 headers={"Accept": "application/sparql-results+json"}, timeout=120)
+        resp.raise_for_status()
+        extra = [s for s in parse_sparql(resp.json()["results"]["bindings"]) if s.dataset_iri not in known]
+    except Exception as exc:  # noqa: BLE001 – doplňkový zdroj, sběr nesmí kvůli němu spadnout
+        log.warning("NKOD SPARQL: doplňkové hledání selhalo: %s", exc)
+        return []
+    log.info("NKOD SPARQL: navíc %d desek bez (správné) deklarace OFN", len(extra))
+    return extra

@@ -109,3 +109,19 @@ def test_is_municipal():
           "Český úřad zeměměřický a katastrální"]
     assert all(is_municipal(BoardSource("x", "i", "t", p, "u")) for p in yes)
     assert not any(is_municipal(BoardSource("x", "i", "t", p, "u")) for p in no)
+
+
+def test_parse_sparql_prefers_download_url_and_czech_title():
+    from uredni_desky.nkod import parse_sparql
+    rows = [
+        {"ds": {"value": "https://data.gov.cz/zdroj/datové-sady/00235440/1"},
+         "title": {"value": "Official board", "xml:lang": "en"},
+         "pubName": {"value": "Město Kolín", "xml:lang": "cs"},
+         "access": {"value": "https://www.kolin.cz/uredni-deska/"},
+         "download": {"value": "https://www.kolin.cz/opendata/deska.json"}},
+        {"ds": {"value": "https://data.gov.cz/zdroj/datové-sady/00235440/1"},
+         "title": {"value": "Úřední deska města Kolín", "xml:lang": "cs"}},
+    ]
+    [s] = parse_sparql(rows)
+    assert s.title == "Úřední deska města Kolín" and s.publisher == "Město Kolín"
+    assert s.access_url.endswith("deska.json") and s.alt_urls == ("https://www.kolin.cz/uredni-deska/",)
