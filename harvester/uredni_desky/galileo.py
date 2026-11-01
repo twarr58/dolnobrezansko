@@ -182,7 +182,7 @@ async def fetch_board(client: httpx.AsyncClient, list_url: str, detail_concurren
     # Accept: application/json (výchozí u sběru) vrací Galileo jako 404
     resp = await client.get(list_url, headers=webpage.HTML_HEADERS)
     resp.raise_for_status()
-    if "official-desk__item" in resp.text and "/-/aktualni/" in resp.text:
+    if "official-desk__item" in resp.text and "/-/aktualni/" in resp.text and "/-/aktualni" not in str(resp.url):
         # šablona lego3: titulní stránka desky ukazuje jen 5 nejnovějších, celý seznam je na -/aktualni/
         resp = await client.get(str(resp.url).split("#")[0].rstrip("/") + "/-/aktualni/", headers=webpage.HTML_HEADERS)
         resp.raise_for_status()
