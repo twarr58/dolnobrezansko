@@ -32,12 +32,13 @@ log = logging.getLogger(__name__)
 WIKIDATA_SPARQL = "https://query.wikidata.org/sparql"
 # Q5153359 = obec v Česku (města a městyse jsou její podtřídy).
 WIKIDATA_QUERY = """
-SELECT ?item ?name ?web (GROUP_CONCAT(DISTINCT ?typeLabel; separator="|") AS ?types) WHERE {
+SELECT ?item ?name ?web (GROUP_CONCAT(DISTINCT ?typeLabel; separator="|") AS ?types) (SAMPLE(?okresLabel) AS ?okres) WHERE {
   ?item wdt:P31/wdt:P279* wd:Q5153359 .
   FILTER NOT EXISTS { ?item wdt:P576 [] }
   ?item rdfs:label ?name . FILTER(LANG(?name) = "cs")
   OPTIONAL { ?item wdt:P856 ?web }
   OPTIONAL { ?item wdt:P31 ?type . ?type rdfs:label ?typeLabel . FILTER(LANG(?typeLabel) = "cs") }
+  OPTIONAL { ?item wdt:P131 ?ok . ?ok wdt:P31 wd:Q548611 . ?ok rdfs:label ?okresLabel . FILTER(LANG(?okresLabel) = "cs") }
 }
 GROUP BY ?item ?name ?web
 """
@@ -89,6 +90,8 @@ async def fetch_municipalities(client: httpx.AsyncClient) -> list[dict]:
         qid = b["item"]["value"].rsplit("/", 1)[-1]
         m = by_item.setdefault(qid, {"qid": qid, "name": b["name"]["value"], "types": "", "webs": []})
         m["types"] = b.get("types", {}).get("value", m["types"])
+        if okres := b.get("okres", {}).get("value"):
+            m["area"] = re.sub(r"^okres\s+", "", okres, flags=re.I)
         if (w := b.get("web", {}).get("value")) and w not in m["webs"]:
             m["webs"].append(w)
     return list(by_item.values())
@@ -218,7 +221,7 @@ async def _probe_vismo_ofn(client: httpx.AsyncClient, base: str) -> str | None:
 
 async def classify_municipality(client: httpx.AsyncClient, m: dict, sem: asyncio.Semaphore) -> dict:
     result = {"qid": m["qid"], "name": m["name"], "publisher": publisher_name(m["name"], m["types"]),
-              "web": m["webs"][0] if m["webs"] else None}
+              "web": m["webs"][0] if m["webs"] else None, "area": m.get("area", "")}
     if not result["web"]:
         result["status"] = "bez webu ve Wikidatech"
         return result
@@ -278,6 +281,7 @@ async def run(out: Path, nkod_boards: Path | None, concurrency: int = 32, limit:
     async with httpx.AsyncClient(headers={"User-Agent": USER_AGENT}, follow_redirects=True,
                                  limits=httpx.Limits(max_connections=concurrency)) as client:
         municipalities = await fetch_municipalities(client)
+        areas = {m["qid"]: m.get("area", "") for m in municipalities}
         log.info("Wikidata: %d obcí, s webem %d", len(municipalities), sum(1 for m in municipalities if m["webs"]))
         if previous:
             webs, qids = _recheck_targets(previous, boards)
@@ -293,7 +297,7 @@ async def run(out: Path, nkod_boards: Path | None, concurrency: int = 32, limit:
         in_nkod = bool(r.get("web")) and registered_domain(r["web"]) in known_domains
         r["in_nkod"] = in_nkod
         if r.get("fmt") and not in_nkod:
-            src = {k: r[k] for k in ("fmt", "publisher", "qid") if k in r}
+            src = {k: r[k] for k in ("fmt", "publisher", "qid", "area") if r.get(k)}
             src.update({k: r[k] for k in ("subdomain", "url") if k in r})
             sources.append(src)
         elif not r.get("fmt") and not in_nkod and r.get("status") == "ok":
@@ -302,6 +306,9 @@ async def run(out: Path, nkod_boards: Path | None, concurrency: int = 32, limit:
         done = {r["qid"] for r in results}
         done_webs = {r.get("web") for r in results}
         sources = [s for s in previous["sources"] if s.get("qid") not in done] + sources
+        for s in sources:  # okres doplnit i zdrojům z dřívějška
+            if not s.get("area") and (a := areas.get(s.get("qid"))):
+                s["area"] = a
         unknown = [u for u in previous["unknown"] if u.get("qid") not in done and u.get("web") not in done_webs] + unknown
 
     if previous:

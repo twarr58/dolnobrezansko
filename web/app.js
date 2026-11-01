@@ -446,7 +446,7 @@ function renderIndex() {
   };
   mount('Seznam desek',
     h('h1', {}, 'Seznam desek'),
-    h('p', { class: 'lede' }, `${num(all.length)} úředních desek obcí a městských částí evidovaných v Národním katalogu otevřených dat. Číslo udává počet vyvěšených oznámení.`),
+    h('p', { class: 'lede' }, `${num(all.length)} úředních desek obcí a městských částí – z Národního katalogu otevřených dat a z webů obcí. Číslo udává počet vyvěšených oznámení.`),
     h('div', { class: 'boardfilter' },
       h('label', { class: 'vh', for: 'iq' }, 'Hledat desku'),
       h('input', { id: 'iq', type: 'search', placeholder: 'Hledat obec nebo úřad', oninput: (e) => paint(e.target.value) })),

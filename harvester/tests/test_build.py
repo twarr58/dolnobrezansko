@@ -169,3 +169,14 @@ def test_stale_archived_twins_are_dropped():
     twin = as_json(items0)[0] | {"id": "stary", "removed": T0.isoformat(timespec="seconds")}
     _, items1 = merge([SRC], {"b1": FetchResult(True, payload("A"))}, as_json(items0) + [twin], T1)
     assert [i.id for i in items1] == [items0[0].id]
+
+
+def test_display_name_namesake_municipalities():
+    from uredni_desky.build import display_name
+    a = BoardSource("a", "i", "Úřední deska (iMunis eDeska)", "Obec Lhota", "https://lhota.imunis.cz/edeska/rss.asp",
+                    fmt="imunis", area="Plzeň-jih")
+    b = BoardSource("b", "i", "Úřední deska (web obce)", "Obec Lhota", "https://www.obec-lhota.cz/uredni-deska/",
+                    fmt="html")
+    assert display_name(a, False, True) == "Obec Lhota (okres Plzeň-jih)"
+    assert display_name(b, False, True) == "Obec Lhota (obec-lhota.cz)"
+    assert display_name(a, False, False) == "Obec Lhota"

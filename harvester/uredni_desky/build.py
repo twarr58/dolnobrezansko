@@ -15,6 +15,7 @@ import gzip
 import json
 import logging
 import re
+from urllib.parse import urlsplit
 import shutil
 from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
@@ -147,18 +148,31 @@ _NAME_RULES = [
 ]
 
 
-def display_name(src: BoardSource, ambiguous: bool) -> str:
+def _hint(src: BoardSource) -> str:
+    if src.area:
+        return f"okres {src.area}"
+    host = (urlsplit(src.access_url).hostname or "").removeprefix("www.")
+    return host
+
+
+def display_name(src: BoardSource, ambiguous: bool, namesake: bool = False) -> str:
     """Název desky pro UI.
 
     Většinou je to poskytovatel (obec, úřad). Pokud jeden poskytovatel publikuje víc desek
     (např. Ministerstvo spravedlnosti za všechny soudy), odvodí se název z titulku desky.
+    Obce se stejným názvem (několik „Obec Lhota“) se odliší okresem, případně doménou webu.
     """
     publisher = _clean(src.publisher)
+    if src.fmt != "ofn" or (namesake and not ambiguous):
+        # deska z webu obce: jedna obec = jedna deska, shodný název znamená jinou obec
+        if (namesake or ambiguous) and (hint := _hint(src)):
+            return f"{publisher} ({hint})"
+        return publisher or _clean(src.title) or "Neznámá deska"
     if ambiguous and src.title:
         name = _clean(src.title)
         for rule in _NAME_RULES:
             name = rule.sub("", name).strip(" -–—:")
-        if not name or name.lower().startswith("města "):
+        if not name or name.lower().startswith(("města ", "(")):
             return publisher or _clean(src.title)
         if not re.search(r"[^\W\d_]", name):  # např. „Úřední deska 2025“
             return f"{publisher} ({name})"
@@ -181,12 +195,16 @@ def write_outputs(out_dir: Path, boards: list[dict], items: list[Item], now: dat
     out_dir.mkdir(parents=True, exist_ok=True)
     stamp = now.isoformat(timespec="seconds")
 
-    pubs: dict[str, int] = {}
+    ofn_pubs: dict[str, int] = {}  # víc desek jednoho poskytovatele v NKOD (ministerstvo za soudy)
+    all_pubs: dict[str, int] = {}
     for b in boards:
-        pubs[b["publisher"]] = pubs.get(b["publisher"], 0) + 1
+        all_pubs[b["publisher"]] = all_pubs.get(b["publisher"], 0) + 1
+        if b.get("fmt", "ofn") == "ofn":
+            ofn_pubs[b["publisher"]] = ofn_pubs.get(b["publisher"], 0) + 1
     for b in boards:
-        b["name"] = display_name(BoardSource(**{k: b[k] for k in ("id", "dataset_iri", "title", "publisher", "access_url")}),
-                                 pubs[b["publisher"]] > 1)
+        src = BoardSource(**{k: b[k] for k in ("id", "dataset_iri", "title", "publisher", "access_url")},
+                          fmt=b.get("fmt", "ofn"), area=b.get("area", ""))
+        b["name"] = display_name(src, ofn_pubs.get(b["publisher"], 0) > 1, all_pubs[b["publisher"]] > 1)
 
     since = (now - timedelta(days=RECENT_DAYS)).date().isoformat()
     recent = [_slim(i) for i in items if i.posted and i.posted >= since and not i.removed]
