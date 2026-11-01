@@ -76,7 +76,7 @@ serverech úřadů. Z Česka fungují, jde o blokování zahraničních IP.
 Řešení: harvester umí pro tyto servery použít záložní proxy v ČR. Stačí v repozitáři nastavit
 secret `HARVEST_FALLBACK_PROXY` (např. `http://uzivatel:heslo@proxy.example.cz:3128`).
 Proxy se použije jen pro desky, které selžou na timeout nebo chybu spojení.
-Alternativa: spouštět celý sběr z ČR (self-hosted runner, CronJob v OpenShiftu apod.).
+Alternativa: spouštět sběr ze self-hosted runneru GitHub Actions v ČR.
 
 ## Formát dat pro web
 
