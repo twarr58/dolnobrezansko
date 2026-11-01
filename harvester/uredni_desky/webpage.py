@@ -39,7 +39,8 @@ _DOC_EXT = re.compile(r"\.(pdf|docx?|odt|rtf|xlsx?|ods|zip|rar|7z|jpe?g|png|tiff
 _DOC_HINT = re.compile(r"(download|file|soubor|priloh|attachment|getfile|dokument)", re.I)
 _GENERIC_TEXT = re.compile(
     r"^(stáhnout|stahnout|pdf|docx?|odt|zobrazit|detail|více|vice|číst dále|cist dale|otevřít|"
-    r"příloha|priloha|soubor|dokument|klikněte zde|zde|\d+(\s*[kKmM]i?B)?|\[?pdf\]?|»|›|>|\+)\b.{0,30}$", re.I)
+    r"příloha|priloha|soubor|dokument|klikněte zde|zde|celý příspěvek|celý článek|číst více|cist vice|"
+    r"zobrazit více|více informací|\d+(\s*[kKmM]i?B)?|\[?pdf\]?|»|›|>|\+)\b.{0,30}$", re.I)
 _NOISE = re.compile(r"(^|[\s_-])(menu|nav|navbar|navigation|header|footer|breadcrumbs?|cookie|sidebar|"
                     r"submenu|topbar|skip|social|search|login|lang)([\s_-]|$)", re.I)
 _PAGER = re.compile(r"(stránk|page|předchozí|další|následující|archiv|starší)", re.I)

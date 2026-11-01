@@ -99,3 +99,12 @@ def test_board_link_by_anchor_text():
     from uredni_desky.discover import classify_html
     html = '<a href="/obec/">Obec</a><a href="/index.php?id=12&amp;x=1"><span>Úřední</span> deska</a>'
     assert classify_html(html, "https://www.obec.cz/")["board_link"] == "https://www.obec.cz/index.php?id=12&x=1"
+
+
+def test_deska_asp_link_and_shortest_choice():
+    from uredni_desky.discover import classify_html
+    html = ('<a href="urad/user/deska/2024/x.pdf">PDF</a><a href="urad/deska.asp">Deska</a>'
+            '<a href="/deskohrani-1.html">Deskovky</a>')
+    assert classify_html(html, "https://www.obec.cz/obec/")["board_link"] == "https://www.obec.cz/obec/urad/deska.asp"
+    html = '<a href="/uredni-deska/oznameni-o-necem-123.html">x</a><a href="/uredni-deska/">Úřední deska</a>'
+    assert classify_html(html, "https://o.cz/")["board_link"] == "https://o.cz/uredni-deska/"

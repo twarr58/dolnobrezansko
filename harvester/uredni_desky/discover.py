@@ -48,6 +48,13 @@ _BOARD_LINK = re.compile(r'href="([^"]*(?:uredni[-_]?desk|edesk|e-desk|uredni%20
 _BOARD_ANCHOR = re.compile(r'<a\b[^>]*?href="([^"#][^"]*)"[^>]*>((?:(?!</a>).){0,300}?)</a>', re.I | re.S)
 _BOARD_TEXT = re.compile(r"(úřední|uredni|elektronick[áa])\s+desk|\be-?desk", re.I)
 _TAGS = re.compile(r"<[^>]+>")
+# …/deska.asp, …/urad/deska/, …?page=deska (weby, kde v adrese není „uredni“)
+_DESKA_HREF = re.compile(r"(^|[/_=-])(uredni)?deska(\.(asp|aspx|php|html?)|/?(\?|$))", re.I)
+_DOC = re.compile(r"\.(pdf|docx?|odt|xlsx?|zip|jpe?g|png)(\?|$)", re.I)
+_FRAME = re.compile(r'<(?:frame|iframe)[^>]+src="([^"]+)"|<meta[^>]+http-equiv="?refresh"?[^>]+url=([^"\'>\s]+)', re.I)
+# obvyklé adresy desky, když odkaz na titulní stránce chybí
+_COMMON_PATHS = ("/uredni-deska", "/uredni-deska/", "/obecni-urad/uredni-deska/", "/urad/uredni-deska/",
+                 "/obec/uredni-deska", "/edeska")
 _GENERATOR = re.compile(r'<meta[^>]+name="generator"[^>]+content="([^"]+)"', re.I)
 _VISMO = re.compile(r'data-application="(Vismo[^"]*)"', re.I)
 # Galileo: deska bývá na /urad/uredni-deska/, /obecni-urad/uredni-deska/, /urad-obce/uredni-deska-1/ …
@@ -106,7 +113,9 @@ def classify_html(html: str, base: str) -> dict:
         info["cms"] = m.group(1)[:60]
     elif "igalileo.cz" in low:
         info["cms"] = "Galileo"
-    if links := _BOARD_LINK.findall(html):
+    links = _BOARD_LINK.findall(html)
+    links += [h for h in re.findall(r'href="([^"#]+)"', html, re.I) if _DESKA_HREF.search(h) and not _DOC.search(h)]
+    if links:
         # nejkratší cesta = stránka seznamu, ne detail jednoho oznámení nebo archiv
         cands = [urljoin(base, "".join(h.replace("&amp;", "&").split())) for h in links]
         cands = [c for c in cands if "archiv" not in c.lower()] or cands
@@ -148,13 +157,14 @@ async def _probe_board(client: httpx.AsyncClient, info: dict) -> None:
         r.raise_for_status()
     except (httpx.HTTPError, httpx.InvalidURL, ValueError):
         return
-    if info.get("cms", "").startswith("Vismo") and "site_board" in r.text:
+    text = webpage.response_text(r)
+    if info.get("cms", "").startswith("Vismo") and "site_board" in text:
         info.update(fmt="vismo", url=str(r.url))
         return
-    if m := _IMUNIS.search(r.text):  # stránka desky odkazuje na eDesku iMunis
+    if m := _IMUNIS.search(text):  # stránka desky odkazuje na eDesku iMunis
         info.update(fmt="imunis", subdomain=m.group(1).lower())
         return
-    for href in re.findall(r'href="([^"]+\.json)"', r.text, re.I)[:2]:  # export OFN odkázaný ze stránky
+    for href in re.findall(r'href="([^"]+\.json)"', text, re.I)[:2]:  # export OFN odkázaný ze stránky
         url = urljoin(str(r.url), href.replace("&amp;", "&"))
         try:
             jr = await client.get(url, timeout=20)
@@ -163,7 +173,7 @@ async def _probe_board(client: httpx.AsyncClient, info: dict) -> None:
                 return
         except (httpx.HTTPError, httpx.InvalidURL, BoardFormatError, AttributeError):
             continue
-    for cand in feed_candidates(r.text, str(r.url)):
+    for cand in feed_candidates(text, str(r.url)):
         try:
             fr = await client.get(cand, timeout=20)
             if fr.status_code == 200 and parse_feed(fr.content, str(fr.url)):
@@ -177,6 +187,21 @@ async def _probe_board(client: httpx.AsyncClient, info: dict) -> None:
         return
     if items:
         info.update(fmt="html", url=src, items=len(items))
+
+
+async def _probe_common_paths(client: httpx.AsyncClient, base: str, info: dict) -> None:
+    origin = "{0.scheme}://{0.netloc}".format(urlsplit(base))
+    for path in _COMMON_PATHS:
+        try:
+            r = await client.get(origin + path, timeout=15, headers=webpage.HTML_HEADERS)
+        except (httpx.HTTPError, httpx.InvalidURL):
+            return
+        if r.status_code == 200 and urlsplit(str(r.url)).path.rstrip("/") not in ("", "/"):
+            info["board_link"] = str(r.url)
+            await _probe_board(client, info)
+            if info.get("fmt"):
+                return
+            info.pop("board_link", None)
 
 
 async def _probe_vismo_ofn(client: httpx.AsyncClient, base: str) -> str | None:
@@ -199,14 +224,26 @@ async def classify_municipality(client: httpx.AsyncClient, m: dict, sem: asyncio
         return result
     async with sem:
         try:
-            r = await client.get(result["web"], timeout=20)
+            r = await client.get(result["web"], timeout=20, headers=webpage.HTML_HEADERS)
             r.raise_for_status()
-            info = classify_html(r.text, str(r.url))
+            html = webpage.response_text(r)
+            if len(html) < 3000 and (fm := _FRAME.search(html)):
+                # web v rámech / přesměrování přes meta refresh – skutečný obsah je jinde
+                try:
+                    r2 = await client.get(urljoin(str(r.url), (fm.group(1) or fm.group(2)).strip()), timeout=20,
+                                          headers=webpage.HTML_HEADERS)
+                    if r2.status_code == 200:
+                        r, html = r2, webpage.response_text(r2)
+                except (httpx.HTTPError, httpx.InvalidURL):
+                    pass
+            info = classify_html(html, str(r.url))
             if info.get("cms", "").startswith("Vismo") and not info.get("fmt"):
                 if ofn := await _probe_vismo_ofn(client, str(r.url)):
                     info.update(fmt="ofn", url=ofn)
             if not info.get("fmt"):
                 await _probe_board(client, info)
+            if not info.get("fmt") and not info.get("board_link"):
+                await _probe_common_paths(client, str(r.url), info)
             result.update(info)
             result["status"] = "ok"
         except httpx.TimeoutException:
