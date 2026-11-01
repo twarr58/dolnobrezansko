@@ -86,6 +86,13 @@ def main() -> None:
     g.add_argument("--concurrency", type=int, default=32)
     g.add_argument("--limit", type=int)
 
+    pr = sub.add_parser("probe", help="Vyzkouší adaptéry na stránkách (ladění)")
+    pr.add_argument("urls", nargs="*")
+    pr.add_argument("--state", default="state")
+    pr.add_argument("--unknown", type=int, default=0, help="Přidat N náhodných nepodporovaných desek z discovered.json")
+    pr.add_argument("--failed", default="", help="Přidat nenačtené desky daného fmt z boards.json (např. galileo)")
+    pr.add_argument("--seed", type=int, default=0)
+
     s = sub.add_parser("sample", help="Ukázková data z fixture (bez sítě)")
     s.add_argument("--out", default="web/data")
 
@@ -99,6 +106,19 @@ def main() -> None:
     elif args.cmd == "explore":
         from .explore import run as explore
         explore(args.title, [x for x in args.find.split(",") if x])
+    elif args.cmd == "probe":
+        import random
+        from .probe import run as probe
+        urls = [u for u in args.urls if u.startswith(("http://", "https://"))]
+        state = Path(args.state)
+        if args.unknown and (state / "discovered.json").exists():
+            unknown = [u["board_link"] for u in json.loads((state / "discovered.json").read_text("utf-8"))["unknown"]
+                       if u.get("board_link")]
+            urls += random.Random(args.seed).sample(unknown, min(args.unknown, len(unknown)))
+        if args.failed and (state / "boards.json").exists():
+            urls += [b["access_url"] for b in json.loads((state / "boards.json").read_text("utf-8"))
+                     if b.get("fmt") == args.failed and not b.get("ok")]
+        asyncio.run(probe(urls))
     elif args.cmd == "diagnose":
         from .diagnose import run
         asyncio.run(run(Path(args.boards), {k for k in args.kinds.split(",") if k}))

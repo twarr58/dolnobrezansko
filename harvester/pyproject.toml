@@ -7,7 +7,7 @@ name = "uredni-desky"
 version = "0.1.0"
 description = "Sběr úředních desek (OFN Úřední desky) z Národního katalogu otevřených dat do statických JSON souborů"
 requires-python = ">=3.11"
-dependencies = ["httpx>=0.27", "cryptography>=42", "json-repair>=0.30"]
+dependencies = ["httpx>=0.27", "cryptography>=42", "json-repair>=0.30", "lxml>=5"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]

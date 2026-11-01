@@ -1,0 +1,53 @@
+name: Ladění adaptérů
+
+on:
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: "URL desek oddělené mezerou"
+        default: ""
+        required: false
+      unknown:
+        description: "Počet náhodných nepodporovaných desek z discovered.json"
+        default: "0"
+        required: false
+      failed:
+        description: "Nenačtené desky daného formátu (galileo, rss, vismo, html …)"
+        default: ""
+        required: false
+      seed:
+        description: "Seed náhodného výběru"
+        default: "0"
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ./harvester
+      - name: Stav z větve data
+        run: |
+          git fetch --depth 1 origin data
+          git worktree add --detach state FETCH_HEAD
+      - name: Ladění
+        env:
+          URLS: ${{ inputs.urls }}
+          UNKNOWN: ${{ inputs.unknown }}
+          FAILED: ${{ inputs.failed }}
+          SEED: ${{ inputs.seed }}
+        run: |
+          case "$UNKNOWN" in ''|*[!0-9]*) UNKNOWN=0 ;; esac
+          case "$SEED" in ''|*[!0-9]*) SEED=0 ;; esac
+          case "$FAILED" in *[!a-z]*) FAILED= ;; esac
+          set -f
+          python -m uredni_desky probe --state state --unknown "$UNKNOWN" --failed "$FAILED" --seed "$SEED" -- $URLS
