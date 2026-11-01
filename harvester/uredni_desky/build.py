@@ -52,12 +52,18 @@ def _item_from_json(d: dict) -> Item:
     return Item(**d)
 
 
+SKIPPED = "skipped"
+_BOARD_STATE = ("ok", "error", "kind", "http_status", "elapsed_ms", "fetched_at", "count", "warnings", "used_url",
+                "via_proxy")
+
+
 def merge(
     sources: list[BoardSource],
     results: dict[str, FetchResult],
     previous_items: list[dict],
     now: datetime,
     archive_days: int = 365,
+    prev_boards: dict[str, dict] | None = None,
 ) -> tuple[list[dict], list[Item]]:
     """Sloučí nový sběr s předchozím stavem.
 
@@ -79,6 +85,14 @@ def merge(
         board = {**asdict(src), "ok": res.ok, "error": res.error, "kind": res.kind, "http_status": res.http_status,
                  "elapsed_ms": res.elapsed_ms, "fetched_at": stamp, "count": 0, "warnings": res.warnings,
                  "used_url": res.url, "via_proxy": res.via_proxy}
+        if res.kind == SKIPPED:
+            # deska v tomto běhu na řadě nebyla (rotace) – stav i položky zůstávají z posledního stažení
+            pb = (prev_boards or {}).get(src.id, {})
+            board.update({k: pb[k] for k in _BOARD_STATE if k in pb})
+            for it in by_board.get(src.id, []):
+                out[it.id] = it
+            boards.append(board)
+            continue
         current: list[Item] = []
         if res.ok:
             try:
@@ -248,7 +262,8 @@ def run_build(
 ) -> dict:
     now = now or datetime.now(timezone.utc)
     previous = load_state(state_dir) if state_dir else []
-    boards, items = merge(sources, results, previous, now)
+    prev_boards = {b["id"]: b for b in _load_json(state_dir / "boards.json", [])} if state_dir else {}
+    boards, items = merge(sources, results, previous, now, prev_boards=prev_boards)
     shown_boards, shown_items = boards, items
     if state_dir:
         geo.attach(boards, state_dir / "obce.json")

@@ -190,3 +190,26 @@ def test_future_posted_replaced_by_first_seen():
     web = BoardSource("w", "https://o.cz/d", "Úřední deska (web obce)", "Obec B", "https://o.cz/d", fmt="html")
     _, items = merge([web], {"w": FetchResult(True, p)}, [], T0)
     assert {i.title: i.posted for i in items} == {"Seminář": "2026-10-30", "Bez data": "2026-10-30"}
+
+
+def test_skipped_board_keeps_previous_state_and_items():
+    from uredni_desky.build import SKIPPED
+    _, items0 = merge([SRC], {"b1": FetchResult(True, payload("A"))}, [], T0)
+    prev = {"b1": {"id": "b1", "ok": True, "count": 1, "fetched_at": "x"}}
+    boards, items1 = merge([SRC], {"b1": FetchResult(False, kind=SKIPPED)}, as_json(items0), T1, prev_boards=prev)
+    assert boards[0]["ok"] is True and boards[0]["count"] == 1 and boards[0]["fetched_at"] == "x"
+    assert [i.title for i in items1] == ["A"] and items1[0].removed is None
+
+
+def test_rotation_splits_galileo_only_with_previous_state(tmp_path):
+    import json
+    from uredni_desky.__main__ import rotate
+    g = [BoardSource(f"g{i}", "i", "t", "p", "u", fmt="galileo") for i in range(30)]
+    new = BoardSource("gnew", "i", "t", "p", "u", fmt="galileo")
+    other = BoardSource("r1", "i", "t", "p", "u", fmt="rss")
+    path = tmp_path / "boards.json"
+    path.write_text(json.dumps([{"id": s.id, "ok": True} for s in g + [other]]), "utf-8")
+    fetched = [rotate(g + [new, other], path, slot)[0] for slot in range(3)]
+    for f in fetched:
+        assert new in f and other in f and 0 < len([s for s in f if s.id.startswith("g") and s is not new]) < 30
+    assert {s.id for f in fetched for s in f} >= {s.id for s in g}

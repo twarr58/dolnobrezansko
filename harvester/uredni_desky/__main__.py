@@ -8,13 +8,15 @@ import contextlib
 import os
 import json
 import logging
+import zlib
+from datetime import datetime, timezone
 from pathlib import Path
 
 import httpx
 
 from . import USER_AGENT
 from . import cache
-from .build import load_state, run_build
+from .build import SKIPPED, load_state, run_build
 from .extra import load_extra_sources
 from .fetch import FetchResult, fetch_all
 from .nkod import BoardSource, board_id, discover_boards, discover_extra, is_municipal
@@ -44,9 +46,31 @@ async def _harvest(args: argparse.Namespace) -> None:
             logging.info("Jen obce a městské části: %d desek", len(sources))
         if args.limit:
             sources = sources[: args.limit]
-        results = await fetch_all(client, sources, concurrency=args.concurrency, retries=args.retries,
+        to_fetch, skipped = rotate(sources, Path(args.state) / "boards.json", datetime.now(timezone.utc).hour)
+        logging.info("Stahuje se %d desek, %d čeká na další běh (rotace)", len(to_fetch), len(skipped))
+        results = await fetch_all(client, to_fetch, concurrency=args.concurrency, retries=args.retries,
                                   fallback=fallback)
+        results.update({s.id: FetchResult(False, kind=SKIPPED) for s in skipped})
     run_build(sources, results, Path(args.out), Path(args.state))
+
+
+# Galileo (~2 300 webů na společném hostingu) snese stažení všech desek jen jednou za pár hodin:
+# každý hodinový běh vezme třetinu. Desky bez předchozího úspěšného stažení se stahují vždy.
+ROTATION = {"galileo": 3}
+
+
+def rotate(sources: list[BoardSource], boards_path: Path, slot: int) -> tuple[list[BoardSource], list[BoardSource]]:
+    prev_ok = set()
+    if boards_path.exists():
+        prev_ok = {b["id"] for b in json.loads(boards_path.read_text("utf-8")) if b.get("ok")}
+    fetch, skip = [], []
+    for s in sources:
+        n = ROTATION.get(s.fmt)
+        if n and s.id in prev_ok and zlib.crc32(s.id.encode()) % n != slot % n:
+            skip.append(s)
+        else:
+            fetch.append(s)
+    return fetch, skip
 
 
 def _sample(args: argparse.Namespace) -> None:
