@@ -103,7 +103,7 @@ def classify_html(html: str, base: str) -> dict:
     elif "igalileo.cz" in low:
         info["cms"] = "Galileo"
     if m := _BOARD_LINK.search(html):
-        info["board_link"] = urljoin(base, m.group(1))
+        info["board_link"] = urljoin(base, "".join(m.group(1).split()))
     return info
 
 
@@ -132,7 +132,7 @@ async def _probe_board(client: httpx.AsyncClient, info: dict) -> None:
     try:
         r = await client.get(board, timeout=20)
         r.raise_for_status()
-    except httpx.HTTPError:
+    except (httpx.HTTPError, httpx.InvalidURL, ValueError):
         return
     if info.get("cms", "").startswith("Vismo") and "site_board" in r.text:
         info.update(fmt="vismo", url=str(r.url))
@@ -143,7 +143,7 @@ async def _probe_board(client: httpx.AsyncClient, info: dict) -> None:
             if fr.status_code == 200 and parse_feed(fr.content, str(fr.url)):
                 info.update(fmt="rss", url=cand)
                 return
-        except (httpx.HTTPError, ElementTree.ParseError):
+        except (httpx.HTTPError, httpx.InvalidURL, ValueError, ElementTree.ParseError):
             continue
 
 
@@ -180,6 +180,9 @@ async def classify_municipality(client: httpx.AsyncClient, m: dict, sem: asyncio
         except httpx.TimeoutException:
             result["status"] = "timeout"
         except httpx.HTTPError as exc:
+            result["status"] = f"chyba: {type(exc).__name__}"
+        except Exception as exc:  # noqa: BLE001 – chyba u jedné obce nesmí shodit celé hledání
+            log.warning("Hledání %s (%s): %s", m["name"], result["web"], exc)
             result["status"] = f"chyba: {type(exc).__name__}"
     return result
 

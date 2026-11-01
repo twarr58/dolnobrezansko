@@ -71,3 +71,25 @@ def test_detail_budget():
     cache.reset_budget(2)
     assert cache.take_detail_slot() and cache.take_detail_slot() and not cache.take_detail_slot()
     cache.reset_budget()
+
+
+def test_board_link_whitespace_stripped():
+    info = classify_html('<a href="/uredni-deska\r\n">Deska</a>', "https://www.obec.cz/")
+    assert info["board_link"] == "https://www.obec.cz/uredni-deska"
+
+
+def test_classify_municipality_survives_invalid_url():
+    import asyncio
+    import httpx
+    from uredni_desky.discover import classify_municipality
+
+    def handler(request):
+        return httpx.Response(200, text='<a href="/uredni-deska">x</a>')
+
+    async def go():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as c:
+            return await classify_municipality(c, {"qid": "Q1", "name": "X", "types": "", "webs": ["https://bad\r.cz/"]},
+                                               asyncio.Semaphore(1))
+
+    res = asyncio.run(go())
+    assert res["status"].startswith("chyba")
