@@ -188,13 +188,28 @@ async def fetch_all(
     concurrency: int = 24,
     retries: int = 2,
     fallback: httpx.AsyncClient | None = None,
+    board_timeout: float = 240,
+    total_budget: float = 40 * 60,
 ) -> dict[str, FetchResult]:
     sem = asyncio.Semaphore(concurrency)
     host_locks: dict[str, asyncio.Semaphore] = {}
 
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + total_budget
+
     async def run(src: BoardSource) -> tuple[str, FetchResult]:
         async with sem:
-            res = await _fetch_board(client, src, retries, host_locks, fallback)
+            left = deadline - loop.time()
+            if left <= 0:
+                return src.id, FetchResult(False, None, "Nestaženo – vyčerpán čas na celý sběr", None, 0,
+                                           KIND_TIMEOUT, src.access_url)
+            try:
+                # celkový limit na desku: server, který posílá data po kapkách, obchází timeout čtení
+                res = await asyncio.wait_for(_fetch_board(client, src, retries, host_locks, fallback),
+                                             timeout=min(board_timeout, left))
+            except asyncio.TimeoutError:
+                res = FetchResult(False, None, f"Stahování desky trvalo déle než {int(min(board_timeout, left))} s",
+                                  None, int(min(board_timeout, left) * 1000), KIND_TIMEOUT, src.access_url)
             if not res.ok:
                 log.info("Chyba [%s] %s (%s): %s", res.kind, src.publisher or src.title, res.url, res.error)
             elif res.warnings:

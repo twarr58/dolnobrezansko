@@ -66,3 +66,19 @@ def test_fallback_proxy_used_on_timeout():
     res = asyncio.run(go())
     assert res["b1"].ok and res["b1"].via_proxy
     assert not res["b2"].ok and res["b2"].kind == "not_found"  # 404 se přes proxy nezkouší
+
+
+def test_board_timeout_and_total_budget():
+    async def slow(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/drip":
+            await asyncio.sleep(5)
+        return httpx.Response(200, content=b'{"informace": []}')
+
+    async def go(**kw):
+        async with httpx.AsyncClient(transport=httpx.MockTransport(slow)) as client:
+            return await fetch_all(client, [src(1, "https://x/drip"), src(2, "https://y/ok")], retries=0, **kw)
+
+    res = asyncio.run(go(board_timeout=0.2))
+    assert res["b1"].kind == "timeout" and "déle" in res["b1"].error and res["b2"].ok
+    res = asyncio.run(go(total_budget=0))
+    assert not res["b2"].ok and "vyčerpán" in res["b2"].error
