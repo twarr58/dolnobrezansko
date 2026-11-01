@@ -82,3 +82,11 @@ def test_form_wrapper_and_cp1250():
             "</table></form></body></html>").encode("cp1250")
     items = parse_board(html, BASE)
     assert [i.title for i in items] == ["Oznámení o vyhlášení", "Záměr prodeje"]
+
+
+def test_czech_month_names_and_card_title():
+    assert pick_dates("Vyvěšeno 27. října 2026, sejmuto 1. prosince 2026") == ("2026-10-27", "2026-12-01")
+    assert pick_dates("9. červenec 2026") == ("2026-07-09", None)
+    html = """<ul><li><a href="/d/1"><h3>Pozvánka</h3><p>Vyvěšeno: 30. 10. 2026</p></a></li>
+    <li><a href="/d/2"><h3>Opis výsledků</h3><p>Vyvěšeno: 19. 10. 2026</p></a></li></ul>"""
+    assert [i.title for i in parse_board(html, BASE)] == ["Pozvánka", "Opis výsledků"]

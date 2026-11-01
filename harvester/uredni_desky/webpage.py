@@ -26,7 +26,12 @@ import httpx
 import lxml.html
 from lxml import etree
 
-_DATE = re.compile(r"(?<!\d)(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})(?!\d)|(?<!\d)(\d{4})-(\d{2})-(\d{2})(?!\d)")
+_MONTHS = {"led": 1, "úno": 2, "uno": 2, "bře": 3, "bre": 3, "dub": 4, "kvě": 5, "kve": 5, "čer": 6, "cer": 6,
+           "srp": 8, "zář": 9, "zar": 9, "říj": 10, "rij": 10, "lis": 11, "pro": 12}
+_DATE = re.compile(r"(?<!\d)(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})(?!\d)|(?<!\d)(\d{4})-(\d{2})-(\d{2})(?!\d)"
+                   r"|(?<!\d)(\d{1,2})\.\s*(ledna|leden|února|únor|března|březen|dubna|duben|května|květen|června|"
+                   r"červen|července|červenec|srpna|srpen|září|října|říjen|listopadu|listopad|prosince|prosinec)\s+(\d{4})(?!\d)",
+                   re.I)
 _UNTIL_LABEL = re.compile(r"(sejm|svěšen|vyvěšeno\s+do|zveřejněno\s+do|platnost\s+do|\bdo\s*:?\s*$|\s-\s*$|–\s*$)", re.I)
 _POSTED_LABEL = re.compile(r"(vyvěš|zveřejn|\bod\s*:?\s*$|datum\s*:?\s*$|vloženo)", re.I)
 _SKIP_HREF = re.compile(r"^(#|javascript:|mailto:|tel:|data:)", re.I)
@@ -54,6 +59,10 @@ class Item:
 def _iso(m: re.Match) -> str | None:
     if m.group(1):
         d, mth, y = int(m.group(1)), int(m.group(2)), int(m.group(3))
+    elif m.group(7):
+        name = m.group(8).lower()
+        mth = 7 if name in ("července", "červenec") else _MONTHS.get(name[:3], 0)
+        d, y = int(m.group(7)), int(m.group(9))
     else:
         y, mth, d = int(m.group(4)), int(m.group(5)), int(m.group(6))
     if not (1 <= d <= 31 and 1 <= mth <= 12 and 2000 <= y <= 2100):
@@ -214,6 +223,14 @@ def parse_board(html: str | bytes, base: str) -> list[Item]:
                 docs.append((label, url))
             if label and not _GENERIC_TEXT.match(label) and not _DATE.fullmatch(label) and len(label) >= 4:
                 titled.append((label, url))
+        if el.tag == "a":
+            # celá položka v odkazu: název z nadpisu uvnitř, jinak text před prvním datem / popiskem
+            heads = el.xpath(".//h1|.//h2|.//h3|.//h4|.//h5|.//strong|.//*[contains(@class,'title')]")
+            head = next((_text(h) for h in heads if len(_text(h)) >= 4), "")
+            if not head:
+                head = re.split(r"(vyvěšeno|zveřejněno|vystavení|sejmut|platnost)", _text(el), 1, flags=re.I)[0]
+            url = _clean_url(urljoin(base, el.get("href").strip()))
+            titled = [(" ".join(head.split()).strip(" -–|:,"), url)] if len(head.strip()) >= 4 else titled
         if titled:
             title, url = max(titled, key=lambda t: len(t[0]))
         elif links:
