@@ -186,7 +186,7 @@ async def fetch_board(client: httpx.AsyncClient, list_url: str, detail_concurren
         # šablona lego3: titulní stránka desky ukazuje jen 5 nejnovějších, celý seznam je na -/aktualni/
         resp = await client.get(str(resp.url).split("#")[0].rstrip("/") + "/-/aktualni/", headers=webpage.HTML_HEADERS)
         resp.raise_for_status()
-    items = parse_list(resp.text, str(resp.url))
+    items = await asyncio.to_thread(parse_list, resp.text, str(resp.url))
     if not items:
         # jiná šablona Galilea – obecný HTML adaptér (detaily s přílohami se pak stáhnou jako obvykle)
         generic, _ = await webpage.items_from_response(client, resp)

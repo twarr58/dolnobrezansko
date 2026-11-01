@@ -16,6 +16,7 @@ Když stránka desku jen vkládá (iframe se službou e-deska apod.), načte se 
 
 from __future__ import annotations
 
+import asyncio
 import collections
 import hashlib
 import re
@@ -351,16 +352,16 @@ async def fetch_items(client: httpx.AsyncClient, url: str) -> tuple[list[Item], 
 async def items_from_response(client: httpx.AsyncClient, resp: httpx.Response) -> tuple[list[Item], str]:
     """Položky ze stažené stránky desky, případně z iframu nebo z podstránek kategorií."""
     base = str(resp.url)
-    items = parse_board(response_text(resp), base)
+    items = await asyncio.to_thread(parse_board, response_text(resp), base)
     if items:
         return items, base
     for src in iframe_sources(resp.text, base):
-        if (r := await _get(client, src)) and (items := parse_board(response_text(r), str(r.url))):
+        if (r := await _get(client, src)) and (items := await asyncio.to_thread(parse_board, response_text(r), str(r.url))):
             return items, str(r.url)
     merged: dict[str, Item] = {}
     for sp in subpages(resp.text, base):
         if r := await _get(client, sp):
-            for it in parse_board(response_text(r), str(r.url)):
+            for it in await asyncio.to_thread(parse_board, response_text(r), str(r.url)):
                 merged.setdefault(it.url, it)
     return list(merged.values()), base
 
