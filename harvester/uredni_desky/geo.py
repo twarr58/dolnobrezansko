@@ -52,9 +52,16 @@ def attach(boards: list[dict], obce_path: Path | None) -> int:
                 cands = by_name.get(_key(_PREFIX.sub("", b.get("publisher", ""))), [])
             o = cands[0] if len(cands) == 1 else None
         if o:
+            b["qid"] = o["qid"]
             b["lat"], b["lon"] = round(o["lat"], 3), round(o["lon"], 3)
             if not b.get("area") and o.get("area"):
                 b["area"] = o["area"]
             placed += 1
     log.info("Poloha doplněna %d z %d desek", placed, len(boards))
     return placed
+
+
+def duplicates(boards: list[dict]) -> set[str]:
+    """Desky z webu obce, která má funkční desku v NKOD (stejná obec, jiná doména) – zobrazí se jen NKOD."""
+    nkod = {b["qid"] for b in boards if b.get("qid") and b.get("fmt", "ofn") == "ofn" and b.get("ok")}
+    return {b["id"] for b in boards if b.get("qid") in nkod and b.get("fmt", "ofn") != "ofn"}

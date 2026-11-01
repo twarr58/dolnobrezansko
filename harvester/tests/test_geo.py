@@ -25,3 +25,10 @@ def test_attach_by_qid_publisher_and_domain(tmp_path):
     assert boards[1]["area"] == "Plzeň-jih"
     assert "lat" not in boards[2]
     assert boards[3]["lon"] == 17.393 and boards[4]["lat"] == 49.95
+
+
+def test_duplicates_prefers_nkod():
+    from uredni_desky.geo import duplicates
+    boards = [{"id": "a", "qid": "Q1", "fmt": "ofn", "ok": True}, {"id": "b", "qid": "Q1", "fmt": "html", "ok": True},
+              {"id": "c", "qid": "Q2", "fmt": "ofn", "ok": False}, {"id": "d", "qid": "Q2", "fmt": "galileo", "ok": True}]
+    assert duplicates(boards) == {"b"}

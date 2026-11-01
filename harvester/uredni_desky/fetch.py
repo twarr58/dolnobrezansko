@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import time
 from dataclasses import dataclass, field
@@ -18,6 +19,10 @@ log = logging.getLogger(__name__)
 
 MAX_BYTES = 50 * 1024 * 1024
 PER_HOST = 2  # víc souběžných spojení na jeden server část hostingů odmítá
+# Weby jednoho poskytovatele běží na stejných serverech (Galileo: ~2 300 obcí) – souběh se omezí
+# na celého poskytovatele, jinak hosting po chvíli přestane přijímat spojení.
+RETRY_DELAY = 5.0
+PROVIDER_LIMITS = {"galileo": 6, "imunis": 4, "vismo": 6}
 
 # Druhy chyb – frontend k nim zobrazuje vysvětlení.
 KIND_TIMEOUT = "timeout"
@@ -138,7 +143,11 @@ async def _fetch_adapter(client: httpx.AsyncClient, src: BoardSource,
     host = urlsplit(src.access_url).hostname or ""
     async with host_locks.setdefault(host, asyncio.Semaphore(PER_HOST)):
         try:
-            payload = await ADAPTERS[src.fmt](client, src.access_url)
+            try:
+                payload = await ADAPTERS[src.fmt](client, src.access_url)
+            except (httpx.TimeoutException, httpx.ConnectError):
+                await asyncio.sleep(RETRY_DELAY)  # přetížený hosting – jeden pozdější pokus
+                payload = await ADAPTERS[src.fmt](client, src.access_url)
             return FetchResult(True, payload, None, 200, ms(), None, src.access_url)
         except httpx.HTTPStatusError as exc:
             code = exc.response.status_code
@@ -197,8 +206,11 @@ async def fetch_all(
     loop = asyncio.get_running_loop()
     deadline = loop.time() + total_budget
 
+    providers = {name: asyncio.Semaphore(n) for name, n in PROVIDER_LIMITS.items()}
+
     async def run(src: BoardSource) -> tuple[str, FetchResult]:
-        async with sem:
+        # zámek poskytovatele se bere před globálním slotem a mimo limit času na desku
+        async with providers.get(src.fmt) or contextlib.nullcontext(), sem:
             left = deadline - loop.time()
             if left <= 0:
                 return src.id, FetchResult(False, None, "Nestaženo – vyčerpán čas na celý sběr", None, 0,

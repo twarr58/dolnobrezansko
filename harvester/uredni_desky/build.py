@@ -244,9 +244,14 @@ def run_build(
     now = now or datetime.now(timezone.utc)
     previous = load_state(state_dir) if state_dir else []
     boards, items = merge(sources, results, previous, now)
+    shown_boards, shown_items = boards, items
     if state_dir:
         geo.attach(boards, state_dir / "obce.json")
-    meta = write_outputs(out_dir, boards, items, now)
+        if dup := geo.duplicates(boards):
+            log.info("Skryto %d desek z webů obcí, které mají desku v NKOD", len(dup))
+            shown_boards = [b for b in boards if b["id"] not in dup]
+            shown_items = [i for i in items if i.board not in dup]
+    meta = write_outputs(out_dir, shown_boards, shown_items, now)
     if state_dir:
         state_dir.mkdir(parents=True, exist_ok=True)
         # Komprimovaně: GitHub odmítá soubory nad 100 MB a nekomprimovaný stav má desítky MB.
