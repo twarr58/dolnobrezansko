@@ -22,6 +22,7 @@ def load_extra_sources(discovered: Path | None = None) -> list[BoardSource]:
         raw["ofn"] = [s for s in found if s.get("fmt") == "ofn"]
         raw["rss"] = [s for s in found if s.get("fmt") == "rss"]
         raw["vismo"] = [s for s in found if s.get("fmt") == "vismo"]
+        raw["html"] = [s for s in found if s.get("fmt") == "html"]
     sources = []
     for entry in raw.get("imunis", []):
         sub = entry["subdomain"].strip().lower()
@@ -55,7 +56,8 @@ def load_extra_sources(discovered: Path | None = None) -> list[BoardSource]:
             sources.append(BoardSource(id=board_id(f"web:{url}"), dataset_iri=url,
                                        title="Úřední deska (otevřená data na webu obce)",
                                        publisher=entry["publisher"], access_url=url))
-    titles = {"rss": "Úřední deska (RSS kanál webu obce)", "vismo": "Úřední deska (web obce)"}
+    titles = {"rss": "Úřední deska (RSS kanál webu obce)", "vismo": "Úřední deska (web obce)",
+              "html": "Úřední deska (web obce)"}
     for fmt, title in titles.items():
         for entry in raw.get(fmt, []):
             url = entry["url"].strip()

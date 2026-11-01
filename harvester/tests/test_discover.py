@@ -93,3 +93,9 @@ def test_classify_municipality_survives_invalid_url():
 
     res = asyncio.run(go())
     assert res["status"].startswith("chyba")
+
+
+def test_board_link_by_anchor_text():
+    from uredni_desky.discover import classify_html
+    html = '<a href="/obec/">Obec</a><a href="/index.php?id=12&amp;x=1"><span>Úřední</span> deska</a>'
+    assert classify_html(html, "https://www.obec.cz/")["board_link"] == "https://www.obec.cz/index.php?id=12&x=1"

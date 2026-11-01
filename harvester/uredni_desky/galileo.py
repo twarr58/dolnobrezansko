@@ -16,7 +16,7 @@ from urllib.parse import parse_qs, urljoin, urlsplit, urlunsplit
 
 import httpx
 
-from . import cache
+from . import cache, webpage
 from .imunis import czech_date
 
 
@@ -33,6 +33,7 @@ def _clean_url(url: str) -> str:
     """Bez query (?kshow=… se liší podle kategorie, identifikátor položky musí být stabilní)."""
     p = urlsplit(url)
     return urlunsplit((p.scheme, p.netloc, p.path, "", ""))
+
 
 
 def _classes(attrs) -> set[str]:
@@ -178,23 +179,30 @@ def to_informace(item: ListItem, detail: Detail | None) -> dict:
 
 
 async def fetch_board(client: httpx.AsyncClient, list_url: str, detail_concurrency: int = 2) -> dict:
-    resp = await client.get(list_url)
+    # Accept: application/json (výchozí u sběru) vrací Galileo jako 404
+    resp = await client.get(list_url, headers=webpage.HTML_HEADERS)
     resp.raise_for_status()
     if "official-desk__item" in resp.text and "/-/aktualni/" in resp.text:
         # šablona lego3: titulní stránka desky ukazuje jen 5 nejnovějších, celý seznam je na -/aktualni/
-        resp = await client.get(str(resp.url).split("#")[0].rstrip("/") + "/-/aktualni/")
+        resp = await client.get(str(resp.url).split("#")[0].rstrip("/") + "/-/aktualni/", headers=webpage.HTML_HEADERS)
         resp.raise_for_status()
     items = parse_list(resp.text, str(resp.url))
     if not items:
-        raise ValueError("Na stránce úřední desky nebyly nalezeny žádné položky (změnila se šablona?)")
+        # jiná šablona Galilea – obecný HTML adaptér (detaily s přílohami se pak stáhnou jako obvykle)
+        generic, _ = await webpage.items_from_response(client, resp)
+        items = [ListItem(webpage._clean_url(i.url.split("#")[0]), i.title, i.posted, i.until) for i in generic]
+        if not items:
+            if infos := await webpage.alis_infos(client, resp.text):
+                return {"informace": infos}
+            raise ValueError("Na stránce úřední desky nebyly nalezeny žádné položky (změnila se šablona?)")
     sem = asyncio.Semaphore(detail_concurrency)
 
     async def detail(item: ListItem) -> Detail | None:
-        if item.url in cache.DETAILS or not cache.take_detail_slot():
+        if item.url in cache.DETAILS or webpage._is_doc(item.url) or not cache.take_detail_slot():
             return None  # doplní se z mezipaměti níže, případně v příštím běhu
         async with sem:
             try:
-                r = await client.get(item.url)
+                r = await client.get(item.url, headers=webpage.HTML_HEADERS)
                 r.raise_for_status()
                 return parse_detail(r.text, str(r.url))
             except httpx.HTTPError:

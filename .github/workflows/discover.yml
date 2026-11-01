@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "41 3 * * 1" # jednou týdně
   workflow_dispatch:
+    inputs:
+      recheck:
+        description: "Jen znovu prověřit nepodporované obce a nefunkční zdroje"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -29,7 +34,9 @@ jobs:
           git fetch --depth 1 origin data
           git worktree add --detach state FETCH_HEAD
       - name: Hledání
-        run: python -m uredni_desky discover --out state/discovered.json --nkod state/boards.json
+        env:
+          RECHECK: ${{ inputs.recheck && '--recheck' || '' }}
+        run: python -m uredni_desky discover --out state/discovered.json --nkod state/boards.json $RECHECK
       - name: Uložit do větve data
         run: |
           git config user.name "github-actions[bot]"

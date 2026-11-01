@@ -85,6 +85,8 @@ def main() -> None:
     g.add_argument("--nkod", default="state/boards.json", help="boards.json z posledního sběru (desky v NKOD)")
     g.add_argument("--concurrency", type=int, default=32)
     g.add_argument("--limit", type=int)
+    g.add_argument("--recheck", action="store_true",
+                   help="Jen znovu prověřit nepodporované obce a nefunkční zdroje v existujícím discovered.json")
 
     pr = sub.add_parser("probe", help="Vyzkouší adaptéry na stránkách (ladění)")
     pr.add_argument("urls", nargs="*")
@@ -102,7 +104,7 @@ def main() -> None:
         asyncio.run(_harvest(args))
     elif args.cmd == "discover":
         from .discover import run as discover
-        asyncio.run(discover(Path(args.out), Path(args.nkod), args.concurrency, args.limit))
+        asyncio.run(discover(Path(args.out), Path(args.nkod), args.concurrency, args.limit, args.recheck))
     elif args.cmd == "explore":
         from .explore import run as explore
         explore(args.title, [x for x in args.find.split(",") if x])

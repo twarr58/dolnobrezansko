@@ -53,3 +53,12 @@ def test_pick_dates_labels_and_order():
 
 def test_no_board_on_plain_page():
     assert parse_board("<html><body><p>Ahoj 1. 1. 2026</p><a href='/x'>Odkaz</a></body></html>", BASE) == []
+
+
+def test_volatile_params_and_subpages():
+    from uredni_desky.webpage import _clean_url, subpages
+    assert _clean_url("https://o.cz/d/x-1.html?kshow=2#a") == "https://o.cz/d/x-1.html"
+    assert _clean_url("https://o.cz/d.php?id=5&utm_source=x") == "https://o.cz/d.php?id=5"
+    html = ('<a href="/urad/uredni-deska/stavebni/">S</a><a href="/urad/uredni-deska/">D</a>'
+            '<a href="/urad/">U</a><a href="/urad/uredni-deska/archiv-2019/">A</a><a href="/urad/uredni-deska/a/b/">X</a>')
+    assert subpages(html, "https://o.cz/urad/uredni-deska/") == ["https://o.cz/urad/uredni-deska/stavebni/"]

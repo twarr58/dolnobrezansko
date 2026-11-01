@@ -10,7 +10,7 @@ from urllib.parse import urlsplit
 
 import httpx
 
-from . import feed, galileo, imunis, tls, vismo
+from . import feed, galileo, imunis, tls, vismo, webpage
 from .nkod import BoardSource
 from .normalize import BoardFormatError, decode_board
 
@@ -126,7 +126,8 @@ async def _fetch_url(client: httpx.AsyncClient, url: str, retries: int) -> Fetch
 
 
 ADAPTERS = {"imunis": imunis.fetch_board, "galileo": galileo.fetch_board,
-            "rss": feed.fetch_board, "vismo": vismo.fetch_board}
+            "rss": feed.fetch_board, "vismo": vismo.fetch_board,
+            "html": webpage.fetch_board}
 
 
 async def _fetch_adapter(client: httpx.AsyncClient, src: BoardSource,

@@ -104,9 +104,15 @@ def _strip_noise(root) -> None:
             el.drop_tree()
 
 
+HTML_HEADERS = {"Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8"}
+_VOLATILE_PARAM = re.compile(r"^(kshow|utm_[a-z]+|sid|phpsessid|fbclid)=", re.I)
+
+
 def _clean_url(url: str) -> str:
+    """Bez fragmentu a parametrů, které se mění (kategorie výpisu, sledování) – URL slouží jako identifikátor."""
     p = urlsplit(url)
-    return urlunsplit((p.scheme, p.netloc, p.path, p.query, ""))
+    query = "&".join(q for q in p.query.split("&") if q and not _VOLATILE_PARAM.match(q))
+    return urlunsplit((p.scheme, p.netloc, p.path, query, ""))
 
 
 def _is_doc(url: str) -> bool:
@@ -230,24 +236,73 @@ def iframe_sources(html: str, base: str) -> list[str]:
     return out[:3]
 
 
+_ALIS = re.compile(r'href="(https?://urednideska\.alis\.cz/([a-z0-9-]+))', re.I)
+
+
+def subpages(html: str, base: str, limit: int = 6) -> list[str]:
+    """Podstránky desky (deska rozdělená do kategorií: …/uredni-deska/stavebni-rizeni/)."""
+    root_path = urlsplit(base).path.rstrip("/") + "/"
+    out = []
+    for href in re.findall(r'href="([^"#?]+)"', html):
+        url = _clean_url(urljoin(base, href.replace("&amp;", "&")))
+        p = urlsplit(url)
+        if p.netloc == urlsplit(base).netloc and p.path.startswith(root_path) and p.path.rstrip("/") + "/" != root_path \
+                and p.path.count("/") <= root_path.count("/") + 1 and not _is_doc(url) and not re.search(r"archiv|20[01]\d", p.path):
+            out.append(url)
+    return list(dict.fromkeys(out))[:limit]
+
+
+async def _get(client: httpx.AsyncClient, url: str) -> httpx.Response | None:
+    try:
+        r = await client.get(url, headers=HTML_HEADERS)
+        r.raise_for_status()
+        return r
+    except (httpx.HTTPError, httpx.InvalidURL):
+        return None
+
+
 async def fetch_items(client: httpx.AsyncClient, url: str) -> tuple[list[Item], str]:
-    resp = await client.get(url)
+    resp = await client.get(url, headers=HTML_HEADERS)
     resp.raise_for_status()
-    items = parse_board(resp.content, str(resp.url))
-    if not items:
-        for src in iframe_sources(resp.text, str(resp.url)):
-            try:
-                r = await client.get(src)
-                r.raise_for_status()
-            except httpx.HTTPError:
-                continue
-            if items := parse_board(r.content, str(r.url)):
-                return items, str(r.url)
-    return items, str(resp.url)
+    return await items_from_response(client, resp)
+
+
+async def items_from_response(client: httpx.AsyncClient, resp: httpx.Response) -> tuple[list[Item], str]:
+    """Položky ze stažené stránky desky, případně z iframu nebo z podstránek kategorií."""
+    base = str(resp.url)
+    items = parse_board(resp.content, base)
+    if items:
+        return items, base
+    for src in iframe_sources(resp.text, base):
+        if (r := await _get(client, src)) and (items := parse_board(r.content, str(r.url))):
+            return items, str(r.url)
+    merged: dict[str, Item] = {}
+    for sp in subpages(resp.text, base):
+        if r := await _get(client, sp):
+            for it in parse_board(r.content, str(r.url)):
+                merged.setdefault(it.url, it)
+    return list(merged.values()), base
+
+
+async def alis_infos(client: httpx.AsyncClient, html: str) -> list[dict] | None:
+    """Stránka desky jen odkazuje na ALIS (urednideska.alis.cz/<obec>) – položky z jeho RSS."""
+    from .feed import parse_feed
+    if not (m := _ALIS.search(html)):
+        return None
+    try:
+        r = await client.get(f"https://urednideska.alis.cz/{m.group(2)}/rss")
+        r.raise_for_status()
+        return parse_feed(r.content, str(r.url)) or None
+    except (httpx.HTTPError, ValueError, etree.ParseError, Exception):  # noqa: BLE001
+        return None
 
 
 async def fetch_board(client: httpx.AsyncClient, url: str) -> dict:
-    items, _ = await fetch_items(client, url)
-    if not items:
-        raise ValueError("Na stránce nebyl rozpoznán seznam oznámení s daty vyvěšení")
-    return {"informace": [to_informace(i) for i in items]}
+    resp = await client.get(url, headers=HTML_HEADERS)
+    resp.raise_for_status()
+    items, _ = await items_from_response(client, resp)
+    if items:
+        return {"informace": [to_informace(i) for i in items]}
+    if infos := await alis_infos(client, resp.text):
+        return {"informace": infos}
+    raise ValueError("Na stránce nebyl rozpoznán seznam oznámení s daty vyvěšení")

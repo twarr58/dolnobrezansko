@@ -81,7 +81,7 @@ def parse_board(html: str, base: str) -> list[dict]:
 
 
 async def fetch_board(client: httpx.AsyncClient, url: str) -> dict:
-    resp = await client.get(url)
+    resp = await client.get(url, headers={"Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8"})
     resp.raise_for_status()
     infos = parse_board(resp.text, str(resp.url))
     if not infos and "site_board" not in resp.text:
