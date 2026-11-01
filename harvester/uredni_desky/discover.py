@@ -32,17 +32,19 @@ log = logging.getLogger(__name__)
 WIKIDATA_SPARQL = "https://query.wikidata.org/sparql"
 # Q5153359 = obec v Česku (města a městyse jsou její podtřídy).
 WIKIDATA_QUERY = """
-SELECT ?item ?name ?web (GROUP_CONCAT(DISTINCT ?typeLabel; separator="|") AS ?types) (SAMPLE(?okresLabel) AS ?okres) WHERE {
+SELECT ?item ?name ?web (GROUP_CONCAT(DISTINCT ?typeLabel; separator="|") AS ?types) (SAMPLE(?okresLabel) AS ?okres) (SAMPLE(?coord) AS ?coords) WHERE {
   ?item wdt:P31/wdt:P279* wd:Q5153359 .
   FILTER NOT EXISTS { ?item wdt:P576 [] }
   ?item rdfs:label ?name . FILTER(LANG(?name) = "cs")
   OPTIONAL { ?item wdt:P856 ?web }
   OPTIONAL { ?item wdt:P31 ?type . ?type rdfs:label ?typeLabel . FILTER(LANG(?typeLabel) = "cs") }
+  OPTIONAL { ?item wdt:P625 ?coord }
   OPTIONAL { ?item wdt:P131 ?ok . ?ok wdt:P31 wd:Q548611 . ?ok rdfs:label ?okresLabel . FILTER(LANG(?okresLabel) = "cs") }
 }
 GROUP BY ?item ?name ?web
 """
 
+_POINT = re.compile(r"Point\(([-\d.]+)\s+([-\d.]+)\)")
 _IMUNIS = re.compile(r"https?://([a-z0-9-]+)\.imunis\.cz/edeska", re.I)
 _BOARD_LINK = re.compile(r'href="([^"]*(?:uredni[-_]?desk|edesk|e-desk|uredni%20desk)[^"]*)"', re.I)
 # odkaz podle textu: <a href="/obec/deska.php">Úřední deska</a>, „eDeska“, „Elektronická úřední deska“
@@ -90,6 +92,8 @@ async def fetch_municipalities(client: httpx.AsyncClient) -> list[dict]:
         qid = b["item"]["value"].rsplit("/", 1)[-1]
         m = by_item.setdefault(qid, {"qid": qid, "name": b["name"]["value"], "types": "", "webs": []})
         m["types"] = b.get("types", {}).get("value", m["types"])
+        if (pt := _POINT.match(b.get("coords", {}).get("value", ""))):
+            m["lon"], m["lat"] = round(float(pt.group(1)), 5), round(float(pt.group(2)), 5)
         if okres := b.get("okres", {}).get("value"):
             m["area"] = re.sub(r"^okres\s+", "", okres, flags=re.I)
         if (w := b.get("web", {}).get("value")) and w not in m["webs"]:
@@ -278,10 +282,17 @@ async def run(out: Path, nkod_boards: Path | None, concurrency: int = 32, limit:
             if b.get("fmt", "ofn") == "ofn" and b.get("ok"):
                 known_domains.add(registered_domain(b.get("access_url", "")))
     previous = json.loads(out.read_text("utf-8")) if recheck and out.exists() else None
+    out.parent.mkdir(parents=True, exist_ok=True)
     async with httpx.AsyncClient(headers={"User-Agent": USER_AGENT}, follow_redirects=True,
                                  limits=httpx.Limits(max_connections=concurrency)) as client:
         municipalities = await fetch_municipalities(client)
         areas = {m["qid"]: m.get("area", "") for m in municipalities}
+        # seznam všech obcí se souřadnicemi – harvester podle něj doplní polohu deskám (hledání v okolí)
+        (out.parent / "obce.json").write_text(json.dumps([
+            {"qid": m["qid"], "publisher": publisher_name(m["name"], m["types"]), "name": m["name"],
+             "area": m.get("area", ""), "web": m["webs"][0] if m["webs"] else None,
+             "lat": m.get("lat"), "lon": m.get("lon")} for m in municipalities
+        ], ensure_ascii=False, separators=(",", ":")), "utf-8")
         log.info("Wikidata: %d obcí, s webem %d", len(municipalities), sum(1 for m in municipalities if m["webs"]))
         if previous:
             webs, qids = _recheck_targets(previous, boards)

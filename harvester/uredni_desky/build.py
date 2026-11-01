@@ -21,6 +21,7 @@ from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from . import geo
 from .fetch import FetchResult
 from .nkod import BoardSource
 from .normalize import BoardFormatError, Document, Item, normalize_board
@@ -243,6 +244,8 @@ def run_build(
     now = now or datetime.now(timezone.utc)
     previous = load_state(state_dir) if state_dir else []
     boards, items = merge(sources, results, previous, now)
+    if state_dir:
+        geo.attach(boards, state_dir / "obce.json")
     meta = write_outputs(out_dir, boards, items, now)
     if state_dir:
         state_dir.mkdir(parents=True, exist_ok=True)

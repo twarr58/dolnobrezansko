@@ -33,6 +33,7 @@ class BoardSource:
     alt_urls: tuple[str, ...] = ()
     fmt: str = "ofn"  # "ofn" = data podle normy z NKOD, "imunis" = RSS + detail iMunis eDesky
     area: str = ""  # okres – rozliší obce se stejným názvem
+    qid: str = ""  # obec ve Wikidatech (zdroje nalezené hledáním obcí)
 
     def urls(self) -> list[str]:
         return [self.access_url, *[u for u in self.alt_urls if u != self.access_url]]

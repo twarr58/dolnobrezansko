@@ -146,3 +146,12 @@ h2.section { font-size: 17px; margin: 28px 0 0; }
 .colophon p { margin: 0 0 6px; max-width: 80ch; }
 
 .note { color: var(--muted); font-size: 15px; margin: 4px 0 0; max-width: 70ch; }
+
+/* V okolí */
+.search.nearbyform { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; }
+.search.nearbyform select { height: 44px; }
+@media (max-width: 640px) {
+  .search.nearbyform { grid-template-columns: minmax(0, 1fr) auto; }
+  .search.nearbyform button { display: block; grid-column: 1 / -1; }
+}
+.nearby li { display: flex; justify-content: space-between; gap: 12px; }

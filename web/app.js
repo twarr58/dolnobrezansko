@@ -136,6 +136,7 @@ async function route() {
     if (section === 'deska' && a && b) return await renderItem(a, b, seq);
     if (section === 'deska' && a) return await renderBoard(a, params, seq);
     if (section === 'desky') return renderIndex();
+    if (section === 'okoli') return renderNearby(params);
     if (section === 'pokryti') return renderCoverage();
     if (section === 'o-projektu') return renderAbout();
     return renderNotFound();
@@ -423,6 +424,118 @@ async function renderItem(boardId, itemId, seq) {
       original ? h('p', { class: 'original' }, h('a', { href: original, rel: 'noopener noreferrer' }, `Zobrazit na úřední desce: ${b.name}`)) : null));
 }
 
+// ---------- v okolí ----------
+
+const RADII = [5, 10, 20, 50];
+
+/** Vzdálenost dvou bodů na Zemi v km (haversine). */
+function distanceKm(a, b) {
+  const rad = (x) => (x * Math.PI) / 180;
+  const dLat = rad(b.lat - a.lat);
+  const dLon = rad(b.lon - a.lon);
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLon / 2) ** 2;
+  return 12742 * Math.asin(Math.sqrt(s));
+}
+
+const km = (d) => `${d < 10 ? d.toFixed(1).replace('.', ',') : Math.round(d)} km`;
+
+function renderNearby(params) {
+  setNav('okoli');
+  const placed = [...state.boards.values()].filter((b) => typeof b.lat === 'number' && typeof b.lon === 'number');
+  const byName = new Map(placed.map((b) => [fold(b.name), b]));
+  let radius = RADII.includes(Number(params.get('km'))) ? Number(params.get('km')) : 20;
+  let center = null; // { lat, lon, label } – poloha zůstává jen v prohlížeči, nikam se neodesílá
+  let limit = STEP;
+  let notices = [];
+
+  const status = h('p', { class: 'summary', 'aria-live': 'polite' });
+  const boardList = h('div');
+  const register = h('div');
+  const more = h('button', { type: 'button', class: 'more', hidden: true }, 'Zobrazit další');
+
+  const paintNotices = () => {
+    if (!notices.length) {
+      register.replaceChildren(h('p', { class: 'empty' }, 'Za posledních 30 dní tu nic nevyvěsili.'));
+      more.hidden = true;
+      return;
+    }
+    renderRegister(register, notices, true, limit);
+    const rest = notices.length - limit;
+    more.hidden = rest <= 0;
+    more.textContent = `Zobrazit dalších ${num(Math.min(STEP, rest))} z ${num(rest)}`;
+  };
+  more.addEventListener('click', () => { limit += STEP; paintNotices(); });
+
+  const paint = () => {
+    const q = new URLSearchParams({ km: String(radius) });
+    history.replaceState(null, '', `#/okoli?${q}`);
+    if (!center) {
+      status.replaceChildren('Zvolte svou polohu nebo zadejte obec. Zobrazí se úřední desky obcí do zvolené vzdálenosti a jejich oznámení za posledních 30 dní.');
+      boardList.replaceChildren();
+      register.replaceChildren();
+      more.hidden = true;
+      return;
+    }
+    const near = placed.map((b) => ({ b, d: distanceKm(center, b) })).filter((x) => x.d <= radius).sort((x, y) => x.d - y.d);
+    const ids = new Set(near.map((x) => x.b.id));
+    notices = state.recent.filter((it) => ids.has(it.b));
+    limit = STEP;
+    status.replaceChildren(
+      h('strong', {}, `${num(near.length)} ${plural(near.length, 'úřední deska', 'úřední desky', 'úředních desek')}`),
+      ` do ${radius} km od ${center.label}, `,
+      h('strong', {}, `${num(notices.length)} ${plural(notices.length, 'oznámení', 'oznámení', 'oznámení')}`),
+      ' za posledních 30 dní.');
+    boardList.replaceChildren(near.length ? h('details', { class: 'filterbox', open: near.length <= 12 },
+      h('summary', {}, 'Desky v okolí'),
+      h('ul', { class: 'docs nearby' }, near.map(({ b, d }) => h('li', {},
+        h('a', { href: `#/deska/${b.id}` }, b.name),
+        h('span', { class: 'ext' }, ` ${km(d)} · `, b.ok ? `${num(b.count)} vyvěšeno` : h('span', { class: 'bad' }, 'nedostupná')))))) : h('p', { class: 'empty' }, 'V této vzdálenosti nemáme žádnou desku. Zkuste větší okruh.'));
+    paintNotices();
+  };
+
+  const locate = h('button', { type: 'button' }, 'Použít moji polohu');
+  locate.addEventListener('click', () => {
+    if (!('geolocation' in navigator)) {
+      status.textContent = 'Prohlížeč neumí zjistit polohu. Zadejte obec.';
+      return;
+    }
+    status.textContent = 'Zjišťuji polohu…';
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { center = { lat: pos.coords.latitude, lon: pos.coords.longitude, label: 'vaší polohy' }; paint(); },
+      (err) => {
+        status.textContent = err.code === 1
+          ? 'Přístup k poloze je zakázaný. Povolte ho v prohlížeči, nebo zadejte obec.'
+          : 'Polohu se nepodařilo zjistit. Zadejte obec.';
+      },
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 600000 });
+  });
+
+  const place = h('input', { id: 'misto', type: 'text', list: 'placed-names', placeholder: 'nebo obec, např. Semtěš', autocomplete: 'off' });
+  const pick = () => {
+    const b = byName.get(fold(place.value));
+    if (b) { center = { lat: b.lat, lon: b.lon, label: b.name }; paint(); }
+  };
+  place.addEventListener('change', pick);
+  place.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); pick(); } });
+
+  const range = h('select', { id: 'km', onchange: (e) => { radius = Number(e.target.value); paint(); } },
+    RADII.map((r) => h('option', { value: String(r) }, `do ${r} km`)));
+  range.value = String(radius);
+
+  mount('V okolí',
+    h('h1', {}, 'V okolí'),
+    h('form', { class: 'search nearbyform', onsubmit: (e) => { e.preventDefault(); pick(); } },
+      locate,
+      h('label', { class: 'vh', for: 'misto' }, 'Obec'),
+      place,
+      h('label', { class: 'vh', for: 'km' }, 'Vzdálenost'),
+      range,
+      h('datalist', { id: 'placed-names' }, placed.map((b) => h('option', { value: b.name })))),
+    h('p', { class: 'note' }, `Poloha se použije jen ve vašem prohlížeči a nikam se neodesílá. Polohu známe u ${num(placed.length)} desek.`),
+    status, boardList, register, more);
+  paint();
+}
+
 // ---------- seznam desek, pokrytí, o projektu ----------
 
 function renderIndex() {
@@ -524,6 +637,7 @@ function renderAbout() {
       h('p', {}, 'Obce a městské části mohou (a podle zákona o svobodném přístupu k informacím by měly) zveřejňovat obsah své úřední desky také jako otevřená data a evidovat ji v Národním katalogu otevřených dat. Každá deska je ale samostatný soubor na serveru obce, takže je pracné sledovat víc než jednu.'),
       h('p', {}, 'Tento web každou hodinu stáhne všechny desky obcí a městských částí z katalogu, sjednotí je a umožní v nich hledat najednou. Desky krajů, ministerstev a soudů nesbírá. Oznámení, která z desky zmizí, zůstávají rok v záložce Sejmuto.'),
       h('p', {}, 'Hledání na úvodní stránce prochází oznámení vyvěšená za posledních 30 dní. Starší najdete na stránce konkrétní desky.'),
+      h('p', {}, 'Stránka V okolí ukáže desky obcí do zvolené vzdálenosti od vaší polohy nebo od zadané obce. Poloha se zjišťuje jen ve vašem prohlížeči a nikam se neodesílá.'),
       h('p', {}, 'Některé obce, které desku do katalogu nezapsaly, se načítají přímo z jejich úřední desky na webu: služba iMunis eDeska (například Dolní Břežany) a weby na systému Galileo (například Semtěš a Bílé Podolí).'),
       h('p', {}, 'Zdrojový kód: ', h('a', { href: 'https://github.com/twarr58/uredni_desky' }, 'github.com/twarr58/uredni_desky'), '.')));
 }

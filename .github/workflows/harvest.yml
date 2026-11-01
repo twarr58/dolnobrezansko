@@ -67,7 +67,7 @@ jobs:
           # Větev drží jen poslední stav (jeden commit bez historie), aby repozitář nebobtnal.
           git worktree add --orphan -b data-next out
           cp state/items.json.gz state/boards.json out/
-          [ -f state/discovered.json ] && cp state/discovered.json out/ || true
+          for f in discovered.json obce.json; do [ -f "state/$f" ] && cp "state/$f" out/ || true; done
           cd out
           git add -A
           git commit -qm "Stav sběru $(date -u +%FT%TZ)"

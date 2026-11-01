@@ -36,7 +36,7 @@ def load_extra_sources(discovered: Path | None = None) -> list[BoardSource]:
             publisher=entry["publisher"],
             access_url=f"{base}/rss.asp",
             fmt="imunis",
-            area=entry.get("area", ""),
+            area=entry.get("area", ""), qid=entry.get("qid", ""),
         ))
     for entry in raw.get("galileo", []):
         url = entry["url"].strip()
@@ -50,7 +50,7 @@ def load_extra_sources(discovered: Path | None = None) -> list[BoardSource]:
             publisher=entry["publisher"],
             access_url=url,
             fmt="galileo",
-            area=entry.get("area", ""),
+            area=entry.get("area", ""), qid=entry.get("qid", ""),
         ))
     for entry in raw.get("ofn", []):  # export OFN na webu obce, který není v NKOD (např. Vismo)
         url = entry["url"].strip()
@@ -58,7 +58,7 @@ def load_extra_sources(discovered: Path | None = None) -> list[BoardSource]:
             sources.append(BoardSource(id=board_id(f"web:{url}"), dataset_iri=url,
                                        title="Úřední deska (otevřená data na webu obce)",
                                        publisher=entry["publisher"], access_url=url,
-                                       area=entry.get("area", "")))
+                                       area=entry.get("area", ""), qid=entry.get("qid", "")))
     titles = {"rss": "Úřední deska (RSS kanál webu obce)", "vismo": "Úřední deska (web obce)",
               "html": "Úřední deska (web obce)"}
     for fmt, title in titles.items():
@@ -67,7 +67,7 @@ def load_extra_sources(discovered: Path | None = None) -> list[BoardSource]:
             if url.startswith(("https://", "http://")):
                 sources.append(BoardSource(id=board_id(f"{fmt}:{url}"), dataset_iri=url, title=title,
                                            publisher=entry["publisher"], access_url=url, fmt=fmt,
-                                           area=entry.get("area", "")))
+                                           area=entry.get("area", ""), qid=entry.get("qid", "")))
     unique: dict[str, BoardSource] = {}
     for src in sources:
         unique.setdefault(src.id, src)
