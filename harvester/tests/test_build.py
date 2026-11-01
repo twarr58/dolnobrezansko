@@ -180,3 +180,13 @@ def test_display_name_namesake_municipalities():
     assert display_name(a, False, True) == "Obec Lhota (okres Plzeň-jih)"
     assert display_name(b, False, True) == "Obec Lhota (obec-lhota.cz)"
     assert display_name(a, False, False) == "Obec Lhota"
+
+
+def test_future_posted_replaced_by_first_seen():
+    p = {"informace": [{"název": {"cs": "Seminář"}, "vyvěšení": {"datum": "2027-01-10"}},
+                       {"název": {"cs": "Bez data"}}]}
+    _, items = merge([SRC], {"b1": FetchResult(True, p)}, [], T0)
+    assert {i.title: i.posted for i in items}["Seminář"] == "2026-10-30"
+    web = BoardSource("w", "https://o.cz/d", "Úřední deska (web obce)", "Obec B", "https://o.cz/d", fmt="html")
+    _, items = merge([web], {"w": FetchResult(True, p)}, [], T0)
+    assert {i.title: i.posted for i in items} == {"Seminář": "2026-10-30", "Bez data": "2026-10-30"}

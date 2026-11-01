@@ -20,6 +20,7 @@ import collections
 import hashlib
 import re
 from dataclasses import dataclass, field
+from datetime import date
 from urllib.parse import urljoin, urlsplit, urlunsplit
 
 import httpx
@@ -79,6 +80,10 @@ def dates_with_labels(text: str) -> list[tuple[str, str]]:
             out.append((iso, text[max(last, m.start() - 40):m.start()]))
         last = m.end()
     return out
+
+
+def _today() -> str:
+    return date.today().isoformat()
 
 
 def pick_dates(text: str) -> tuple[str | None, str | None]:
@@ -265,8 +270,11 @@ def parse_board(html: str | bytes, base: str) -> list[Item]:
                 outside = " ".join(own)
                 title = re.sub(r"\s+", " ", title.replace(own[0], " ")).strip(" -–|:,") if own[0] != title else title
         posted, until = pick_dates(outside if dates_with_labels(outside) else text)
-        if not posted:
-            continue
+        if posted and not until and posted > _today():
+            # jediné datum v budoucnosti nemůže být vyvěšení – deska uvádí jen datum sejmutí
+            posted, until = None, posted
+        if not (posted or until) or not _DATE.sub("", title).strip(" -–.,:|/"):
+            continue  # bez data, nebo „název“ je jen datum
         uhost = urlsplit(url).hostname or ""
         if uhost != host and not _is_doc(url) and not uhost.endswith("." + host.removeprefix("www.")):
             # odkaz mimo web obce, který není soubor – nejspíš reklama / jiný web
@@ -287,8 +295,9 @@ def parse_board(html: str | bytes, base: str) -> list[Item]:
 
 
 def to_informace(item: Item) -> dict:
-    info: dict = {"iri": item.url, "url": item.url.split("#")[0], "název": {"cs": item.title},
-                  "vyvěšení": {"datum": item.posted}}
+    info: dict = {"iri": item.url, "url": item.url.split("#")[0], "název": {"cs": item.title}}
+    if item.posted:
+        info["vyvěšení"] = {"datum": item.posted}
     if item.until:
         info["relevantní_do"] = {"datum": item.until}
     if item.docs:

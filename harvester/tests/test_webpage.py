@@ -101,3 +101,12 @@ def test_card_date_element_beats_date_in_title_and_aspnet_session():
                                                    ("Usnesení ZO 28/26 ze dne 24.9.2026", "2026-09-30")]
     assert _clean_url("https://x.cz/Ginis/App/UDE01/(S(krhsdzkwaca44abc))/Detail.aspx?id=5") == \
         "https://x.cz/Ginis/App/UDE01/Detail.aspx?id=5"
+
+
+def test_single_future_date_is_until_and_date_titles_dropped():
+    html = """<table><tr><td><a href="/d/1">Změna úředních hodin</a></td><td>8.10.2099</td></tr>
+    <tr><td><a href="/d/2">Závěrečný účet</a></td><td>30.6.2099</td></tr>
+    <tr><td><a href="/d/3">2026-12-31</a></td><td>2026-12-31</td></tr></table>"""
+    items = parse_board(html, BASE)
+    assert [(i.title, i.posted, i.until) for i in items] == [
+        ("Změna úředních hodin", None, "2099-10-08"), ("Závěrečný účet", None, "2099-06-30")]

@@ -73,6 +73,7 @@ def merge(
 
     boards: list[dict] = []
     out: dict[str, Item] = {}
+    tomorrow = (now + timedelta(days=1)).date().isoformat()
     for src in sources:
         res = results.get(src.id) or FetchResult(False, error="nestaženo")
         board = {**asdict(src), "ok": res.ok, "error": res.error, "kind": res.kind, "http_status": res.http_status,
@@ -104,6 +105,10 @@ def merge(
                 old = candidates.pop()
                 seen.add(old.id)
             it.first_seen = old.first_seen if old else stamp
+            if it.posted and it.posted > tomorrow or not it.posted and src.fmt != "ofn":
+                # vyvěšení v budoucnosti je chyba zdroje (datum akce z názvu, pubDate události v RSS);
+                # u desek z webů bez data vyvěšení – nahradí se dnem, kdy se oznámení objevilo
+                it.posted = it.first_seen[:10]
             it.last_seen = stamp
             out[it.id] = it
             seen.add(it.id)
