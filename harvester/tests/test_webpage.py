@@ -62,3 +62,23 @@ def test_volatile_params_and_subpages():
     html = ('<a href="/urad/uredni-deska/stavebni/">S</a><a href="/urad/uredni-deska/">D</a>'
             '<a href="/urad/">U</a><a href="/urad/uredni-deska/archiv-2019/">A</a><a href="/urad/uredni-deska/a/b/">X</a>')
     assert subpages(html, "https://o.cz/urad/uredni-deska/") == ["https://o.cz/urad/uredni-deska/stavebni/"]
+
+
+def test_item_wrapped_in_link_and_date_in_title():
+    html = """<main><div class="grid">
+    <a class="card" href="/uredni-deska/abc"><h3>Pozvánka na zasedání dne 9.11.2026</h3><span>Vyvěšeno 29. 10. 2026</span><span>Do 31.12.2026</span></a>
+    <a class="card" href="/uredni-deska/def"><h3>Rozpočtové opatření</h3><span>Vyvěšeno 27. 10. 2026</span></a>
+    </div></main>"""
+    items = parse_board(html, BASE)
+    assert [(i.url, i.posted, i.until) for i in items] == [
+        ("https://www.obec.cz/uredni-deska/abc", "2026-10-29", "2026-12-31"),
+        ("https://www.obec.cz/uredni-deska/def", "2026-10-27", None)]
+
+
+def test_form_wrapper_and_cp1250():
+    html = ("<html><head><meta charset='windows-1250'></head><body class='has-sidebar'><form><table>"
+            "<tr><td><a href='/d/1.pdf'>Oznámení o vyhlášení</a></td><td>1.10.2026</td></tr>"
+            "<tr><td><a href='/d/2.pdf'>Záměr prodeje (120 kB)</a></td><td>2.10.2026</td></tr>"
+            "</table></form></body></html>").encode("cp1250")
+    items = parse_board(html, BASE)
+    assert [i.title for i in items] == ["Oznámení o vyhlášení", "Záměr prodeje"]

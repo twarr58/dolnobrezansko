@@ -94,14 +94,11 @@ def _text(el) -> str:
 
 
 def _strip_noise(root) -> None:
-    for bad in root.xpath("//script|//style|//noscript|//nav|//header|//footer|//form|//select|//template"):
-        bad.drop_tree()
-    for el in root.xpath("//*[@class or @id or @role]"):
-        if el.getparent() is None:
-            continue
-        marker = " ".join(filter(None, (el.get("class"), el.get("id"), el.get("role"))))
-        if _NOISE.search(marker) and el.tag not in ("body", "html", "main", "table", "tr", "td", "li"):
-            el.drop_tree()
+    # jen jednoznačné značky; podle tříd se neodstraňuje (obal celé stránky mívá třídu typu „has-sidebar“)
+    for bad in root.xpath("//script|//style|//noscript|//nav|//select|//template|//header[not(.//table)]|"
+                          "//footer[not(.//table)]|//*[@role='navigation']"):
+        if bad.getparent() is not None:
+            bad.drop_tree()
 
 
 HTML_HEADERS = {"Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8"}
@@ -130,7 +127,31 @@ def _links(el) -> list:
     return [a for a in el.iter("a") if a.get("href") and not _SKIP_HREF.match(a.get("href").strip())]
 
 
+_META_CHARSET = re.compile(rb'<meta[^>]+charset=["\']?([a-z0-9_-]+)', re.I)
+
+
+def decode_html(content: bytes, header_charset: str | None = None) -> str:
+    """Text stránky: kódování z hlavičky, z <meta charset>, jinak UTF-8 a záložně windows-1250."""
+    for enc in (header_charset, (m.group(1).decode() if (m := _META_CHARSET.search(content[:4096])) else None)):
+        if enc:
+            try:
+                return content.decode(enc)
+            except (LookupError, UnicodeDecodeError):
+                pass
+    try:
+        return content.decode("utf-8")
+    except UnicodeDecodeError:
+        return content.decode("cp1250", errors="replace")
+
+
+def response_text(resp: httpx.Response) -> str:
+    return decode_html(resp.content, resp.charset_encoding)
+
+
 def parse_board(html: str | bytes, base: str) -> list[Item]:
+    if isinstance(html, bytes):
+        html = decode_html(html)
+    html = re.sub(r"^\s*<\?xml[^>]*\?>", "", html)
     try:
         root = lxml.html.fromstring(html)
     except (etree.ParserError, ValueError):
@@ -143,8 +164,11 @@ def parse_board(html: str | bytes, base: str) -> list[Item]:
         href = _clean_url(urljoin(base, a.get("href").strip()))
         if not href.startswith(("http://", "https://")):
             continue
+        own = _text(a)
+        own_dates = bool(dates_with_labels(own))
+        chosen = None
         el = a
-        for _ in range(6):
+        for _ in range(7):
             el = el.getparent()
             if el is None or el.tag in ("body", "html"):
                 break
@@ -154,9 +178,18 @@ def parse_board(html: str | bytes, base: str) -> list[Item]:
             text = _text(el)
             if len(text) > 1500:
                 break
-            if dates_with_labels(text):
-                containers.setdefault(id(el), (el, text, links))
+            outside = text
+            for lnk in links:  # datum mimo všechny odkazy – jinak jde o obal více položek
+                if lt := _text(lnk):
+                    outside = outside.replace(lt, " ", 1)
+            if dates_with_labels(outside):
+                chosen = (el, text, links)
                 break
+        if chosen is None and own_dates:
+            # celá položka uvnitř odkazu (<a class="card">název, datum</a>), nebo datum jen v názvu
+            chosen = (a, own, [a])
+        if chosen:
+            containers.setdefault(id(chosen[0]), chosen)
 
     groups: dict[str, list] = collections.defaultdict(list)
     for el, text, links in containers.values():
@@ -190,9 +223,14 @@ def parse_board(html: str | bytes, base: str) -> list[Item]:
             title = " ".join(title.split()).strip(" -–|:,")[:300]
         else:
             continue
+        title = re.sub(r"\s*[\(\[]?\s*(\d+([,.]\d+)?\s*[kKMm]i?B|pdf|docx?)\s*[\)\]]?\s*$", "", title).strip()
         if len(title) < 4:
             continue
-        posted, until = pick_dates(text)
+        outside = text
+        for lnk in links:
+            if (lt := _text(lnk)) and lnk is not el:
+                outside = outside.replace(lt, " ", 1)
+        posted, until = pick_dates(outside if dates_with_labels(outside) else text)
         if not posted:
             continue
         uhost = urlsplit(url).hostname or ""
@@ -270,16 +308,16 @@ async def fetch_items(client: httpx.AsyncClient, url: str) -> tuple[list[Item], 
 async def items_from_response(client: httpx.AsyncClient, resp: httpx.Response) -> tuple[list[Item], str]:
     """Položky ze stažené stránky desky, případně z iframu nebo z podstránek kategorií."""
     base = str(resp.url)
-    items = parse_board(resp.content, base)
+    items = parse_board(response_text(resp), base)
     if items:
         return items, base
     for src in iframe_sources(resp.text, base):
-        if (r := await _get(client, src)) and (items := parse_board(r.content, str(r.url))):
+        if (r := await _get(client, src)) and (items := parse_board(response_text(r), str(r.url))):
             return items, str(r.url)
     merged: dict[str, Item] = {}
     for sp in subpages(resp.text, base):
         if r := await _get(client, sp):
-            for it in parse_board(r.content, str(r.url)):
+            for it in parse_board(response_text(r), str(r.url)):
                 merged.setdefault(it.url, it)
     return list(merged.values()), base
 

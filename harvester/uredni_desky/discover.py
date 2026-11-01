@@ -106,8 +106,11 @@ def classify_html(html: str, base: str) -> dict:
         info["cms"] = m.group(1)[:60]
     elif "igalileo.cz" in low:
         info["cms"] = "Galileo"
-    if m := _BOARD_LINK.search(html):
-        info["board_link"] = urljoin(base, "".join(m.group(1).split()))
+    if links := _BOARD_LINK.findall(html):
+        # nejkratší cesta = stránka seznamu, ne detail jednoho oznámení nebo archiv
+        cands = [urljoin(base, "".join(h.replace("&amp;", "&").split())) for h in links]
+        cands = [c for c in cands if "archiv" not in c.lower()] or cands
+        info["board_link"] = min(cands, key=lambda c: (len(urlsplit(c).path) + len(urlsplit(c).query), c))
     else:
         for href, text in _BOARD_ANCHOR.findall(html):
             if _BOARD_TEXT.search(_TAGS.sub(" ", text)) and not href.lower().startswith(("javascript:", "mailto:")):
@@ -148,6 +151,18 @@ async def _probe_board(client: httpx.AsyncClient, info: dict) -> None:
     if info.get("cms", "").startswith("Vismo") and "site_board" in r.text:
         info.update(fmt="vismo", url=str(r.url))
         return
+    if m := _IMUNIS.search(r.text):  # stránka desky odkazuje na eDesku iMunis
+        info.update(fmt="imunis", subdomain=m.group(1).lower())
+        return
+    for href in re.findall(r'href="([^"]+\.json)"', r.text, re.I)[:2]:  # export OFN odkázaný ze stránky
+        url = urljoin(str(r.url), href.replace("&amp;", "&"))
+        try:
+            jr = await client.get(url, timeout=20)
+            if jr.status_code == 200 and decode_board(jr.content)[0].get("informace") is not None:
+                info.update(fmt="ofn", url=url)
+                return
+        except (httpx.HTTPError, httpx.InvalidURL, BoardFormatError, AttributeError):
+            continue
     for cand in feed_candidates(r.text, str(r.url)):
         try:
             fr = await client.get(cand, timeout=20)
