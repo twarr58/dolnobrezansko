@@ -49,10 +49,16 @@ class _ListParser(HTMLParser):
         self._buf: list[str] = []
         self._category: str | None = None
         self._in_cat_title = False
+        self._odate_depth = 0  # šablona lego3: div.official-desk__date
 
     def handle_starttag(self, tag, attrs):
         cls = _classes(attrs)
-        if tag == "a" and "item-href" in cls:
+        if self._odate_depth and tag == "div":
+            self._odate_depth += 1
+        if tag == "div" and any(c.startswith("official-desk__date") for c in cls) and not self._odate_depth:
+            self._odate_depth, self._buf = 1, []
+            return
+        if tag == "a" and ("item-href" in cls or "official-desk__body-heading" in cls):
             href = dict(attrs).get("href") or ""
             self.items.append(ListItem(_clean_url(urljoin(self.base, href)), "", category=self._category))
             self._in_link, self._buf = True, []
@@ -63,6 +69,17 @@ class _ListParser(HTMLParser):
             self._in_cat_title, self._buf = True, []
 
     def handle_endtag(self, tag):
+        if tag == "div" and self._odate_depth:
+            self._odate_depth -= 1
+            if not self._odate_depth and self.items:
+                text = " ".join(self._buf)
+                value = czech_date(text)
+                if value:
+                    if "sejmut" in text.lower() or "do:" in text.lower():
+                        self.items[-1].until = value
+                    else:
+                        self.items[-1].posted = value
+            return
         if tag == "a" and self._in_link:
             self.items[-1].title = " ".join("".join(self._buf).split())
             self._in_link = False
@@ -78,7 +95,7 @@ class _ListParser(HTMLParser):
             self._in_cat_title = False
 
     def handle_data(self, data):
-        if self._in_link or self._date or self._in_cat_title:
+        if self._in_link or self._date or self._in_cat_title or self._odate_depth:
             self._buf.append(data)
 
 
@@ -163,6 +180,10 @@ def to_informace(item: ListItem, detail: Detail | None) -> dict:
 async def fetch_board(client: httpx.AsyncClient, list_url: str, detail_concurrency: int = 2) -> dict:
     resp = await client.get(list_url)
     resp.raise_for_status()
+    if "official-desk__item" in resp.text and "/-/aktualni/" in resp.text:
+        # šablona lego3: titulní stránka desky ukazuje jen 5 nejnovějších, celý seznam je na -/aktualni/
+        resp = await client.get(str(resp.url).split("#")[0].rstrip("/") + "/-/aktualni/")
+        resp.raise_for_status()
     items = parse_list(resp.text, str(resp.url))
     if not items:
         raise ValueError("Na stránce úřední desky nebyly nalezeny žádné položky (změnila se šablona?)")

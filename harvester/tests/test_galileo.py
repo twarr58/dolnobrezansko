@@ -87,3 +87,44 @@ def test_empty_list_is_error():
 
     res = asyncio.run(go())[src.id]
     assert not res.ok and res.kind == "format"
+
+
+LEGO3 = """<html><body><h2>Nejnovější záznamy</h2>
+<div class="official-desk__item"><h3>
+ <a class="official-desk__body-heading" href="/urad/uredni-deska/ustavujici-zasedani-zastupitelstva-obce-806.html">Ustavující zasedání zastupitelstva obce</a></h3>
+ <div class="official-desk__data">
+  <div class="official-desk__date official-desk__date--from"><svg role="img"><title>Vyvěšeno</title><path d="M1"/></svg> 26. 10. 2026</div>
+  <div class="official-desk__date official-desk__date--to"><svg role="img"><title>Datum sejmutí</title><path d="M1"/></svg> 11. 11. 2026</div>
+ </div></div>
+<div class="official-desk__item"><h3>
+ <a class="official-desk__body-heading" href="/urad/uredni-deska/zamer-obce-risuty-prodej-stepkovace-804.html">Záměr obce Řisuty - prodej štěpkovače</a></h3>
+ <div class="official-desk__data"><div class="official-desk__date"><svg><title>Vyvěšeno</title></svg> 20. 10. 2026</div></div></div>
+<a href="/urad/uredni-deska/-/aktualni/">Aktuální</a>
+</body></html>"""
+
+
+def test_parse_lego3_template():
+    items = parse_list(LEGO3, "https://www.risuty.cz/urad/uredni-deska/-/aktualni/")
+    assert [(i.title[:12], i.posted, i.until) for i in items] == [
+        ("Ustavující z", "2026-10-26", "2026-11-11"), ("Záměr obce Ř", "2026-10-20", None)]
+    assert items[0].url == "https://www.risuty.cz/urad/uredni-deska/ustavujici-zasedani-zastupitelstva-obce-806.html"
+
+
+def test_lego3_fetches_full_list():
+    from uredni_desky.galileo import fetch_board
+    seen = []
+
+    def handler(request):
+        seen.append(request.url.path)
+        if request.url.path.endswith("/-/aktualni/"):
+            return httpx.Response(200, text=LEGO3)
+        if request.url.path == "/urad/uredni-deska/":
+            return httpx.Response(200, text=LEGO3)  # titulní stránka desky (5 nejnovějších)
+        return httpx.Response(200, text=DETAIL)
+
+    async def go():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as c:
+            return await fetch_board(c, "https://www.risuty.cz/urad/uredni-deska/")
+
+    data = asyncio.run(go())
+    assert "/urad/uredni-deska/-/aktualni/" in seen and len(data["informace"]) == 2
