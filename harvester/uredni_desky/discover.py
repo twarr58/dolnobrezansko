@@ -193,7 +193,7 @@ async def _probe_board(client: httpx.AsyncClient, info: dict) -> None:
     except (httpx.HTTPError, httpx.InvalidURL, ValueError):
         return
     if items:
-        info.update(fmt="html", url=src, items=len(items))
+        info.update(fmt="html", url=webpage._clean_url(src), items=len(items))
 
 
 async def _probe_common_paths(client: httpx.AsyncClient, base: str, info: dict) -> None:

@@ -64,6 +64,8 @@ def load_extra_sources(discovered: Path | None = None) -> list[BoardSource]:
     for fmt, title in titles.items():
         for entry in raw.get(fmt, []):
             url = entry["url"].strip()
+            if fmt == "html":  # adresa z iframu GINIS může nést identifikátor relace /(S(…))/
+                url = re.sub(r"/\([A-Z]\([a-z0-9]{10,}\)\)", "", url, flags=re.I)
             if url.startswith(("https://", "http://")):
                 sources.append(BoardSource(id=board_id(f"{fmt}:{url}"), dataset_iri=url, title=title,
                                            publisher=entry["publisher"], access_url=url, fmt=fmt,

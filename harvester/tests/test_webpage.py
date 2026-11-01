@@ -90,3 +90,14 @@ def test_czech_month_names_and_card_title():
     html = """<ul><li><a href="/d/1"><h3>Pozvánka</h3><p>Vyvěšeno: 30. 10. 2026</p></a></li>
     <li><a href="/d/2"><h3>Opis výsledků</h3><p>Vyvěšeno: 19. 10. 2026</p></a></li></ul>"""
     assert [i.title for i in parse_board(html, BASE)] == ["Pozvánka", "Opis výsledků"]
+
+
+def test_card_date_element_beats_date_in_title_and_aspnet_session():
+    from uredni_desky.webpage import _clean_url
+    html = """<div><a class="newsItem" href="/n/1"><div class="t">Zasedání dne 4.11.2026</div><div class="newsDate">27. říjen 2026</div></a>
+    <a class="newsItem" href="/n/2"><div class="t">Usnesení ZO 28/26 ze dne 24.9.2026</div><div class="newsDate">30. září 2026</div></a></div>"""
+    items = parse_board(html, BASE)
+    assert [(i.title, i.posted) for i in items] == [("Zasedání dne 4.11.2026", "2026-10-27"),
+                                                   ("Usnesení ZO 28/26 ze dne 24.9.2026", "2026-09-30")]
+    assert _clean_url("https://x.cz/Ginis/App/UDE01/(S(krhsdzkwaca44abc))/Detail.aspx?id=5") == \
+        "https://x.cz/Ginis/App/UDE01/Detail.aspx?id=5"

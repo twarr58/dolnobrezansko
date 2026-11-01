@@ -111,6 +111,7 @@ def _strip_noise(root) -> None:
             bad.drop_tree()
 
 
+_ASPNET_SESSION = re.compile(r"/\([A-Z]\([a-z0-9]{10,}\)\)", re.I)
 HTML_HEADERS = {"Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8"}
 _VOLATILE_PARAM = re.compile(r"^(kshow|utm_[a-z]+|sid|phpsessid|fbclid)=", re.I)
 
@@ -119,7 +120,8 @@ def _clean_url(url: str) -> str:
     """Bez fragmentu a parametrů, které se mění (kategorie výpisu, sledování) – URL slouží jako identifikátor."""
     p = urlsplit(url)
     query = "&".join(q for q in p.query.split("&") if q and not _VOLATILE_PARAM.match(q))
-    return urlunsplit((p.scheme, p.netloc, p.path, query, ""))
+    path = _ASPNET_SESSION.sub("", p.path)  # GINIS / ASP.NET: /(S(relace))/ se mění při každém načtení
+    return urlunsplit((p.scheme, p.netloc, path, query, ""))
 
 
 def _is_doc(url: str) -> bool:
@@ -229,7 +231,7 @@ def parse_board(html: str | bytes, base: str) -> list[Item]:
             heads = el.xpath(".//h1|.//h2|.//h3|.//h4|.//h5|.//strong|.//*[contains(@class,'title')]")
             head = next((_text(h) for h in heads if len(_text(h)) >= 4), "")
             if not head:
-                head = re.split(r"(vyvěšeno|zveřejněno|vystavení|sejmut|platnost)", _text(el), 1, flags=re.I)[0]
+                head = re.split(r"(vyvěšeno|zveřejněno|vystavení|sejmut|platnost)", _text(el), maxsplit=1, flags=re.I)[0]
             url = _clean_url(urljoin(base, el.get("href").strip()))
             titled = [(" ".join(head.split()).strip(" -–|:,"), url)] if len(head.strip()) >= 4 else titled
         if titled:
@@ -248,6 +250,20 @@ def parse_board(html: str | bytes, base: str) -> list[Item]:
         for lnk in links:
             if (lt := _text(lnk)) and lnk is not el:
                 outside = outside.replace(lt, " ", 1)
+        if el.tag == "a":
+            # karta v odkazu: datum vyvěšení bývá ve vlastním prvku („27. říjen 2026“), datum v názvu ne
+            heads = {"h1", "h2", "h3", "h4", "h5", "h6", "strong"}
+            own = [t for d in el.iter() if isinstance(d.tag, str) and d is not el and d.tag not in heads
+                   and not any(x.tag in heads for x in d.iterancestors() if x is not el and el in x.iterancestors() or False)
+                   and len(t := _text(d)) < 60 and dates_with_labels(t)
+                   and not d.xpath(".//h1|.//h2|.//h3|.//h4|.//h5|.//strong")
+                   and not any(dates_with_labels(_text(c)) for c in d if isinstance(c.tag, str))]
+            # prvek obsahuje jen datum (případně s popiskem „Vyvěšeno:“)
+            own = [t for t in own if len(re.sub(r"(vyvěšeno|zveřejněno|vystaveno|vloženo|sejmuto|datum|od|do|dne|[\s:–|-])",
+                                                "", _DATE.sub("", t), flags=re.I)) <= 3]
+            if own:
+                outside = " ".join(own)
+                title = re.sub(r"\s+", " ", title.replace(own[0], " ")).strip(" -–|:,") if own[0] != title else title
         posted, until = pick_dates(outside if dates_with_labels(outside) else text)
         if not posted:
             continue
