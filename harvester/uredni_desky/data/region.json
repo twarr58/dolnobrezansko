@@ -5,7 +5,7 @@
   "web": "https://www.dolnobrezansko.cz/",
   "area": "Praha-západ",
   "members": [
-    {"name": "Dolní Břežany", "newsletter": {"name": "Dolnobřežanský Rozhled", "url": "https://www.dolnibrezany.cz/obecni-zpravodaj", "match": "/dolnobrezansky-ro[a-z]+-cislo-", "page_param": "elparam-5-page", "pages": 4}, "publisher": "Obec Dolní Břežany", "qid": "Q2697750",
+    {"name": "Dolní Břežany", "newsletter": {"name": "Dolnobřežanský Rozhled", "url": "https://www.dolnibrezany.cz/obecni-zpravodaj", "match": "/dolnobrezansky-ro[a-z]+-cislo-", "page_param": "elparam-5-page", "pages": 4, "detail": {"match": "/file/\\d+", "exclude": "kalend"}}, "publisher": "Obec Dolní Břežany", "qid": "Q2697750",
      "source": {"fmt": "imunis", "subdomain": "brezany"}},
     {"name": "Vrané nad Vltavou", "newsletter": {"name": "Zrcadlo", "url": "https://vranenadvltavou.cz/zrcadlo---obecni-zpravodaj/", "match": "/formular/.*zrcadlo", "exclude": "cen[ií]k"}, "publisher": "Obec Vrané nad Vltavou", "qid": "Q164468",
      "source": {"fmt": "imunis", "subdomain": "vranenadvltavou"}},

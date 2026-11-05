@@ -80,3 +80,31 @@ def test_psary_and_jesenice_match_only_issue_files():
     got = newsletters.parse_archive(jes, "https://www.mujesenice.cz/jesenicky-kuryr/ms-4026/p1=4026", cfg["Jesenice"])
     assert [(i["t"], i["y"]) for i in got] == [("Jesenický kurýr 10/2026", 2026)]
     assert cfg["Okrouhlo"] is False
+
+
+def test_detail_page_gives_pdf_and_issue_date():
+    page = """<html><body><nav>Kalendář 2026</nav><main><h1>Dolnobřežanský Rozkvět číslo 77</h1><p>prosinec 2021</p>
+      <a href="/file/111">Dolnobřežanský Rozkvět - vydání č. 77 ve formátu PDF</a>
+      <a href="/file/222">Kalendář akcí ve formátu PDF</a></main></body></html>"""
+    got = newsletters.parse_detail(page, "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-77",
+                                   {"match": r"/file/\d+", "exclude": "kalend"})
+    assert got == {"pdf": "https://www.dolnibrezany.cz/file/111", "when": "prosinec 2021", "y": 2021}
+
+    calls = []
+
+    def handler(req):
+        calls.append(str(req.url))
+        return httpx.Response(200, text=page)
+
+    async def go(resolved):
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            return await newsletters.resolve_details(
+                client, [{"t": "Rozkvět číslo 77", "url": "https://www.dolnibrezany.cz/r-77"}],
+                {"match": r"/file/\d+", "exclude": "kalend"}, resolved)
+
+    resolved = {}
+    out = asyncio.run(go(resolved))
+    assert out == [{"t": "Rozkvět číslo 77 (prosinec 2021)", "url": "https://www.dolnibrezany.cz/file/111",
+                    "page": "https://www.dolnibrezany.cz/r-77", "y": 2021}]
+    asyncio.run(go(resolved))  # podruhé z paměti
+    assert len(calls) == 1

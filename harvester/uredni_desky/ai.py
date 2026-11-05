@@ -29,7 +29,7 @@ MAX_DOCS = 10
 TEXT_MAX_CHARS = 150_000
 EFFORT = os.environ.get("AI_EFFORT", "medium")
 # Verze obsahu shrnutí: zvýšení přepočítá shrnutí všech aktivních oznámení (postupně, AI_LIMIT za běh).
-VERSION = 2
+VERSION = 3  # 3: věcné pojmenování („vypnutí elektřiny“) – přegeneruje i stará shrnutí
 _IMAGE_TYPES = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg", "gif": "image/gif", "webp": "image/webp"}
 
 SYSTEM = """Jsi pomocník, který lidem z obcí mikroregionu Dolnobřežansko vysvětluje oznámení z úředních desek.

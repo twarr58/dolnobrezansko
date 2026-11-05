@@ -168,3 +168,33 @@ def test_edesky_attachment_uses_public_text_without_downloading_original(tmp_pat
     docs, _ = asyncio.run(go())
     assert hits == ["https://edesky.cz/dokument/38492238.txt"]  # originál na blokovaném webu se nezkouší
     assert docs[orig]["kind"] == "text" and docs[orig]["ext"] == "pdf" and "28. 11. 2026" in docs[orig]["text"]
+
+
+def test_old_cached_edesky_page_is_replaced_by_text(tmp_path, monkeypatch):
+    """Příloha uložená dřív jako stránka edesky.cz (HTML s menu) se hned nahradí rozpoznaným textem."""
+    from datetime import datetime, timezone
+
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_FEDERATION_RULE_ID", raising=False)
+    edesky.ATTACHMENTS.clear(), edesky._TEXT_FILES.clear(), edesky.TEXTS.clear()
+    url = "https://edesky.cz/dokument/38492238#priloha_49866786"
+    edesky.ATTACHMENTS[url] = {"text_url": "https://edesky.cz/dokument/38492238.txt", "att_id": "49866786",
+                               "doc_id": "38492238"}
+    region._write_gz(tmp_path / "docs.json.gz", {url: {
+        "url": url, "ext": "html", "kind": "text", "chars": 2274, "sha": "old", "checked": "2026-11-05T00:00:00+00:00",
+        "text": "(function(w,d,s,l,i){w[l]=w[l]||[];"}})
+    hits = []
+
+    def handler(req):
+        hits.append(str(req.url))
+        return httpx.Response(200, text=TEXT_FILE)
+
+    items = [{"id": "i1", "board": "b1", "title": "OOP", "posted": "2026-11-05", "docs": [{"name": "OOP", "url": url}]}]
+
+    async def go():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as c:
+            return await region.enrich(c, items, tmp_path, ai_limit=0, now=datetime(2026, 11, 5, 12, tzinfo=timezone.utc))
+
+    docs, _ = asyncio.run(go())
+    assert hits == ["https://edesky.cz/dokument/38492238.txt"]
+    assert docs[url]["src"] == "edesky" and "function(w" not in docs[url]["text"]

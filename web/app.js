@@ -10,7 +10,7 @@ const WEEKDAYS = ['ne', 'po', 'út', 'st', 'čt', 'pá', 'so'];
 const WEEKDAYS_LONG = ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'];
 const RESTRICTIONS = new Set(['doprava', 'energie', 'voda']); // akce, která omezuje (uzavírka, odstávka)
 
-const state = { data: null, filter: { obec: '', tema: '', q: '' }, limit: STEP, listScroll: null };
+const state = { data: null, filter: { obec: '', tema: '', q: '', den: '', lhuta: false }, limit: STEP, listScroll: null };
 
 // ---------- pomocné funkce ----------
 
@@ -184,6 +184,8 @@ function route() {
   state.filter.obec = params.get('obec') || '';
   state.filter.tema = params.get('tema') || '';
   state.filter.q = params.get('q') || '';
+  state.filter.den = isIso(params.get('den')) ? params.get('den') : '';
+  state.filter.lhuta = params.get('lhuta') === '1';
   onList = true;
   renderHome();
   const y = state.listScroll;
@@ -196,6 +198,8 @@ function writeFilter() {
   if (state.filter.obec) p.set('obec', state.filter.obec);
   if (state.filter.tema) p.set('tema', state.filter.tema);
   if (state.filter.q) p.set('q', state.filter.q);
+  if (state.filter.den) p.set('den', state.filter.den);
+  if (state.filter.lhuta) p.set('lhuta', '1');
   const qs = p.toString();
   history.replaceState(null, '', qs ? `#/?${qs}` : '#/');
 }
@@ -220,11 +224,12 @@ function stem(term) {
 }
 
 function filtered() {
-  const { obec, tema, q } = state.filter;
+  const { obec, tema, q, lhuta } = state.filter;
   const terms = fold(q).split(/\s+/).filter(Boolean).map(stem);
   return state.data.items.filter((it) => {
     if (obec && it.o !== obec) return false;
     if (tema && it.s?.cat !== tema) return false;
+    if (lhuta && !(isIso(it.s?.deadline) && daysTo(it.s.deadline) >= 0 && !it.r)) return false;
     if (!terms.length) return true;
     if (!it._q) it._q = searchText(it);
     return terms.every((t) => it._q.includes(t));
@@ -248,26 +253,23 @@ function row(it, dateIso, dateNote, datePrefix) {
       h('span', { class: 'row__meta' }, [dateNote, it.o, label(it)].filter(Boolean).join(' · '), badges(it)))));
 }
 
-function weekStrip(groups, onPick) {
-  return h('div', { class: 'week', role: 'list', 'aria-label': 'Příštích 7 dní' },
+/** Řada 7 malých štítků dní; klik vybere den (znovu klik zruší). */
+function dayChips(groups, onPick) {
+  return h('div', { class: 'days', role: 'group', 'aria-label': 'Nejbližších 7 dní' },
     Array.from({ length: 7 }, (_, i) => {
       const iso = addDays(TODAY, i);
       const items = groups.get(iso) || [];
-      const kinds = new Set(items.map((x) => x.w.kind));
-      const cls = ['day-btn', i === 0 ? 'day-btn--today' : '', items.length ? 'day-btn--has' : '',
-        kinds.has('warn') ? 'day-btn--warn' : kinds.has('event') ? 'day-btn--event' : ''].filter(Boolean).join(' ');
+      const kinds = ['warn', 'event', 'start'].filter((k) => items.some((x) => x.w.kind === k));
       const name = `${i === 0 ? 'dnes, ' : ''}${weekdayLong(iso)} ${dateCz(iso)}`;
-      return h('div', { role: 'listitem' }, h('button', {
-        type: 'button', class: cls, disabled: !items.length,
-        'aria-label': items.length ? `${name}: ${items.length} ${plural(items.length, 'termín', 'termíny', 'termínů')}` : `${name}: nic`,
-        onclick: () => onPick(iso),
+      const on = state.filter.den === iso;
+      return h('button', {
+        type: 'button', class: `day${i === 0 ? ' day--today' : ''}`, 'aria-pressed': String(on), disabled: !items.length && !on,
+        'aria-label': `${name}: ${items.length ? `${items.length} ${plural(items.length, 'termín', 'termíny', 'termínů')}` : 'nic'}`,
+        onclick: () => onPick(on ? '' : iso),
       },
-      h('span', { class: 'day-btn__wd' }, i === 0 ? 'dnes' : weekday(iso)),
-      h('span', { class: 'day-btn__d' }, String(+iso.slice(8, 10))),
-      h('span', { class: 'day-btn__full' }, `${weekday(iso)} ${dateCz(iso)}`),
-      h('span', { class: 'day-btn__rel' }, i < 2 ? relDay(iso) : ''),
-      h('span', { class: 'day-btn__count' }, items.length ? `${items.length} ${plural(items.length, 'termín', 'termíny', 'termínů')}` : 'nic'),
-      h('span', { class: 'dots', 'aria-hidden': 'true' }, ['warn', 'event', 'start'].filter((k) => kinds.has(k)).map((k) => h('span', { class: `dot dot--${k}` })))));
+      h('span', { class: 'day__wd' }, i === 0 ? 'dnes' : weekday(iso)),
+      h('span', { class: 'day__d' }, `${+iso.slice(8, 10)}.`),
+      h('span', { class: 'dots', 'aria-hidden': 'true' }, kinds.map((k) => h('span', { class: `dot dot--${k}` }))));
     }));
 }
 
@@ -275,12 +277,34 @@ function renderHome() {
   const d = state.data;
   const updated = new Date(d.generated_at);
   const connected = d.members.filter((m) => m.connected);
+  const labels = d.categories || {};
   const counts = new Map();
-  for (const it of d.items) if (!it.r) counts.set(it.o, (counts.get(it.o) || 0) + 1);
+  const catCounts = new Map();
+  for (const it of d.items) {
+    if (it.r) continue;
+    counts.set(it.o, (counts.get(it.o) || 0) + 1);
+    if (it.s?.cat) catCounts.set(it.s.cat, (catCounts.get(it.s.cat) || 0) + 1);
+  }
+  const total = d.items.filter((it) => !it.r).length;
+  const villageNames = connected.map((m) => m.name)
+    .sort((a, b) => (counts.get(b) || 0) - (counts.get(a) || 0) || a.localeCompare(b, 'cs'));
+  const topicIds = [...catCounts.keys()]
+    .sort((a, b) => catCounts.get(b) - catCounts.get(a) || (labels[a] || a).localeCompare(labels[b] || b, 'cs'));
+  const topicName = (id) => labels[id] || id;
 
-  const weekBox = h('div');
+  const daysBox = h('div', { class: 'filters__days' });
   const body = h('div', { class: 'timeline' });
-  const status = h('p', { class: 'status', 'aria-live': 'polite' });
+  const status = h('span', { 'aria-live': 'polite' });
+  const reset = h('button', { type: 'button', class: 'linkish', hidden: true }, 'Zrušit výběr');
+  const tokens = h('span', { class: 'tokens' });
+  const sugBox = h('div', { class: 'sug', role: 'listbox', hidden: true, 'aria-label': 'Návrhy' });
+  const vilPanel = h('div', { class: 'vilpanel', id: 'vilpanel', hidden: true });
+  const topicRow = h('nav', { class: 'topics', 'aria-label': 'Témata' });
+  let vilBtn;
+  let lhutaBtn;
+
+  const changed = () => { state.limit = STEP; writeFilter(); paintControls(); paint(); };
+  const setFilter = (patch) => { Object.assign(state.filter, patch); changed(); };
 
   const paint = () => {
     const items = filtered();
@@ -308,15 +332,15 @@ function renderHome() {
     undated.sort((a, b) => (b.p || '').localeCompare(a.p || '') || (b.fs || '').localeCompare(a.fs || ''));
     const removed = items.filter((it) => it.r).sort((a, b) => (b.r || '').localeCompare(a.r || ''));
 
-    weekBox.replaceChildren(weekStrip(groups, (iso) => document.getElementById(`den-${iso}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })));
-    const nDated = [...groups.values()].reduce((n, l) => n + l.length, 0);
-    status.textContent = items.length
-      ? [`${nDated} ${plural(nDated, 'termín', 'termíny', 'termínů')} v příštích ${HORIZON} dnech`,
-        running.length ? `${running.length} právě platí` : null,
-        `${undated.length} bez termínu`].filter(Boolean).join(' · ')
-      : '';
+    daysBox.replaceChildren(dayChips(groups, (iso) => setFilter({ den: iso })));
+    const den = state.filter.den;
+    const dayKeys = [...groups.keys()].sort().filter((iso) => !den || iso === den);
+    const nDated = dayKeys.reduce((n, iso) => n + groups.get(iso).length, 0);
+    const shown = den ? nDated : items.filter((it) => !it.r).length;
+    status.replaceChildren(h('strong', {}, String(shown)), ` ${plural(shown, 'oznámení', 'oznámení', 'oznámení')}`,
+      den ? ` · ${weekdayLong(den)} ${dateCz(den)}` : '');
 
-    const dayNodes = [...groups.keys()].sort().map((iso) => {
+    const dayNodes = dayKeys.map((iso) => {
       const n = daysTo(iso);
       return h('section', { class: 'daygroup', id: `den-${iso}`, 'aria-label': `${weekdayLong(iso)} ${dateCz(iso)}` },
         h('div', { class: 'daygroup__date' },
@@ -336,12 +360,12 @@ function renderHome() {
     more.addEventListener('click', () => { state.limit += STEP; paintUndated(); });
     paintUndated();
 
-    const filteredOut = state.filter.q || state.filter.obec || state.filter.tema;
+    const { q, obec, tema, lhuta } = state.filter;
     const nothing = !items.length
-      ? h('p', { class: 'empty' }, filteredOut ? 'Nic nenalezeno. Zkus jiné slovo nebo všechny obce.' : 'Na deskách teď nic nevisí.')
-      : !dayNodes.length ? h('p', { class: 'empty' }, `V příštích ${HORIZON} dnech žádné lhůty ani termíny.`) : null;
+      ? h('p', { class: 'empty' }, q || obec || tema || lhuta ? 'Nic nenalezeno. Zkus jiné slovo, obec nebo téma.' : 'Na deskách teď nic nevisí.')
+      : !dayNodes.length ? h('p', { class: 'empty' }, den ? 'Na tento den nic.' : `V příštích ${HORIZON} dnech žádné lhůty ani termíny.`) : null;
 
-    body.replaceChildren(...[
+    body.replaceChildren(...(den ? [...dayNodes, nothing] : [
       running.length ? h('h2', { class: 'section-title section-title--first' }, 'PRÁVĚ PLATÍ') : null,
       running.length ? h('ul', { class: 'rows' }, running.map(({ it, w }) => row(it, w.until, `platí do ${dateCz(w.until)}`, 'do'))) : null,
       running.length && dayNodes.length ? h('h2', { class: 'section-title' }, `PŘÍŠTÍCH ${HORIZON} DNÍ`) : null,
@@ -356,40 +380,97 @@ function renderHome() {
         h('summary', {}, `SEJMUTO ZA POSLEDNÍCH 30 DNÍ (${removed.length})`),
         h('ul', { class: 'rows' }, removed.map((it) => row(it, (it.r || '').slice(0, 10), 'sejmuto')))) : null,
       villages(d),
-    ].filter(Boolean));
+    ]).filter(Boolean));
   };
 
-  const chips = h('div', { class: 'places', role: 'group', 'aria-label': 'Obec' });
-  const total = d.items.filter((it) => !it.r).length;
-  const names = ['', ...connected.map((m) => m.name)
-    .sort((a, b) => (counts.get(b) || 0) - (counts.get(a) || 0) || a.localeCompare(b, 'cs'))];
-  const paintChips = () => chips.replaceChildren(...names.map((name) => h('button', {
-    type: 'button', class: 'place', 'aria-pressed': String(state.filter.obec === name),
-    onclick: () => { state.filter.obec = state.filter.obec === name ? '' : name; state.limit = STEP; writeFilter(); paintChips(); paint(); },
-  }, h('span', { class: 'place__name' }, name || 'Všechny obce'), h('span', { class: 'place__n' }, String(name ? counts.get(name) || 0 : total)))));
-  paintChips();
+  // Výběr: štítky v poli hledání, obce, témata, lhůta
+  const paintControls = () => {
+    const f = state.filter;
+    const tok = (kind, text, patch) => h('span', { class: 'token' },
+      h('span', { class: 'token__kind' }, kind), text,
+      h('button', { type: 'button', class: 'token__x', 'aria-label': `Zrušit ${kind} ${text}`, onclick: () => { setFilter(patch); search.focus(); } },
+        icon('M6 6l12 12M18 6 6 18', 12)));
+    tokens.replaceChildren(...[
+      f.obec ? tok('obec', f.obec, { obec: '' }) : null,
+      f.tema ? tok('téma', topicName(f.tema), { tema: '' }) : null,
+      f.den ? tok('den', dateCz(f.den, { wd: true }), { den: '' }) : null].filter(Boolean));
+    search.placeholder = f.obec || f.tema || f.den ? 'Upřesnit…' : 'Obec, téma nebo text…';
+    reset.hidden = !(f.obec || f.tema || f.den || f.q || f.lhuta);
+    vilBtn.setAttribute('aria-expanded', String(!vilPanel.hidden));
+    lhutaBtn.setAttribute('aria-pressed', String(!!f.lhuta));
+    vilPanel.replaceChildren(...['', ...villageNames].map((name) => h('button', {
+      type: 'button', class: 'vil', 'aria-pressed': String(f.obec === name),
+      onclick: () => { vilPanel.hidden = true; setFilter({ obec: name }); },
+    }, h('span', {}, name || 'Všechny obce'), h('span', { class: 'vil__n' }, String(name ? counts.get(name) || 0 : total)))));
+    topicRow.replaceChildren(...['', ...topicIds].map((id) => h('button', {
+      type: 'button', class: 'topic', 'aria-pressed': String(f.tema === id),
+      onclick: () => setFilter({ tema: f.tema === id ? '' : id }),
+    }, id ? topicName(id) : 'Vše')));
+  };
 
-  // Témata (typy oznámení) – počty u aktivních oznámení, nejčastější nahoře
-  const labels = d.categories || {};
-  const catCounts = new Map();
-  for (const it of d.items) if (!it.r && it.s?.cat) catCounts.set(it.s.cat, (catCounts.get(it.s.cat) || 0) + 1);
-  const topics = h('div', { class: 'places', role: 'group', 'aria-label': 'Téma' });
-  const topicIds = ['', ...[...catCounts.keys()].sort((a, b) => catCounts.get(b) - catCounts.get(a) || (labels[a] || a).localeCompare(labels[b] || b, 'cs'))];
-  const paintTopics = () => topics.replaceChildren(...topicIds.map((id) => h('button', {
-    type: 'button', class: 'place', 'aria-pressed': String(state.filter.tema === id),
-    onclick: () => { state.filter.tema = state.filter.tema === id ? '' : id; state.limit = STEP; writeFilter(); paintTopics(); paint(); },
-  }, h('span', { class: 'place__name' }, id ? (labels[id] || id) : 'Všechna témata'),
-  h('span', { class: 'place__n' }, String(id ? catCounts.get(id) : total)))));
-  paintTopics();
+  // Našeptávač: obec nebo téma podle psaného textu; jinak se hledá v textu oznámení
+  const suggest = (text) => {
+    const t = fold(text.trim());
+    const hits = !t ? [] : [
+      ...villageNames.filter((n) => fold(n).includes(t)).map((n) => ({ kind: 'obec', label: n, n: counts.get(n) || 0, patch: { obec: n } })),
+      ...topicIds.filter((id) => fold(topicName(id)).includes(t)).map((id) => ({ kind: 'téma', label: topicName(id), n: catCounts.get(id), patch: { tema: id } })),
+    ].slice(0, 6);
+    sugBox.replaceChildren(...hits.map((s) => h('button', {
+      type: 'button', class: 'sug__item', role: 'option',
+      onclick: () => { search.value = ''; sugBox.hidden = true; setFilter({ ...s.patch, q: '' }); search.focus(); },
+    }, h('span', { class: 'sug__kind' }, s.kind), h('span', { class: 'sug__label' }, s.label), h('span', { class: 'sug__n' }, String(s.n)))));
+    sugBox.hidden = !hits.length;
+    search.setAttribute('aria-expanded', String(!!hits.length));
+  };
 
   let timer;
   const search = h('input', {
-    type: 'search', id: 'q', class: 'search', value: state.filter.q, placeholder: 'např. Pražská, 208/1, kanalizace', autocomplete: 'off',
+    type: 'search', id: 'q', class: 'tokenbox__input', value: state.filter.q, autocomplete: 'off',
+    role: 'combobox', 'aria-expanded': 'false', 'aria-controls': 'sug', 'aria-autocomplete': 'list',
     oninput: (e) => {
+      suggest(e.target.value);
       clearTimeout(timer);
-      timer = setTimeout(() => { state.filter.q = e.target.value; state.limit = STEP; writeFilter(); paint(); }, 160);
+      timer = setTimeout(() => { state.filter.q = e.target.value; state.limit = STEP; writeFilter(); reset.hidden = false; paint(); }, 160);
+    },
+    onkeydown: (e) => {
+      if (e.key === 'ArrowDown' && !sugBox.hidden) { e.preventDefault(); sugBox.querySelector('button')?.focus(); }
+      else if (e.key === 'Escape') { sugBox.hidden = true; }
+      else if (e.key === 'Backspace' && !e.target.value) {
+        const f = state.filter; // smaže poslední štítek
+        if (f.den) setFilter({ den: '' }); else if (f.tema) setFilter({ tema: '' }); else if (f.obec) setFilter({ obec: '' });
+      }
     },
   });
+  sugBox.id = 'sug';
+  sugBox.addEventListener('keydown', (e) => {
+    const items = [...sugBox.querySelectorAll('button')];
+    const i = items.indexOf(document.activeElement);
+    if (e.key === 'ArrowDown') { e.preventDefault(); items[Math.min(i + 1, items.length - 1)]?.focus(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); if (i <= 0) search.focus(); else items[i - 1].focus(); }
+    else if (e.key === 'Escape') { sugBox.hidden = true; search.focus(); }
+  });
+  reset.addEventListener('click', () => {
+    search.value = '';
+    sugBox.hidden = true;
+    setFilter({ obec: '', tema: '', q: '', den: '', lhuta: false });
+  });
+  vilBtn = h('button', {
+    type: 'button', class: 'fbtn', 'aria-controls': 'vilpanel', 'aria-expanded': 'false',
+    onclick: () => { vilPanel.hidden = !vilPanel.hidden; paintControls(); },
+  }, 'Obce', icon('m6 9 6 6 6-6', 14));
+  lhutaBtn = h('button', {
+    type: 'button', class: 'fbtn', 'aria-pressed': 'false',
+    onclick: () => setFilter({ lhuta: !state.filter.lhuta }),
+  }, 'Jen se lhůtou');
+
+  const box = h('div', { class: 'tokenbox' },
+    icon('M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-3.5-3.5', 18),
+    tokens,
+    h('label', { class: 'vh', for: 'q' }, 'Hledat obec, téma nebo text v oznámeních – třeba Psáry, uzavírky, Májová'),
+    search);
+
+  const searchWrap = h('div', { class: 'filters__search' }, box, sugBox);
+  searchWrap.addEventListener('focusout', (e) => { if (!searchWrap.contains(e.relatedTarget)) sugBox.hidden = true; });
 
   const stamp = Number.isNaN(updated.getTime()) ? ''
     : `aktualizováno ${updated.toLocaleDateString('cs-CZ')} ${updated.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })}`;
@@ -400,26 +481,20 @@ function renderHome() {
         h('h1', {}, 'Co se kdy děje'),
         h('span', { class: 'masthead__meta' }, [d.region?.name || 'Dolnobřežansko', stamp].filter(Boolean).join(' · ')),
         d.sample ? h('div', { class: 'sample' }, 'Ukázková data – nejde o skutečná oznámení.') : null),
-      h('div', { class: 'layout' },
-        h('aside', { class: 'panel', 'aria-label': 'Výběr' },
-          h('div', { class: 'panel__block' },
-            h('h2', { class: 'panel__title' }, 'NEJBLIŽŠÍCH 7 DNÍ'),
-            weekBox,
-            h('div', { class: 'legend', 'aria-hidden': 'true' },
-              h('span', {}, h('span', { class: 'dot dot--warn' }), 'lhůta / omezení'),
-              h('span', {}, h('span', { class: 'dot dot--event' }), 'jednání / akce'))),
-          h('div', { class: 'panel__block' },
-            h('label', { class: 'panel__title', for: 'q' }, 'HLEDAT'),
-            search,
-            h('p', { class: 'hint' }, 'Hledá v názvu, shrnutí, místě, č. j. i v popisu příloh. Bez ohledu na diakritiku; více slov = musí sedět všechna.')),
-          h('div', { class: 'panel__block' },
-            h('h2', { class: 'panel__title' }, 'OBEC'),
-            chips),
-          h('div', { class: 'panel__block' },
-            h('h2', { class: 'panel__title' }, 'TÉMA'),
-            topics),
-          status),
-        h('div', { class: 'main' }, body))));
+      h('section', { class: 'filters', 'aria-label': 'Výběr' },
+        h('div', { class: 'filters__row' },
+          searchWrap,
+          vilBtn, lhutaBtn),
+        vilPanel,
+        topicRow,
+        daysBox),
+      h('div', { class: 'summary' },
+        status, reset,
+        h('span', { class: 'legend', 'aria-hidden': 'true' },
+          h('span', {}, h('span', { class: 'dot dot--warn' }), 'lhůta / omezení'),
+          h('span', {}, h('span', { class: 'dot dot--event' }), 'jednání / akce'))),
+      h('div', { class: 'main' }, body)));
+  paintControls();
   paint();
 }
 
@@ -454,7 +529,8 @@ function issueLabel(i) {
   const m = /(?:č\.|číslo\.?)\s*(\d{1,4})/i.exec(i.t);
   if (!m) return i.t;
   const series = /rozkvět/i.test(i.t) ? 'Rozkvět ' : '';
-  return `${series}č. ${m[1]}`;
+  const month = /\((\p{L}+) \d{4}\)/u.exec(i.t); // „(prosinec 2021)“ ze stránky čísla
+  return `${series}č. ${m[1]}${month ? ` · ${month[1]}` : ''}`;
 }
 
 function renderNewsletters() {
