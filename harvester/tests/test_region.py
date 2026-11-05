@@ -261,6 +261,7 @@ def test_output_marks_pending_when_notice_changed_without_new_summary():
     s = region.item_description(it, [], {"sig": "s2:old", "ai": {"tldr": "staré"}, "at": "2026-11-02T09:00:00+00:00",
                                          "updated_at": "2026-11-03T09:00:00+00:00"})
     assert s["pending"] is True and s["summarized"] == "2026-11-02" and s["updated"] == "2026-11-03"
+    assert s["summarized_at"] == "2026-11-02T09:00:00+00:00" and s["updated_at"] == "2026-11-03T09:00:00+00:00"
 
 
 def test_enrich_downloads_attachments_via_proxy_for_blocked_hosts(tmp_path, monkeypatch):

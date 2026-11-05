@@ -72,6 +72,20 @@ function dateCz(iso, { year = false, wd = false } = {}) {
   return `${wd ? `${weekday(iso)} ` : ''}${+iso.slice(8, 10)}. ${+iso.slice(5, 7)}.${showYear ? ` ${y}` : ''}`;
 }
 
+/** „ 5. 11. 2026 v 18:16“ z ISO času zpracování (v místním čase prohlížeče); prázdné, když čas chybí. */
+function stampCz(iso) {
+  const d = typeof iso === 'string' && iso.length > 10 ? new Date(iso) : null;
+  if (!d || Number.isNaN(d.getTime())) return '';
+  return ` ${d.getDate()}. ${d.getMonth() + 1}. ${d.getFullYear()} v ${d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })}`;
+}
+
+/** claude-sonnet-5-5 → Claude Sonnet 5.5 */
+function modelName(id) {
+  const m = /^claude-([a-z]+)-(\d+)(?:-(\d+))?$/.exec(id || '');
+  if (!m) return 'Claude';
+  return `Claude ${m[1].charAt(0).toUpperCase()}${m[1].slice(1)} ${m[2]}${m[3] ? `.${m[3]}` : ''}`;
+}
+
 function relDay(iso) {
   const n = daysTo(iso);
   if (n === 0) return 'dnes';
@@ -478,8 +492,9 @@ function renderDetail(id) {
         original ? h('a', { href: original, rel: 'noopener noreferrer' }, `Původní znění na úřední desce (${it.o})`) : null,
         s.pending ? h('p', { class: 'warn-note' }, 'Úřad oznámení upravil (příloha nebo termín). Nové shrnutí se připravuje, tohle je k předchozí verzi.') : null,
         h('p', {}, s.src === 'claude'
-          ? [`Shrnutí napsala AI (Claude) z textu a příloh${isIso(s.summarized) ? ` ${dateCz(s.summarized, { year: true })}` : ''}`,
-            isIso(s.updated) ? `, aktualizováno po změně oznámení ${dateCz(s.updated, { year: true })}` : '',
+          ? [`Shrnutí napsala AI (${modelName(s.model)}) z textu a příloh`,
+            stampCz(s.summarized_at) || (isIso(s.summarized) ? ` ${dateCz(s.summarized, { year: true })}` : ''),
+            stampCz(s.updated_at) ? `, aktualizováno po změně oznámení${stampCz(s.updated_at)}` : '',
             '. Může se splést – právně platí znění na úřední desce.']
           : 'Shrnutí vzniklo automaticky z textu oznámení. Právně platí znění na úřední desce.'))));
 }
