@@ -117,6 +117,10 @@ spojení (timeout), Vestec vrací HTTP 403. Z Česka fungují. Dvě řešení:
    squid nebo tinyproxy na malém VPS v ČR). Harvester ji použije jen tam, kde přímý přístup selže
    (timeout, chyba spojení, HTTP 401/403/451) – pro desku, její přílohy i stránky oznámení; server,
    který jednou přímo nejde, pak v běhu jede rovnou přes proxy.
+   Nastavení na čerstvém Debianu 12 (VPS s českou IP) jedním skriptem
+   `deploy/proxy/setup-squid-debian12.sh`: squid s heslem, jen weby obcí mikroregionu (žádná otevřená
+   proxy), bez mezipaměti, firewall nftables (SSH + port proxy), automatické bezpečnostní aktualizace;
+   na konci vypíše hodnotu secretu. Heslo jde k proxy nešifrovaně (HTTP), proto proxy pouští jen weby obcí.
 2. **Self-hosted runner v ČR** (vlastní server, NAS, OpenShift s actions-runner-controller) a v jobu
    `harvest` `runs-on: [self-hosted, linux]`. Repozitář je veřejný – sběr se spouští jen z `main`
    (plán, ruční spuštění, push), ne z pull requestů; ve Settings → Actions nech zapnuté schvalování
