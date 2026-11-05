@@ -599,18 +599,36 @@ function kdyRange(kdy) {
   return [TODAY, '9999-12-31'];
 }
 
+const MONTHS = ['leden', 'únor', 'březen', 'duben', 'květen', 'červen', 'červenec', 'srpen', 'září', 'říjen', 'listopad', 'prosinec'];
+const WD_HEAD = ['po', 'út', 'st', 'čt', 'pá', 'so', 'ne'];
+
+/** Posun měsíce „YYYY-MM“ o n. */
+function addMonths(ym, n) {
+  const d = new Date(Date.UTC(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + n, 1));
+  return d.toISOString().slice(0, 7);
+}
+
 function renderEvents(params) {
   const ev = state.data.events || { sources: [], items: [] };
   // obce, jejichž akce jsou skryté (výchozí: vidět vše); v adrese ?skryt=Obec1,Obec2
   const hidden = new Set((params.get('skryt') || '').split(',').map((x) => x.trim()).filter(Boolean));
-  const f = { kdy: params.get('kdy') || '' };
+  const f = {
+    pohled: params.get('pohled') === 'seznam' ? 'seznam' : 'mesic', // výchozí je měsíc jako v kalendáři
+    kdy: params.get('kdy') || '',
+    mesic: /^\d{4}-\d{2}$/.test(params.get('mesic') || '') ? params.get('mesic') : TODAY.slice(0, 7),
+    den: isIso(params.get('den')) ? params.get('den') : '',
+  };
   const all = (ev.items || []).filter((e) => isIso(e.d) && (e.end || e.d) >= TODAY);
   const counts = new Map();
   for (const e of all) counts.set(e.o, (counts.get(e.o) || 0) + 1);
-  const go = ({ kdy = f.kdy, skryt = hidden }) => {
+  const go = (patch) => {
+    const n = { ...f, skryt: hidden, ...patch };
     const p = new URLSearchParams();
-    if (skryt.size) p.set('skryt', [...skryt].join(','));
-    if (kdy) p.set('kdy', kdy);
+    if (n.pohled === 'seznam') p.set('pohled', 'seznam');
+    if (n.skryt.size) p.set('skryt', [...n.skryt].join(','));
+    if (n.pohled === 'seznam' && n.kdy) p.set('kdy', n.kdy);
+    if (n.pohled === 'mesic' && n.mesic !== TODAY.slice(0, 7)) p.set('mesic', n.mesic);
+    if (n.pohled === 'mesic' && n.den) p.set('den', n.den);
     history.replaceState(null, '', p.toString() ? `#/akce?${p}` : '#/akce');
     renderEvents(p);
   };
@@ -620,28 +638,87 @@ function renderEvents(params) {
     go({ skryt: next });
   };
   const only = (name) => go({ skryt: new Set([...counts.keys()].filter((n) => n !== name)) });
-  const [from, to] = kdyRange(f.kdy);
-  const list = all.filter((e) => !hidden.has(e.o) && (e.end || e.d) >= from && (e.d < from ? from : e.d) <= to);
-  const days = new Map();
-  for (const e of list) {
-    const day = e.d < TODAY ? TODAY : e.d; // akce, která už běží, patří k dnešku
-    if (!days.has(day)) days.set(day, []);
-    days.get(day).push(e);
+  const visible = all.filter((e) => !hidden.has(e.o));
+
+  // akce po dnech; vícedenní akce je v každém svém dni (nejvýš 31 dní)
+  const byDay = new Map();
+  for (const e of visible) {
+    let day = e.d < TODAY ? TODAY : e.d;
+    const last = e.end && e.end > e.d ? e.end : e.d;
+    for (let i = 0; day <= last && i < 31; i += 1, day = addDays(day, 1)) {
+      if (!byDay.has(day)) byDay.set(day, []);
+      byDay.get(day).push(e);
+    }
   }
-  const eventNode = (e) => h('a', { class: 'entry entry--event ev', href: safeUrl(e.url) || '#', rel: 'noopener noreferrer', target: '_blank' },
+  for (const list of byDay.values()) list.sort((a, b) => (a.time || '99').localeCompare(b.time || '99') || a.t.localeCompare(b.t, 'cs'));
+
+  const eventNode = (e, day) => h('a', { class: 'entry entry--event ev', href: safeUrl(e.url) || '#', rel: 'noopener noreferrer', target: '_blank' },
     h('span', { class: 'entry__meta' },
-      [e.time, e.end && e.end !== e.d ? `${e.d < TODAY ? 'probíhá' : 'až'} do ${dm(e.end)}` : null, e.o].filter(Boolean).join(' · ')),
+      [e.time, e.end && e.end !== e.d ? `${e.d < day ? 'probíhá' : 'až'} do ${dm(e.end)}` : null, e.o].filter(Boolean).join(' · ')),
     h('h3', { class: 'entry__title' }, e.t),
     e.place || e.tags?.length ? h('span', { class: 'entry__sub' }, [e.place, ...(e.tags || [])].filter(Boolean).join(' · ')) : null);
-  const dayNodes = [...days.keys()].sort().map((iso) => {
+  const dayGroup = (iso, list) => {
     const n = daysTo(iso);
     return h('section', { class: 'daygroup', 'aria-label': `${weekdayLong(iso)} ${dateCz(iso)}` },
       h('div', { class: 'daygroup__date' },
         h('span', { class: 'daygroup__wd' }, weekday(iso)),
         h('span', { class: 'daygroup__d' }, dm(iso)),
         h('span', { class: `daygroup__rel${n <= 2 ? ' daygroup__rel--soon' : ''}` }, relDay(iso))),
-      h('div', { class: 'daygroup__items' }, days.get(iso).map(eventNode)));
-  });
+      h('div', { class: 'daygroup__items' }, list.map((e) => eventNode(e, iso))));
+  };
+
+  let content;
+  let shown;
+  if (f.pohled === 'seznam') {
+    const [from, to] = kdyRange(f.kdy);
+    const keys = [...byDay.keys()].filter((d) => d >= from && d <= to).sort();
+    // v seznamu je vícedenní akce jen jednou – v prvním dni výběru
+    const seen = new Set();
+    const groups = keys.map((d) => [d, byDay.get(d).filter((e) => !seen.has(e) && seen.add(e))]).filter(([, l]) => l.length);
+    shown = seen.size;
+    content = h('div', { class: 'timeline' }, groups.length ? groups.map(([d, l]) => dayGroup(d, l)) : h('p', { class: 'empty' }, 'V tomto výběru žádné akce.'));
+  } else {
+    const first = `${f.mesic}-01`;
+    const offset = (new Date(utc(first)).getUTCDay() + 6) % 7; // pondělí = 0
+    const start = addDays(first, -offset);
+    const nextMonth = `${addMonths(f.mesic, 1)}-01`;
+    const weeks = [];
+    for (let wk = start; wk < nextMonth; wk = addDays(wk, 7)) weeks.push(wk);
+    const inMonth = [...byDay.keys()].filter((d) => d.startsWith(f.mesic));
+    shown = new Set(inMonth.flatMap((d) => byDay.get(d))).size;
+    const sel = f.den && f.den.startsWith(f.mesic) ? f.den : (TODAY.startsWith(f.mesic) ? TODAY : inMonth.sort()[0] || '');
+    const lastData = all.reduce((m, e) => (e.d > m ? e.d : m), TODAY);
+    const cell = (iso) => {
+      const list = byDay.get(iso) || [];
+      const cls = ['cal__day', iso.startsWith(f.mesic) ? '' : 'cal__day--other', iso < TODAY ? 'cal__day--past' : '',
+        iso === TODAY ? 'cal__day--today' : '', iso === sel ? 'cal__day--sel' : '', list.length ? 'cal__day--has' : ''].filter(Boolean).join(' ');
+      return h('button', {
+        type: 'button', class: cls, 'aria-pressed': String(iso === sel),
+        'aria-label': `${weekdayLong(iso)} ${dateCz(iso)}: ${list.length ? `${list.length} ${plural(list.length, 'akce', 'akce', 'akcí')}` : 'nic'}`,
+        onclick: () => go({ den: iso, mesic: iso.slice(0, 7) }),
+      },
+      h('span', { class: 'cal__num' }, String(+iso.slice(8, 10))),
+      h('span', { class: 'cal__evs', 'aria-hidden': 'true' },
+        list.slice(0, 3).map((e) => h('span', { class: 'cal__ev' }, e.time ? h('span', { class: 'cal__time' }, e.time) : null, e.t)),
+        list.length > 3 ? h('span', { class: 'cal__more' }, `+${list.length - 3} další`) : null),
+      h('span', { class: 'cal__dots', 'aria-hidden': 'true' },
+        list.length ? h('span', { class: 'cal__count' }, String(list.length)) : null));
+    };
+    const selList = sel ? byDay.get(sel) || [] : [];
+    content = h('div', { class: 'cal-wrap' },
+      h('div', { class: 'cal__nav' },
+        h('button', { type: 'button', class: 'fbtn cal__arrow', 'aria-label': 'Předchozí měsíc', onclick: () => go({ mesic: addMonths(f.mesic, -1), den: '' }) }, icon('M15 5l-7 7 7 7', 18)),
+        h('h2', { class: 'cal__title' }, `${MONTHS[+f.mesic.slice(5, 7) - 1]} ${f.mesic.slice(0, 4)}`),
+        h('button', { type: 'button', class: 'fbtn cal__arrow', 'aria-label': 'Další měsíc', onclick: () => go({ mesic: addMonths(f.mesic, 1), den: '' }) }, icon('M9 5l7 7-7 7', 18)),
+        f.mesic !== TODAY.slice(0, 7) ? h('button', { type: 'button', class: 'linkish', onclick: () => go({ mesic: TODAY.slice(0, 7), den: '' }) }, 'Dnes') : null),
+      h('div', { class: 'cal', role: 'grid', 'aria-label': 'Měsíc' },
+        WD_HEAD.map((w) => h('span', { class: 'cal__head', role: 'columnheader' }, w)),
+        weeks.map((wk) => Array.from({ length: 7 }, (_, i) => cell(addDays(wk, i))))),
+      first > lastData ? h('p', { class: 'empty' }, 'Akce čteme na 60 dní dopředu – pro tento měsíc zatím nic nemáme.') : null,
+      sel ? h('div', { class: 'timeline cal__detail' },
+        selList.length ? dayGroup(sel, selList) : h('p', { class: 'empty' }, `${weekdayLong(sel)} ${dateCz(sel)}: žádné akce.`)) : null);
+  }
+
   const villagesWith = [...counts.keys()].sort((a, b) => counts.get(b) - counts.get(a) || a.localeCompare(b, 'cs'));
   const sources = ev.sources || [];
   const linkOnly = sources.filter((s) => !s.read || !s.ok);
@@ -655,9 +732,14 @@ function renderEvents(params) {
         h('span', { class: 'masthead__meta' }, 'Z kalendářů na webech obcí · příštích 60 dní'),
         state.data.sample ? h('div', { class: 'sample' }, 'Ukázková data – nejde o skutečné akce.') : null),
       h('section', { class: 'filters', 'aria-label': 'Výběr' },
-        h('div', { class: 'topics', role: 'group', 'aria-label': 'Kdy' }, KDY.map(([k, label]) => h('button', {
-          type: 'button', class: 'topic', 'aria-pressed': String(f.kdy === k), onclick: () => go({ kdy: k }),
-        }, label))),
+        h('div', { class: 'filters__row filters__row--view' },
+          h('div', { class: 'seg', role: 'group', 'aria-label': 'Pohled' },
+            [['mesic', 'Měsíc'], ['seznam', 'Seznam']].map(([k, label]) => h('button', {
+              type: 'button', class: 'seg__btn', 'aria-pressed': String(f.pohled === k), onclick: () => go({ pohled: k }),
+            }, label))),
+          f.pohled === 'seznam' ? h('div', { class: 'topics', role: 'group', 'aria-label': 'Kdy' }, KDY.map(([k, label]) => h('button', {
+            type: 'button', class: 'topic', 'aria-pressed': String(f.kdy === k), onclick: () => go({ kdy: k }),
+          }, label))) : null),
         h('div', { class: 'places-filter' },
           h('div', { class: 'places-filter__head' },
             h('span', { class: 'places-filter__label' }, 'Obce'),
@@ -669,9 +751,10 @@ function renderEvents(params) {
               title: hidden.has(name) ? 'Zobrazit akce obce' : 'Skrýt akce obce',
             }, h('span', { class: 'chip__mark', 'aria-hidden': 'true' }, hidden.has(name) ? null : icon('M5 12l5 5 9-10', 12)), name, h('span', { class: 'topic__n' }, String(counts.get(name)))),
             h('button', { type: 'button', class: 'chip__only', onclick: () => only(name), 'aria-label': `Jen ${name}` }, 'jen')))))),
-      h('div', { class: 'summary' }, h('span', {}, h('strong', {}, String(list.length)), ` ${plural(list.length, 'akce', 'akce', 'akcí')}`)),
-      h('div', { class: 'main' },
-        h('div', { class: 'timeline' }, dayNodes.length ? dayNodes : h('p', { class: 'empty' }, 'V tomto výběru žádné akce.')),
+      h('div', { class: 'summary' }, h('span', {}, h('strong', {}, String(shown)), ` ${plural(shown, 'akce', 'akce', 'akcí')}`,
+        f.pohled === 'mesic' ? ` v měsíci ${MONTHS[+f.mesic.slice(5, 7) - 1]}` : '')),
+      h('div', { class: f.pohled === 'mesic' ? 'main main--wide' : 'main' },
+        content,
         h('section', { class: 'villages', 'aria-labelledby': 'h-cal' },
           h('h2', { id: 'h-cal' }, 'KALENDÁŘE NA WEBECH OBCÍ'),
           h('ul', {}, sources.map((s) => h('li', {}, h('a', { href: safeUrl(s.url), rel: 'noopener noreferrer', target: '_blank' }, s.obec)))),
