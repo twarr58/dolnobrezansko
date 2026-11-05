@@ -20,12 +20,14 @@ from datetime import datetime, timedelta, timezone
 from importlib import resources
 from pathlib import Path
 
+from urllib.parse import urlsplit
+
 import httpx
 
-from . import USER_AGENT, ai, cache, digest, documents, webpage
+from . import USER_AGENT, ai, cache, digest, documents, edesky, webpage
 from .build import load_state, run_build
 from .extra import sources_from_entries
-from .fetch import fetch_all
+from .fetch import fetch_all, needs_proxy
 from .nkod import BoardSource
 
 log = logging.getLogger(__name__)
@@ -166,8 +168,29 @@ def _signature(item: dict, doc_cache: dict[str, dict] | None = None) -> str:
 
 
 async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, ai_limit: int,
-                 now: datetime) -> tuple[dict[str, dict], dict[str, dict]]:
-    """Přílohy a popisy aktivních oznámení. Vrátí (přílohy podle URL, popisy podle id oznámení)."""
+                 now: datetime, fallback: httpx.AsyncClient | None = None,
+                 proxy_hosts: set[str] | None = None) -> tuple[dict[str, dict], dict[str, dict]]:
+    """Přílohy a popisy aktivních oznámení. Vrátí (přílohy podle URL, popisy podle id oznámení).
+
+    fallback: klient přes proxy v ČR pro servery, které z runneru GitHubu nejdou (timeout, 401/403/451);
+    proxy_hosts: servery, u kterých už je jasné, že jdou jen přes proxy (deska se stáhla přes ni).
+    """
+    proxy_hosts = set(proxy_hosts or ())
+
+    async def via_fallback(url: str, call):
+        """Zavolá call(klient) přímo; když server nejde, zkusí záložní proxy a server si zapamatuje."""
+        host = urlsplit(url).hostname or ""
+        if fallback is not None and host in proxy_hosts:
+            return await call(fallback)
+        try:
+            return await call(client)
+        except httpx.HTTPError as exc:
+            if fallback is None or not needs_proxy(exc):
+                raise
+            proxy_hosts.add(host)
+            log.info("Server %s přímo nejde (%s), dál přes záložní proxy", host, type(exc).__name__)
+            return await call(fallback)
+
     doc_cache: dict[str, dict] = _read_json(state_dir / "docs.json.gz", {})
     summaries: dict[str, dict] = _read_json(state_dir / "summaries.json.gz", {})
     summarizer = None
@@ -201,9 +224,16 @@ async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, 
         conditional = cached and cached.get("sha") and not need_bytes
         async with dl_sem:
             try:
-                dl = await documents.download(client, url, etag=cached.get("etag", "") if conditional else "",
-                                              last_modified=cached.get("lm", "") if conditional else "")
+                dl = await via_fallback(url, lambda c: documents.download(
+                    c, url, etag=cached.get("etag", "") if conditional else "",
+                    last_modified=cached.get("lm", "") if conditional else ""))
             except (httpx.HTTPError, ValueError) as exc:
+                if url in edesky.TEXTS:  # soubor z edesky.cz nejde stáhnout – rozpoznaný text z API stačí
+                    info = documents.DocInfo(url=url, kind=documents.KIND_TEXT, checked=stamp)
+                    info.full_text = documents._clean(edesky.TEXTS[url])
+                    info.text, info.chars = info.full_text[:documents.EXCERPT], len(info.full_text)
+                    doc_cache[url] = info.to_cache()
+                    return {**info.to_cache(), "full_text": info.full_text}
                 log.info("Příloha %s: %s %s", url, type(exc).__name__, exc)
                 return cached or {"url": url, "error": f"{type(exc).__name__}: {exc}"[:200]}
         if dl.content is None:  # 304 – beze změny
@@ -237,8 +267,12 @@ async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, 
             budget["docs"] -= 1
             async with dl_sem:
                 try:
-                    r = await client.get(url, headers=webpage.HTML_HEADERS, timeout=30)
-                    r.raise_for_status()
+                    async def get_page(c):
+                        resp = await c.get(url, headers=webpage.HTML_HEADERS, timeout=30)
+                        resp.raise_for_status()
+                        return resp
+
+                    r = await via_fallback(url, get_page)
                     links, text = documents.page_attachments(webpage.response_text(r), str(r.url))
                     cached = {"links": links, "text": text, "checked": now.isoformat(timespec="seconds")}
                     doc_cache[key] = cached
@@ -388,17 +422,20 @@ async def run(out_dir: Path, state_dir: Path, ai_limit: int = 100, concurrency: 
         log.info("Mikroregion %s: %d obcí, %d desek", region["name"], len(members), len(sources))
         cache.load_from_state(load_state(state_dir))
         cache.reset_budget(2000)
-        fallback_ctx = httpx.AsyncClient(**common, proxy=proxy) if proxy else None
+        fallback = httpx.AsyncClient(**common, proxy=proxy) if proxy else None
         try:
-            results = await fetch_all(client, sources, concurrency=concurrency, retries=1, fallback=fallback_ctx,
+            results = await fetch_all(client, sources, concurrency=concurrency, retries=1, fallback=fallback,
                                       total_budget=20 * 60)
+            run_build(sources, results, out_dir, state_dir, now=now)
+            items = load_state(state_dir)
+            boards = _read_json(state_dir / "boards.json", [])
+            # přílohy ze serverů, jejichž deska šla jen přes proxy, se stahují rovnou přes ni
+            proxy_hosts = {urlsplit(s.access_url).hostname or "" for s in sources
+                           if results.get(s.id) and results[s.id].via_proxy}
+            doc_cache, summaries = await enrich(client, items, state_dir, ai_limit, now, fallback, proxy_hosts)
         finally:
-            if fallback_ctx:
-                await fallback_ctx.aclose()
-        run_build(sources, results, out_dir, state_dir, now=now)
-        items = load_state(state_dir)
-        boards = _read_json(state_dir / "boards.json", [])
-        doc_cache, summaries = await enrich(client, items, state_dir, ai_limit, now)
+            if fallback:
+                await fallback.aclose()
     data = build_output(region, members, boards, items, doc_cache, summaries, now)
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "region.json").write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), "utf-8")

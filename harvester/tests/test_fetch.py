@@ -82,3 +82,41 @@ def test_board_timeout_and_total_budget():
     assert res["b1"].kind == "timeout" and "déle" in res["b1"].error and res["b2"].ok
     res = asyncio.run(go(total_budget=0))
     assert not res["b2"].ok and "vyčerpán" in res["b2"].error
+
+
+def test_adapter_board_uses_fallback_proxy_when_blocked(monkeypatch):
+    """Weby blokující zahraniční IP (timeout nebo 403) se čtou přes záložní proxy v ČR."""
+    import asyncio
+
+    import httpx
+
+    from uredni_desky import fetch
+    from uredni_desky.nkod import BoardSource
+
+    monkeypatch.setattr(fetch, "RETRY_DELAY", 0)
+    board = ('<table><tr><td>23.10.2026</td><td>13.11.2026</td>'
+             '<td><a href="/assets/File.ashx?id=1">Odstávka elektřiny</a></td></tr>'
+             '<tr><td>20.10.2026</td><td>9.11.2026</td><td><a href="/assets/File.ashx?id=2">Rozpočtové opatření</a></td></tr></table>')
+
+    def blocked_timeout(req):
+        raise httpx.ConnectTimeout("timeout", request=req)
+
+    def blocked_403(req):
+        return httpx.Response(403)
+
+    def via_proxy(req):
+        return httpx.Response(200, html=board)
+
+    src = BoardSource("b1", "https://www.okrouhlo.cz/uredni-deska/2", "Deska", "Obec Okrouhlo",
+                      "https://www.okrouhlo.cz/uredni-deska/2", fmt="html")
+
+    async def go(handler, with_proxy=True):
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as c, \
+                httpx.AsyncClient(transport=httpx.MockTransport(via_proxy)) as p:
+            return await fetch._fetch_adapter(c, src, {}, p if with_proxy else None)
+
+    for handler in (blocked_timeout, blocked_403):
+        res = asyncio.run(go(handler))
+        assert res.ok and res.via_proxy and len(res.payload["informace"]) == 2
+    res = asyncio.run(go(blocked_403, with_proxy=False))
+    assert not res.ok and res.http_status == 403

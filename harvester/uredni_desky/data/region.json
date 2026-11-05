@@ -1,5 +1,5 @@
 {
-  "_poznamka": "Obce mikroregionu. 'source' = známá deska (formát jako v extra_sources.json). Obce bez 'source' se hledají automaticky (web z 'web', jinak z Wikidat) a výsledek se ukládá do state/region_sources.json.",
+  "_poznamka": "Obce mikroregionu. 'source' = známá deska (formát jako v extra_sources.json; edesky = přes API edesky.cz pro weby, které z GitHubu nejdou). Obce bez 'source' se hledají automaticky (web z 'web', jinak z Wikidat) a výsledek se ukládá do state/region_sources.json.",
   "id": "dolnobrezansko",
   "name": "Mikroregion Dolnobřežansko",
   "web": "https://www.dolnobrezansko.cz/",
@@ -18,12 +18,13 @@
     {"name": "Ohrobec", "publisher": "Obec Ohrobec", "qid": "Q2479240",
      "source": {"fmt": "html", "url": "https://www.ohrobec.cz/#uredni-deska"}},
     {"name": "Vestec", "publisher": "Obec Vestec", "qid": "Q1779826", "web": "https://vestec.cz/",
-     "source": {"fmt": "galileo", "url": "https://vestec.cz/obec-vestec/urad/uredni-deska/"}},
+     "source": {"fmt": "edesky", "url": "https://edesky.cz/desky/1208"}},
     {"name": "Jesenice", "publisher": "Město Jesenice", "web": "https://www.mujesenice.cz/",
-     "source": {"fmt": "html", "url": "https://www.mujesenice.cz/uredni-deska/2"}},
+     "source": {"fmt": "edesky", "url": "https://edesky.cz/desky/1194"}},
     {"name": "Zlatníky-Hodkovice", "publisher": "Obec Zlatníky-Hodkovice"},
-    {"name": "Březová-Oleško", "publisher": "Obec Březová-Oleško"},
+    {"name": "Březová-Oleško", "publisher": "Obec Březová-Oleško", "web": "https://www.brezova-olesko.cz/",
+     "source": {"fmt": "edesky", "url": "https://edesky.cz/desky/1257"}},
     {"name": "Okrouhlo", "publisher": "Obec Okrouhlo", "web": "https://www.okrouhlo.cz/",
-     "source": {"fmt": "html", "url": "https://www.okrouhlo.cz/uredni-deska/2"}}
+     "source": {"fmt": "edesky", "url": "https://edesky.cz/desky/2334"}}
   ]
 }

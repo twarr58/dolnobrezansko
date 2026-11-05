@@ -11,7 +11,7 @@ from urllib.parse import urlsplit
 
 import httpx
 
-from . import feed, galileo, imunis, tls, vismo, webpage
+from . import edesky, feed, galileo, imunis, tls, vismo, webpage
 from .nkod import BoardSource
 from .normalize import BoardFormatError, decode_board
 
@@ -22,7 +22,7 @@ PER_HOST = 2  # víc souběžných spojení na jeden server část hostingů odm
 # Weby jednoho poskytovatele běží na stejných serverech (Galileo: ~2 300 obcí) – souběh se omezí
 # na celého poskytovatele, jinak hosting po chvíli přestane přijímat spojení.
 RETRY_DELAY = 5.0
-PROVIDER_LIMITS = {"galileo": 6, "imunis": 4, "vismo": 6}
+PROVIDER_LIMITS = {"galileo": 6, "imunis": 4, "vismo": 6, "edesky": 2}
 
 # Druhy chyb – frontend k nim zobrazuje vysvětlení.
 KIND_TIMEOUT = "timeout"
@@ -130,25 +130,48 @@ async def _fetch_url(client: httpx.AsyncClient, url: str, retries: int) -> Fetch
     return FetchResult(False, None, str(failure), failure.status, ms(), failure.kind, url)
 
 
-ADAPTERS = {"imunis": imunis.fetch_board, "galileo": galileo.fetch_board,
+ADAPTERS = {"imunis": imunis.fetch_board, "galileo": galileo.fetch_board, "edesky": edesky.fetch_board,
             "rss": feed.fetch_board, "vismo": vismo.fetch_board,
             "html": webpage.fetch_board}
 
 
+BLOCKED = (401, 403, 451)  # server odmítá – často jen zahraniční IP (runner GitHubu je v USA)
+
+
+def needs_proxy(exc: Exception) -> bool:
+    """Chyba, kterou může vyřešit záložní proxy v ČR: nepřipojí se, vyprší čas, nebo server přístup odmítne."""
+    if isinstance(exc, httpx.HTTPStatusError):
+        return exc.response.status_code in BLOCKED
+    return isinstance(exc, (httpx.TimeoutException, httpx.ConnectError))
+
+
 async def _fetch_adapter(client: httpx.AsyncClient, src: BoardSource,
-                         host_locks: dict[str, asyncio.Semaphore]) -> FetchResult:
-    """Desky mimo NKOD čtené adaptérem (RSS / HTML) – výsledek je ve tvaru OFN."""
+                         host_locks: dict[str, asyncio.Semaphore],
+                         fallback: httpx.AsyncClient | None = None) -> FetchResult:
+    """Desky mimo NKOD čtené adaptérem (RSS / HTML) – výsledek je ve tvaru OFN.
+
+    Když server nejde přímo (timeout, spojení, 401/403/451) a je k dispozici záložní klient (proxy v ČR),
+    zkusí se deska přes něj.
+    """
     started = time.monotonic()
     ms = lambda: int((time.monotonic() - started) * 1000)  # noqa: E731
     host = urlsplit(src.access_url).hostname or ""
+    via_proxy = False
     async with host_locks.setdefault(host, asyncio.Semaphore(PER_HOST)):
         try:
             try:
-                payload = await ADAPTERS[src.fmt](client, src.access_url)
-            except (httpx.TimeoutException, httpx.ConnectError):
-                await asyncio.sleep(RETRY_DELAY)  # přetížený hosting – jeden pozdější pokus
-                payload = await ADAPTERS[src.fmt](client, src.access_url)
-            return FetchResult(True, payload, None, 200, ms(), None, src.access_url)
+                try:
+                    payload = await ADAPTERS[src.fmt](client, src.access_url)
+                except (httpx.TimeoutException, httpx.ConnectError):
+                    await asyncio.sleep(RETRY_DELAY)  # přetížený hosting – jeden pozdější pokus
+                    payload = await ADAPTERS[src.fmt](client, src.access_url)
+            except httpx.HTTPError as exc:
+                if fallback is None or not needs_proxy(exc):
+                    raise
+                log.info("Deska %s přímo nejde (%s), zkouším záložní proxy", src.publisher, type(exc).__name__)
+                payload = await ADAPTERS[src.fmt](fallback, src.access_url)
+                via_proxy = True
+            return FetchResult(True, payload, None, 200, ms(), None, src.access_url, via_proxy=via_proxy)
         except httpx.HTTPStatusError as exc:
             code = exc.response.status_code
             kind = KIND_NOT_FOUND if code in (404, 410) else KIND_SERVER if code >= 500 else KIND_HTTP
@@ -170,7 +193,7 @@ async def _fetch_board(client: httpx.AsyncClient, src: BoardSource, retries: int
     (proxy v ČR – část hostingů blokuje zahraniční IP), zkusí se hlavní distribuce přes něj.
     """
     if src.fmt in ADAPTERS:
-        return await _fetch_adapter(client, src, host_locks)
+        return await _fetch_adapter(client, src, host_locks, fallback)
     first: FetchResult | None = None
     for url in src.urls():
         host = urlsplit(url).hostname or ""
