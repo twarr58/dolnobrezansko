@@ -154,6 +154,10 @@ function route() {
 
 // ---------- přehled ----------
 
+function important(s) {
+  return s.importance === 'vysoka' ? h('span', { class: 'tag tag--hot', title: s.importance_why || '' }, 'Důležité') : null;
+}
+
 function card(it, urgent) {
   const s = it.s || {};
   const u = urgent ? urgency(it) : null;
@@ -165,7 +169,7 @@ function card(it, urgent) {
     (it.docs || []).some((d) => d.k === 'mapa') ? 'mapa v příloze' : null,
   ].filter(Boolean).join(' · ');
   return h('a', { class: `card${urgent ? ' card--urgent' : ''}`, href: `#/o/${encodeURIComponent(it.id)}` },
-    h('div', { class: 'card__meta' }, tag(it), h('span', {}, `${it.o} · vyvěšeno ${dateCz(it.p)}`)),
+    h('div', { class: 'card__meta' }, tag(it), important(s), h('span', {}, `${it.o} · vyvěšeno ${dateCz(it.p)}`)),
     h('h3', {}, s.tldr || it.t),
     u ? h('div', { class: 'due' }, icon(dueText(it, u)[0], 18), dueText(it, u)[1]) : null,
     line ? h('div', { class: 'card__line' }, line) : null,
@@ -306,27 +310,46 @@ function renderDetail(id) {
     h('header', { class: 'top top--detail' }, h('div', { class: 'top__inner col' }, back)),
     h('article', { class: 'content col detail' },
       h('div', { class: 'section' },
-        h('div', { class: 'card__meta' }, tag(it), h('span', {}, `${it.o} · vyvěšeno ${dateCz(it.p, { year: true })}`)),
+        h('div', { class: 'card__meta' }, tag(it), important(s), h('span', {}, `${it.o} · vyvěšeno ${dateCz(it.p, { year: true })}`)),
         h('h1', {}, s.tldr || it.t)),
       todoBox,
+      s.impact || s.affects ? h('section', { class: 'calm meaning', 'aria-labelledby': 'h-mean' },
+        h('h2', { id: 'h-mean' }, 'Co to znamená'),
+        s.impact ? h('p', {}, s.impact) : null,
+        s.affects ? h('p', { class: 'muted' }, h('strong', {}, 'Týká se: '), s.affects) : null,
+        s.importance_why && s.importance === 'vysoka' ? h('p', { class: 'muted' }, h('strong', {}, 'Proč je to důležité: '), s.importance_why) : null) : null,
       s.bullets?.length ? h('section', { class: 'section', 'aria-labelledby': 'h-gist' },
-        h('h2', { id: 'h-gist', style: 'margin:0;font-size:18px' }, 'Ve zkratce'),
-        h('ul', { class: 'bullets' }, s.bullets.map((b) => h('li', {}, b)))) : null,
+        h('h2', { id: 'h-gist', class: 'h2' }, s.src === 'claude' ? 'Co přesně' : 'Ve zkratce'),
+        h('ul', { class: 'bullets' }, s.bullets.slice(0, 5).map((b) => h('li', {}, b))),
+        s.bullets.length > 5 ? h('details', { class: 'more-details' },
+          h('summary', {}, `Další podrobnosti (${s.bullets.length - 5})`),
+          h('ul', { class: 'bullets' }, s.bullets.slice(5).map((b) => h('li', {}, b)))) : null) : null,
+      s.facts?.length ? h('section', { class: 'section', 'aria-labelledby': 'h-facts' },
+        h('h2', { id: 'h-facts', class: 'h2' }, 'Klíčové údaje'),
+        h('dl', { class: 'facts' }, s.facts.map((f) => [h('dt', {}, f.label), h('dd', {}, f.value)]))) : null,
+      s.dates?.length ? h('section', { class: 'section', 'aria-labelledby': 'h-dates' },
+        h('h2', { id: 'h-dates', class: 'h2' }, 'Důležitá data'),
+        h('ul', { class: 'dates' }, s.dates.map((x) => h('li', { class: daysTo(x.date) < 0 ? 'past' : '' },
+          h('strong', {}, dateCz(x.date, { weekday: true, year: true })), ' ', x.what)))) : null,
       s.where ? h('section', { class: 'section', 'aria-labelledby': 'h-where' },
-        h('h2', { id: 'h-where', style: 'margin:0;font-size:18px' }, 'Kde'),
+        h('h2', { id: 'h-where', class: 'h2' }, 'Kde'),
         h('p', { style: 'margin:0' }, s.where)) : null,
       h('section', { class: 'section', 'aria-labelledby': 'h-docs' },
-        h('h2', { id: 'h-docs', style: 'margin:0;font-size:18px' }, docs.length ? 'Přílohy' : 'Bez příloh'),
+        h('h2', { id: 'h-docs', class: 'h2' }, docs.length ? 'Přílohy' : 'Bez příloh'),
         docs.map((d) => h('a', { class: 'doc', href: d.url, rel: 'noopener noreferrer' },
           icon(DOC_ICON[d.k] || DOC_ICON.jine, 28, 'var(--link)'),
           h('span', { class: 'doc__body' },
-            h('span', { class: 'doc__name' }, d.n || 'Příloha'),
+            h('span', { class: 'doc__name' }, d.w ? `${d.w.charAt(0).toUpperCase()}${d.w.slice(1)}` : (d.n || 'Příloha')),
+            d.sum ? h('span', { class: 'doc__sum' }, d.sum) : null,
             h('span', { class: 'doc__info' }, [
+              d.w && d.n && fold(d.n) !== fold(d.w) ? d.n : null,
               d.x ? d.x.toUpperCase() : null,
               d.k === 'sken' ? (d.ocr ? 'sken, text rozpoznán (OCR)' : 'sken') : d.k === 'mapa' ? 'mapa / výkres' : null,
               d.pg ? `${d.pg} ${plural(d.pg, 'strana', 'strany', 'stran')}` : null,
-              d.w,
             ].filter(Boolean).join(' · ')))))),
+      s.contact ? h('section', { class: 'section', 'aria-labelledby': 'h-contact' },
+        h('h2', { id: 'h-contact', class: 'h2' }, 'Kam se obrátit'),
+        h('p', { style: 'margin:0' }, s.contact)) : null,
       h('section', { class: 'official' },
         h('div', {}, 'Úřední název: ', it.t),
         it.cj ? h('div', {}, `Č. j.: ${it.cj}`) : null,

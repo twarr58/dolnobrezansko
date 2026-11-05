@@ -222,7 +222,8 @@ async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, 
     async def process(it: dict) -> None:
         sig = _signature(it)
         prev = summaries.get(it["id"])
-        want_ai = summarizer is not None and not (prev and prev.get("sig") == sig and prev.get("ai"))
+        current = bool(prev and prev.get("sig") == sig and prev.get("ai") and prev.get("v") == ai.VERSION)
+        want_ai = summarizer is not None and not current
         docs = [await get_doc(d, want_ai) for d in it.get("docs", [])]
         result = {"sig": sig, "ai": prev.get("ai") if prev and prev.get("sig") == sig else None}
         if want_ai and summarizer.available():
@@ -235,8 +236,9 @@ async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, 
             async with ai_sem:
                 out = await summarizer.summarize(meta, payload)
             if out:
-                result["ai"] = out
-                result["at"] = now.isoformat(timespec="seconds")
+                result.update(ai=out, v=ai.VERSION, at=now.isoformat(timespec="seconds"))
+            elif prev and prev.get("sig") == sig:
+                result["v"] = prev.get("v")
         summaries[it["id"]] = result
 
     try:
@@ -268,17 +270,24 @@ def item_description(it: dict, docs: list[dict], summary: dict | None) -> dict:
                         body=it.get("_body", ""))
     a = (summary or {}).get("ai")
     if a:
-        s.update(src="claude", tldr=a.get("tldr") or s["tldr"], bullets=[b for b in a.get("bullets", []) if b][:4],
+        bullets = a.get("details") or a.get("bullets") or []  # verze 1 měla jen bullets
+        s.update(src="claude", tldr=a.get("tldr") or s["tldr"], bullets=[b for b in bullets if b][:10],
                  action=a.get("action") or s.get("action", ""))
         if a.get("category") in digest.LABELS:
             s["cat"] = a["category"]
-        for key, src in (("deadline", "deadline"), ("event", "event")):
-            if d := _valid_date(a.get(src)):
+        for key in ("deadline", "event"):
+            if d := _valid_date(a.get(key)):
                 s[key] = d
         if a.get("event_time"):
             s["time"] = a["event_time"][:5]
-        if a.get("where"):
-            s["where"] = a["where"]
+        for key in ("where", "impact", "affects", "contact", "importance", "importance_why"):
+            if a.get(key):
+                s[key] = a[key]
+        if facts := [f for f in a.get("facts", []) if f.get("label") and f.get("value")]:
+            s["facts"] = facts[:14]
+        if dates := [{"date": d, "what": x["what"]} for x in a.get("dates", [])
+                     if (d := _valid_date(x.get("date"))) and x.get("what")]:
+            s["dates"] = sorted(dates, key=lambda x: x["date"])[:12]
     s["label"] = digest.LABELS.get(s["cat"], "Ostatní")
     return {k: v for k, v in s.items() if v not in (None, "", [])}
 
@@ -302,13 +311,14 @@ def build_output(region: dict, members: list[dict], boards: list[dict], items: l
         if it["board"] not in name_of or (it.get("removed") and it["removed"] < since):
             continue
         summary = summaries.get(it["id"])
-        ai_docs = {d.get("index"): d.get("what") for d in ((summary or {}).get("ai") or {}).get("docs", [])}
+        ai_docs = {d.get("index"): d for d in ((summary or {}).get("ai") or {}).get("docs", [])}
         docs = []
         for n, d in enumerate(it.get("docs", []), 1):
             info = doc_cache.get(d["url"], {})
             docs.append({k: v for k, v in {
                 "n": d.get("name"), "url": d["url"], "k": info.get("kind"), "x": info.get("ext"),
-                "pg": info.get("pages"), "ocr": info.get("ocr"), "w": ai_docs.get(n)}.items() if v})
+                "pg": info.get("pages"), "ocr": info.get("ocr"), "w": ai_docs.get(n, {}).get("what"),
+                "sum": ai_docs.get(n, {}).get("summary")}.items() if v})
         out_items.append({k: v for k, v in {
             "id": it["id"], "o": name_of[it["board"]], "t": it["title"], "url": it.get("url"),
             "p": it.get("posted"), "u": it.get("until"), "cj": it.get("cj"), "r": it.get("removed"),
@@ -367,7 +377,7 @@ def sample(out_dir: Path) -> dict:
     day = lambda n: (today + timedelta(days=n))  # noqa: E731
     fill = lambda t: re.sub(r"\{d([+-]\d+)\}", lambda m: f"{day(int(m.group(1))).day}. {day(int(m.group(1))).month}. "
                                                        f"{day(int(m.group(1))).year}", t)  # noqa: E731
-    members, boards, items, docs = [], [], [], {}
+    members, boards, items, docs, summaries = [], [], [], {}, {}
     for m in region["members"]:
         bid = f"ukazka-{m['name']}" if m.get("source") else None
         members.append({"name": m["name"], "publisher": m["publisher"], "web": m.get("web", ""), "board": bid,
@@ -383,7 +393,10 @@ def sample(out_dir: Path) -> dict:
         items.append({"id": f"u{n}", "board": f"ukazka-{r['o']}", "title": r["title"], "url": "https://example.org/",
                       "posted": day(r["pd"]).isoformat(), "until": day(r["ud"]).isoformat(), "cj": r.get("cj"),
                       "docs": item_docs, "first_seen": now.isoformat(timespec="seconds")})
-    data = build_output(region, members, boards, items, docs, {}, now)
+        if r.get("ai"):
+            raw_ai = re.sub(r"\{iso([+-]\d+)\}", lambda m: day(int(m.group(1))).isoformat(), json.dumps(r["ai"]))
+            summaries[f"u{n}"] = {"ai": json.loads(fill(raw_ai))}
+    data = build_output(region, members, boards, items, docs, summaries, now)
     data["sample"] = True
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "region.json").write_text(json.dumps(data, ensure_ascii=False, indent=1), "utf-8")

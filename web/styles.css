@@ -145,3 +145,19 @@ svg { flex: 0 0 auto; }
 .villages p { margin: 0; line-height: 1.5; }
 .ok { color: var(--t-green); font-weight: 700; }
 .miss { color: var(--urgent-ink); font-weight: 700; }
+
+/* Rozbor příloh */
+.h2 { margin: 0; font-size: 18px; }
+.tag--hot { background: var(--urgent-bg); color: var(--urgent-ink); }
+.meaning { display: flex; flex-direction: column; gap: 8px; color: var(--ink); }
+.meaning h2 { margin: 0; font-size: 15px; color: var(--muted); }
+.meaning p { margin: 0; line-height: 1.5; }
+.meaning p:first-of-type { font-size: 17px; }
+.more-details summary { cursor: pointer; font-weight: 700; color: var(--link); padding: 8px 0; }
+.facts { margin: 0; display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 6px 16px; font-size: 15px; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 480px) { .facts { grid-template-columns: minmax(0, 1fr); } .facts dd { margin-bottom: 6px; } }
+.dates { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 15px; }
+.dates .past { color: var(--muted); text-decoration: line-through; }
+.doc__sum { font-size: 14px; line-height: 1.45; }
