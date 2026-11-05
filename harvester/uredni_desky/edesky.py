@@ -13,11 +13,14 @@ from __future__ import annotations
 import logging
 import os
 import re
+from dataclasses import dataclass
 from datetime import date, timedelta
 from urllib.parse import unquote
 from xml.etree import ElementTree
 
 import httpx
+
+log = logging.getLogger(__name__)
 
 API_URL = "https://edesky.cz/api/v1/documents"
 WINDOW_DAYS = 60  # dokumenty načtené za posledních N dní; starší se v archivu označí jako sejmuté
@@ -59,21 +62,50 @@ def api_key() -> str:
     return key
 
 
-def parse_documents(content: bytes) -> tuple[list[dict], int]:
-    """XML odpověď API → (položky ve tvaru OFN Úřední desky, počet stránek)."""
+_DOC_URL_ATTRS = ("edesky_url", "url", "link")
+_NAME_ATTRS = ("name", "title", "nazev")
+_DATE_ATTRS = ("created_at", "loaded_at", "published_at", "date")
+
+
+def _attr(el: ElementTree.Element, names: tuple[str, ...]) -> str:
+    for n in names:
+        if (v := (el.get(n) or "").strip()):
+            return v
+    return ""
+
+
+@dataclass
+class Page:
+    infos: list[dict]
+    total_pages: int
+    api_total: int | None  # počet dokumentů podle API (meta/documents_count)
+    raw: int  # elementů <document> v odpovědi
+    sample_attrs: list[str]  # názvy atributů prvního dokumentu (pro ladění, bez hodnot)
+
+
+def parse_page(content: bytes) -> Page:
+    """XML odpověď API → položky ve tvaru OFN Úřední desky + údaje pro log."""
     root = ElementTree.fromstring(content)
     if root.tag != "edesky_search_api":
-        raise ValueError("Odpověď edesky.cz není výsledek hledání")
+        raise ValueError(f"Odpověď edesky.cz není výsledek hledání (kořen <{root.tag}>)")
     page = root.find("meta/page")
-    total_pages = int(page.get("total_pages", "1")) if page is not None else 1
+    total_pages = int(page.get("total_pages", "1") or 1) if page is not None else 1
+    count = root.find("meta/documents_count")
+    api_total = None
+    if count is not None:
+        try:
+            api_total = int(count.get("total") or (count.text or "").strip())
+        except ValueError:
+            pass
+    docs_el = list(root.iter("document"))
     infos = []
-    for doc in root.iter("document"):
-        name = " ".join((doc.get("name") or "").split())
-        edesky_url = doc.get("edesky_url") or ""
+    for doc in docs_el:
+        name = " ".join(_attr(doc, _NAME_ATTRS).split())
+        edesky_url = _attr(doc, _DOC_URL_ATTRS)
         if not name or not edesky_url:
             continue
         info: dict = {"iri": edesky_url, "url": doc.get("orig_url") or edesky_url, "název": {"cs": name}}
-        if (created := (doc.get("created_at") or "")[:10]) and re.match(r"\d{4}-\d{2}-\d{2}$", created):
+        if (created := _attr(doc, _DATE_ATTRS)[:10]) and re.match(r"\d{4}-\d{2}-\d{2}$", created):
             info["vyvěšení"] = {"datum": created}
         docs = []
         for att in doc.iter("attachment"):
@@ -86,24 +118,51 @@ def parse_documents(content: bytes) -> tuple[list[dict], int]:
         if docs:
             info["dokument"] = docs
         infos.append(info)
-    return infos, total_pages
+    return Page(infos, total_pages, api_total, len(docs_el), sorted(docs_el[0].attrib) if docs_el else [])
+
+
+def parse_documents(content: bytes) -> tuple[list[dict], int]:
+    page = parse_page(content)
+    return page.infos, page.total_pages
+
+
+# Varianty dotazu: první, která vrátí dokumenty, vyhrává (API je v testovacím provozu a „*“ v hledání
+# podle názvu nemusí fungovat vždy).
+STRATEGIES = (
+    {"keywords": "*", "search_with": "sql", "window": True},
+    {"keywords": "*", "search_with": "es", "window": True},
+    {"keywords": "*", "search_with": "sql", "window": False},
+    {"keywords": "", "search_with": "sql", "window": False},
+)
 
 
 async def fetch_board(client: httpx.AsyncClient, url: str) -> dict:
     """Dokumenty jedné desky edesky.cz (adresa https://edesky.cz/desky/<id>) za posledních WINDOW_DAYS dní."""
-    params = {
-        "keywords": "*", "search_with": "sql", "dashboard_id": dashboard_id(url), "include_texts": "1",
-        "order": "date", "created_from": (date.today() - timedelta(days=WINDOW_DAYS)).isoformat(),
-        "api_key": api_key(),
-    }
-    infos: list[dict] = []
-    page = 1
-    while page <= MAX_PAGES:
-        resp = await client.get(API_URL, params={**params, "page": str(page)}, timeout=60)
-        resp.raise_for_status()
-        found, total = parse_documents(resp.content)
-        infos += found
-        if page >= total or not found:
-            break
-        page += 1
-    return {"informace": infos}
+    board = dashboard_id(url)
+    key = api_key()
+    since = (date.today() - timedelta(days=WINDOW_DAYS)).isoformat()
+    for strategy in STRATEGIES:
+        params = {"keywords": strategy["keywords"], "search_with": strategy["search_with"], "dashboard_id": board,
+                  "include_texts": "1", "order": "date", "api_key": key}
+        if strategy["window"]:
+            params["created_from"] = since
+        infos: list[dict] = []
+        page_no = 1
+        while page_no <= MAX_PAGES:
+            resp = await client.get(API_URL, params={**params, "page": str(page_no)}, timeout=60)
+            resp.raise_for_status()
+            page = parse_page(resp.content)
+            if page_no == 1:
+                log.info("edesky.cz deska %s (%s, keywords=%r, okno %s): API uvádí %s dokumentů, v odpovědi %d, "
+                         "přečteno %d; atributy dokumentu: %s", board, strategy["search_with"], strategy["keywords"],
+                         "60 dní" if strategy["window"] else "bez omezení", page.api_total, page.raw,
+                         len(page.infos), ",".join(page.sample_attrs) or "-")
+            infos += page.infos
+            if page_no >= page.total_pages or not page.infos:
+                break
+            page_no += 1
+        if infos:
+            if not strategy["window"]:  # bez okna API vrací i staré dokumenty – vzít jen posledních WINDOW_DAYS dní
+                infos = [i for i in infos if i.get("vyvěšení", {}).get("datum", since) >= since] or infos[:200]
+            return {"informace": infos}
+    return {"informace": []}
