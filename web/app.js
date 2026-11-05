@@ -601,19 +601,27 @@ function kdyRange(kdy) {
 
 function renderEvents(params) {
   const ev = state.data.events || { sources: [], items: [] };
-  const f = { obec: params.get('obec') || '', kdy: params.get('kdy') || '' };
+  // obce, jejichž akce jsou skryté (výchozí: vidět vše); v adrese ?skryt=Obec1,Obec2
+  const hidden = new Set((params.get('skryt') || '').split(',').map((x) => x.trim()).filter(Boolean));
+  const f = { kdy: params.get('kdy') || '' };
   const all = (ev.items || []).filter((e) => isIso(e.d) && (e.end || e.d) >= TODAY);
   const counts = new Map();
   for (const e of all) counts.set(e.o, (counts.get(e.o) || 0) + 1);
-  const go = (patch) => {
-    const n = { ...f, ...patch };
+  const go = ({ kdy = f.kdy, skryt = hidden }) => {
     const p = new URLSearchParams();
-    if (n.obec) p.set('obec', n.obec);
-    if (n.kdy) p.set('kdy', n.kdy);
-    location.hash = p.toString() ? `#/akce?${p}` : '#/akce';
+    if (skryt.size) p.set('skryt', [...skryt].join(','));
+    if (kdy) p.set('kdy', kdy);
+    history.replaceState(null, '', p.toString() ? `#/akce?${p}` : '#/akce');
+    renderEvents(p);
   };
+  const toggle = (name) => {
+    const next = new Set(hidden);
+    if (next.has(name)) next.delete(name); else next.add(name);
+    go({ skryt: next });
+  };
+  const only = (name) => go({ skryt: new Set([...counts.keys()].filter((n) => n !== name)) });
   const [from, to] = kdyRange(f.kdy);
-  const list = all.filter((e) => (!f.obec || e.o === f.obec) && (e.end || e.d) >= from && (e.d < from ? from : e.d) <= to);
+  const list = all.filter((e) => !hidden.has(e.o) && (e.end || e.d) >= from && (e.d < from ? from : e.d) <= to);
   const days = new Map();
   for (const e of list) {
     const day = e.d < TODAY ? TODAY : e.d; // akce, která už běží, patří k dnešku
@@ -650,9 +658,17 @@ function renderEvents(params) {
         h('div', { class: 'topics', role: 'group', 'aria-label': 'Kdy' }, KDY.map(([k, label]) => h('button', {
           type: 'button', class: 'topic', 'aria-pressed': String(f.kdy === k), onclick: () => go({ kdy: k }),
         }, label))),
-        h('div', { class: 'topics topics--places', role: 'group', 'aria-label': 'Obec' }, ['', ...villagesWith].map((name) => h('button', {
-          type: 'button', class: 'topic', 'aria-pressed': String(f.obec === name), onclick: () => go({ obec: f.obec === name ? '' : name }),
-        }, name || 'Všechny obce', name ? h('span', { class: 'topic__n' }, String(counts.get(name))) : null)))),
+        h('div', { class: 'places-filter' },
+          h('div', { class: 'places-filter__head' },
+            h('span', { class: 'places-filter__label' }, 'Obce'),
+            h('span', { class: 'places-filter__hint' }, 'klikni pro skrytí / zobrazení'),
+            hidden.size ? h('button', { type: 'button', class: 'linkish', onclick: () => go({ skryt: new Set() }) }, 'Zobrazit všechny') : null),
+          h('div', { class: 'chips', role: 'group', 'aria-label': 'Obce v kalendáři' }, villagesWith.map((name) => h('span', { class: 'chipwrap' },
+            h('button', {
+              type: 'button', class: 'chip', 'aria-pressed': String(!hidden.has(name)), onclick: () => toggle(name),
+              title: hidden.has(name) ? 'Zobrazit akce obce' : 'Skrýt akce obce',
+            }, h('span', { class: 'chip__mark', 'aria-hidden': 'true' }, hidden.has(name) ? null : icon('M5 12l5 5 9-10', 12)), name, h('span', { class: 'topic__n' }, String(counts.get(name)))),
+            h('button', { type: 'button', class: 'chip__only', onclick: () => only(name), 'aria-label': `Jen ${name}` }, 'jen')))))),
       h('div', { class: 'summary' }, h('span', {}, h('strong', {}, String(list.length)), ` ${plural(list.length, 'akce', 'akce', 'akcí')}`)),
       h('div', { class: 'main' },
         h('div', { class: 'timeline' }, dayNodes.length ? dayNodes : h('p', { class: 'empty' }, 'V tomto výběru žádné akce.')),
