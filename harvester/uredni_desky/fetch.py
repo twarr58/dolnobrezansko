@@ -135,7 +135,7 @@ ADAPTERS = {"imunis": imunis.fetch_board, "galileo": galileo.fetch_board, "edesk
             "html": webpage.fetch_board}
 
 
-BLOCKED = (401, 403, 451)  # server odmítá – často jen zahraniční IP (runner GitHubu je v USA)
+BLOCKED = (401, 403, 451, 466)  # 466: WAF webu Psár; server odmítá – často jen zahraniční IP (runner GitHubu je v USA)
 
 
 def needs_proxy(exc: Exception) -> bool:

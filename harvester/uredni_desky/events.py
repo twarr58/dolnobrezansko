@@ -2,6 +2,7 @@
 
 Nastavení u obce v data/region.json pod klíčem „events“:
   url    stránka s kalendářem na webu obce (na ni vede odkaz „Kalendář na webu obce“)
+  browser (volitelně) true = hlavičky běžného prohlížeče (web odmítá roboty podle identifikace)
   fmt    jak číst akce:
          vismo   redakční systém vismo (Dolní Břežany, Libeř) – JSON API kalendáře
                  /api/services/app/ObjectOverview/GetEventsByDay
@@ -23,6 +24,7 @@ import httpx
 import lxml.html
 
 from .fetch import needs_proxy
+from .webpage import BROWSER_HEADERS
 
 log = logging.getLogger(__name__)
 
@@ -44,6 +46,8 @@ def _clean(s: str) -> str:
 
 
 async def _get(client: httpx.AsyncClient, url: str, fallback: httpx.AsyncClient | None, **kw) -> httpx.Response:
+    if kw.pop("browser", False):
+        kw["headers"] = BROWSER_HEADERS
     try:
         resp = await client.get(url, **kw)
         resp.raise_for_status()
@@ -152,15 +156,15 @@ async def fetch_events(client: httpx.AsyncClient, cfg: dict, today: date,
     fmt = cfg.get("fmt")
     end = today + timedelta(days=WINDOW_DAYS)
     if fmt == "vismo":
-        page = await _get(client, cfg["url"], fallback)
+        page = await _get(client, cfg["url"], fallback, browser=cfg.get("browser"))
         obj, block = vismo_ids(page.text)
         api = urljoin(str(page.url), "/api/services/app/ObjectOverview/GetEventsByDay")
-        resp = await _get(client, api, fallback, params={
+        resp = await _get(client, api, fallback, browser=cfg.get("browser"), params={
             "From": f"{today.isoformat()}T00:00:00", "To": f"{end.isoformat()}T23:59:59",
             "ObjectId": obj, "ElementTypeOfObjectTypeBlockId": block})
         events = parse_vismo(resp.json(), str(page.url))
     elif fmt in ("rdc", "article"):
-        page = await _get(client, cfg["url"], fallback)
+        page = await _get(client, cfg["url"], fallback, browser=cfg.get("browser"))
         events = (parse_rdc if fmt == "rdc" else parse_article)(page.text, str(page.url))
     else:
         return []
