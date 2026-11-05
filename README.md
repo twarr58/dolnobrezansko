@@ -110,14 +110,17 @@ u adaptérů stahuje jen u nových položek (mezipaměť ze stavu), aby sběr ne
 
 ### Servery blokující zahraniční IP
 
-Diagnostika (`diagnose.yml`, 31. 10. 2026) ukázala, že 73 desek nepřijme z runneru GitHubu (USA)
-ani TCP spojení. 54 z nich běží u jednoho českého hostingu (78.156.158.x), zbytek na vlastních
-serverech úřadů. Z Česka fungují, jde o blokování zahraničních IP.
+Runnery GitHub Actions běží v USA a část obecních webů je nepustí: Jesenice a Okrouhlo nepřijmou
+spojení (timeout), Vestec vrací HTTP 403. Z Česka fungují. Dvě řešení:
 
-Řešení: harvester umí pro tyto servery použít záložní proxy v ČR. Stačí v repozitáři nastavit
-secret `HARVEST_FALLBACK_PROXY` (např. `http://uzivatel:heslo@proxy.example.cz:3128`).
-Proxy se použije jen pro desky, které selžou na timeout nebo chybu spojení.
-Alternativa: spouštět sběr ze self-hosted runneru GitHub Actions v ČR.
+1. **Záložní proxy v ČR** – secret `HARVEST_FALLBACK_PROXY` (např. `http://uzivatel:heslo@proxy.example.cz:3128`,
+   squid nebo tinyproxy na malém VPS v ČR). Harvester ji použije jen tam, kde přímý přístup selže
+   (timeout, chyba spojení, HTTP 401/403/451) – pro desku, její přílohy i stránky oznámení; server,
+   který jednou přímo nejde, pak v běhu jede rovnou přes proxy.
+2. **Self-hosted runner v ČR** (vlastní server, NAS, OpenShift s actions-runner-controller) a v jobu
+   `harvest` `runs-on: [self-hosted, linux]`. Repozitář je veřejný – sběr se spouští jen z `main`
+   (plán, ruční spuštění, push), ne z pull requestů; ve Settings → Actions nech zapnuté schvalování
+   workflow z forků.
 
 ## Formát dat pro web
 

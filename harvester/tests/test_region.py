@@ -261,3 +261,28 @@ def test_output_marks_pending_when_notice_changed_without_new_summary():
     s = region.item_description(it, [], {"sig": "s2:old", "ai": {"tldr": "staré"}, "at": "2026-11-02T09:00:00+00:00",
                                          "updated_at": "2026-11-03T09:00:00+00:00"})
     assert s["pending"] is True and s["summarized"] == "2026-11-02" and s["updated"] == "2026-11-03"
+
+
+def test_enrich_downloads_attachments_via_proxy_for_blocked_hosts(tmp_path, monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_FEDERATION_RULE_ID", raising=False)
+    direct, proxied = [], []
+
+    def blocked(req):
+        direct.append(str(req.url))
+        return httpx.Response(403)
+
+    def proxy(req):
+        proxied.append(str(req.url))
+        return httpx.Response(200, content=b"Text prilohy", headers={"content-type": "text/plain"})
+
+    items = [{"id": f"i{n}", "board": "b1", "title": f"Oznámení {n}", "posted": "2026-11-01",
+              "docs": [{"name": "Text", "url": f"https://vestec.cz/soubor/{n}.txt"}]} for n in range(3)]
+
+    async def go():
+        async with _client(blocked) as c, httpx.AsyncClient(transport=httpx.MockTransport(proxy)) as p:
+            return await region.enrich(c, items, tmp_path, ai_limit=0, now=NOW, fallback=p)
+
+    docs, _ = asyncio.run(go())
+    assert all(docs[f"https://vestec.cz/soubor/{n}.txt"]["kind"] == "text" for n in range(3))
+    assert len(proxied) == 3 and len(direct) == 1  # po prvním odmítnutí už rovnou přes proxy
