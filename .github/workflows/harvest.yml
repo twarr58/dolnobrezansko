@@ -33,7 +33,7 @@ jobs:
   harvest:
     needs: test
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 55
     # Claude: přihlášení bez klíče přes Workload Identity Federation (viz README). Pravidlo v Claude Console
     # přijímá jen token GitHubu z repo:twarr58/dolnobrezansko:ref:refs/heads/main.
     steps:
@@ -68,7 +68,7 @@ jobs:
           ANTHROPIC_WORKSPACE_ID: ${{ vars.ANTHROPIC_WORKSPACE_ID }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           AI_MODEL: ${{ vars.AI_MODEL || 'claude-sonnet-5-5' }}
-          AI_LIMIT: ${{ vars.AI_LIMIT || '40' }}
+          AI_LIMIT: ${{ vars.AI_LIMIT || '100' }}
         run: python -m uredni_desky region --out site/data --state state
 
       - name: Sestavit web

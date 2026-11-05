@@ -20,7 +20,7 @@ def test_resolve_sources_known_and_detected(tmp_path):
     def handler(req: httpx.Request) -> httpx.Response:
         calls.append(str(req.url))
         if req.url.host == "query.wikidata.org":
-            body = {"results": {"bindings": [{"name": {"value": "Jesenice"}, "w": {"value": "https://www.jesenice.example/"}}]}}
+            body = {"results": {"bindings": [{"name": {"value": "Zlatníky-Hodkovice"}, "w": {"value": "https://www.jesenice.example/"}}]}}
             return httpx.Response(200, json=body)
         if req.url.host == "www.jesenice.example":
             return httpx.Response(200, html='<a href="https://jesenice.imunis.cz/edeska/">Úřední deska</a>')
@@ -34,12 +34,12 @@ def test_resolve_sources_known_and_detected(tmp_path):
     by_name = {m["name"]: m for m in members}
     assert len(members) == 11
     assert by_name["Dolní Břežany"]["board"] and by_name["Psáry"]["board"]
-    assert by_name["Jesenice"]["board"] and by_name["Jesenice"]["status"] == "deska nalezena automaticky"
-    assert by_name["Okrouhlo"]["board"] is None and by_name["Okrouhlo"]["status"] == "web obce nenalezen"
+    assert by_name["Jesenice"]["board"] and by_name["Okrouhlo"]["board"]  # desky zadané v region.json
+    assert by_name["Zlatníky-Hodkovice"]["board"] and by_name["Zlatníky-Hodkovice"]["status"] == "deska nalezena automaticky"
     assert by_name["Vestec"]["board"]  # deska Galileo zadaná v region.json
     assert by_name["Březová-Oleško"]["board"] is None
-    jes = next(s for s in sources if s.publisher == "Město Jesenice")
-    assert jes.fmt == "imunis" and jes.access_url == "https://jesenice.imunis.cz/edeska/rss.asp"
+    zl = next(s for s in sources if s.publisher == "Obec Zlatníky-Hodkovice")
+    assert zl.fmt == "imunis" and zl.access_url == "https://jesenice.imunis.cz/edeska/rss.asp"
     # ID desky Dolních Břežan se nemění – zůstává archiv z dřívějších sběrů
     assert by_name["Dolní Břežany"]["board"] == "41897ce19d1b"
 
@@ -48,7 +48,7 @@ def test_resolve_sources_known_and_detected(tmp_path):
     asyncio.run(go())
     assert calls == []
     saved = json.loads((tmp_path / "region_sources.json").read_text("utf-8"))
-    assert saved["Jesenice"]["entry"] == {"fmt": "imunis", "subdomain": "jesenice"}
+    assert saved["Zlatníky-Hodkovice"]["entry"] == {"fmt": "imunis", "subdomain": "jesenice"}
 
 
 def test_build_output_merges_ai_summary():

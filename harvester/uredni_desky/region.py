@@ -180,7 +180,7 @@ async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, 
             log.warning("Claude: přihlášení se nepovedlo (%s) – jen popisy pravidly", exc)
     budget = {"docs": DOC_BUDGET}
     dl_sem = asyncio.Semaphore(4)
-    ai_sem = asyncio.Semaphore(3)
+    ai_sem = asyncio.Semaphore(5)
 
     stamp = now.isoformat(timespec="seconds")
     recheck_before = (now - timedelta(hours=REVALIDATE_HOURS)).isoformat()
@@ -377,7 +377,7 @@ def build_output(region: dict, members: list[dict], boards: list[dict], items: l
     }
 
 
-async def run(out_dir: Path, state_dir: Path, ai_limit: int = 40, concurrency: int = 8) -> dict:
+async def run(out_dir: Path, state_dir: Path, ai_limit: int = 100, concurrency: int = 8) -> dict:
     now = datetime.now(timezone.utc)
     region = load_region()
     proxy = os.environ.get("HARVEST_FALLBACK_PROXY") or None
