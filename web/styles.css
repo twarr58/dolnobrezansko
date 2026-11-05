@@ -96,22 +96,18 @@ svg { flex: 0 0 auto; }
   .main { padding-top: 6px; }
 }
 
-/* Obce: přepínač s jednou volbou – kroužek, vybraná obec tučně (na telefonu ve dvou sloupcích) */
+/* Obce: prostý seznam řádků; vybraná obec tučně v barvě odkazů, ostatní se při najetí podtrhnou */
 .places { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; }
 .place {
-  display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 6px 0;
-  border: 0; border-bottom: 1px solid var(--rule); background: transparent; font-size: 15px; text-align: left; cursor: pointer;
+  display: flex; align-items: baseline; gap: 10px; min-height: 40px; padding: 8px 0;
+  border: 0; border-bottom: 1px solid var(--rule); background: transparent; color: var(--ink);
+  font-size: 15px; text-align: left; cursor: pointer;
 }
-.place::before {
-  content: ""; flex: 0 0 auto; width: 12px; height: 12px; border-radius: 50%;
-  border: 1.5px solid var(--rule-strong); box-sizing: border-box;
-}
-.place:hover::before { border-color: var(--ink); }
 .place__name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .place__n { font-family: var(--mono); font-size: 12px; color: var(--muted); }
-.place[aria-pressed="true"] { font-weight: 600; }
-.place[aria-pressed="true"]::before { border: 0; background: var(--ink); box-shadow: inset 0 0 0 3px var(--bg), 0 0 0 1.5px var(--ink); }
-.place[aria-pressed="true"] .place__n { color: var(--ink); }
+.place:hover .place__name { text-decoration: underline; text-underline-offset: 3px; }
+.place[aria-pressed="true"] { color: var(--accent); font-weight: 600; }
+.place[aria-pressed="true"] .place__n { color: var(--accent); }
 @media (min-width: 980px) { .places { grid-template-columns: minmax(0, 1fr); } }
 .search {
   width: 100%; height: 44px; font: inherit; font-size: 15px; color: var(--ink); background: var(--surface);
