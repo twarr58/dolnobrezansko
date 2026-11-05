@@ -11,7 +11,7 @@
      "source": {"fmt": "imunis", "subdomain": "vranenadvltavou"}},
     {"name": "Zvole", "events": {"url": "https://www.zvole.info/aktualne/kalendar-akci/", "fmt": "link"}, "newsletter": {"name": "Zvolské noviny", "url": "https://www.zvole.info/aktualne/zvolske-noviny-1/?page=all", "match": "file_storage/download\\.php"}, "publisher": "Obec Zvole", "qid": "Q2703980",
      "source": {"fmt": "galileo", "url": "https://www.zvole.info/urad/uredni-deska/"}},
-    {"name": "Psáry", "newsletter": {"name": "Psárský zpravodaj", "url": "https://psary.cz/psarsky-zpravodaj/", "match": "^(?=.*\\.pdf)(?=.*zpravodaj)"}, "publisher": "Obec Psáry", "qid": "Q640046",
+    {"name": "Psáry", "newsletter": {"name": "Psárský zpravodaj", "url": "https://psary.cz/psarsky-zpravodaj/", "match": "psary\\.cz/psarsky-zpravodaj/[a-z0-9-]+/? ", "exclude": "o-psarskem", "detail": {"match": "\\.pdf"}}, "publisher": "Obec Psáry", "qid": "Q640046",
      "source": {"fmt": "rss", "url": "https://urednideska.alis.cz/obec-psary/rss"}},
     {"name": "Libeř", "events": {"url": "https://www.liber.cz/kalendar-udalosti", "fmt": "vismo"}, "newsletter": false, "publisher": "Obec Libeř", "qid": "Q1863455",
      "source": {"fmt": "vismo", "url": "https://www.liber.cz/uredni-deska"}},

@@ -161,7 +161,9 @@ async def resolve_details(client: httpx.AsyncClient, issues: list[dict], detail:
             except Exception as exc:
                 log.info("Zpravodaj – stránka čísla %s: %r", page, exc)
         info = resolved.get(page) or {}
-        title = issue["t"] + (f" ({info['when']})" if info.get("when") and info["when"] not in issue["t"] else "")
+        # datum ze stránky čísla jen když ho název nemá (u Psár je rok v názvu, datum na stránce může být z postranní lišty)
+        when = info.get("when") if not issue.get("y") else None
+        title = issue["t"] + (f" ({when})" if when and when not in issue["t"] else "")
         out.append({k: v for k, v in {"t": title, "url": info.get("pdf") or page, "page": page if info.get("pdf") else None,
                                       "y": issue.get("y") or info.get("y")}.items() if v})
     return out
