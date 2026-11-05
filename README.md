@@ -42,34 +42,31 @@ model: `AI_MODEL` (výchozí `claude-opus-5-5`).
 ### Přihlášení bez klíče (doporučeno): Workload Identity Federation
 
 GitHub Actions se u Claude prokáže svým krátkodobým tokenem (OIDC). V repozitáři není žádný klíč,
-který by mohl uniknout, a Claude Console přijme jen token z tohoto repozitáře, prostředí `ai`
-a větve `main`.
+který by mohl uniknout. Pravidlo v Claude Console přijme jen token z repozitáře
+`twarr58/uredni_desky` a větve `main`; do `main` může zapisovat jen vlastník repozitáře,
+pull requesty (i z forků) mají jiný ref a neprojdou.
 
-1. **GitHub:** Settings → Environments → **New environment** `ai` → *Deployment branches and tags*
-   → **Selected branches and tags** → přidat `main`.
-2. **Claude Console:** Settings → Workload identity → **Connect workload** → **GitHub Actions**.
-   - repozitář `twarr58/uredni_desky`, subject `repo:twarr58/uredni_desky:environment:ai`
-   - v pravidle navíc claim `ref` = `refs/heads/main` (nebo `repository_owner` = `twarr58`)
-   - audience `https://api.anthropic.com`, oprávnění `workspace:developer`
-3. **GitHub:** v prostředí `ai` → *Environment variables* přidat ID, která průvodce ukáže
-   (nejsou tajná):
+1. **Claude Console:** Settings → Workload identity → **Connect workload** → **GitHub Actions**.
+   - Rule name `uredni-desky-main`, organization `twarr58`, repository `uredni_desky`
+   - Branch / ref `refs/heads/main` (vypsat, prázdné = jakákoli větev)
+   - Allowed events: ne „Only push“ – sběr běží podle plánu (`schedule`) a ručně (`workflow_dispatch`)
+   - Target: nový service account (např. `uredni-desky`), role developer, výchozí workspace
+2. **GitHub:** Settings → Secrets and variables → Actions → záložka **Variables** → přidat ID,
+   která průvodce ukáže (nejsou tajná):
    - `ANTHROPIC_FEDERATION_RULE_ID` (`fdrl_…`)
    - `ANTHROPIC_ORGANIZATION_ID` (UUID organizace)
    - `ANTHROPIC_SERVICE_ACCOUNT_ID` (`svac_…`)
    - `ANTHROPIC_WORKSPACE_ID` (`wrkspc_…`, jen když pravidlo platí pro víc workspaců)
-4. Actions → *Sběr desek mikroregionu a nasazení* → **Run workflow** (větev `main`). V logu kroku
+3. Actions → *Sběr desek mikroregionu a nasazení* → **Run workflow** (větev `main`). V logu kroku
    sběru má být „přihlášení přes Workload Identity Federation“ a „Claude: N shrnutí“.
 
 Harvester si token GitHubu vyžádá sám (workflow má `id-token: write`) a každé 4 minuty ho obnovuje.
 
 ### Alternativa: API klíč
 
-Console → Settings → API keys → **Create key** (s expirací) → v GitHubu prostředí `ai` →
-*Environment secrets* → `ANTHROPIC_API_KEY`. Klíč má přednost před federací.
-
-Prostředí `ai` omezené na `main` zajistí, že přihlášení dostane jen sběr z `main` (plán, ruční
-spuštění, push). Pull requesty z forků ani jiné větve ne; spustit workflow může jen někdo s právem
-zápisu do repozitáře.
+Console → Settings → API keys → **Create key** (s expirací) → GitHub: Settings → Secrets and
+variables → Actions → **Secrets** → `ANTHROPIC_API_KEY`. Klíč má přednost před federací.
+Secrety GitHub nedává workflow spuštěným z pull requestů z forků.
 
 API kredit: předplatné Max obsahuje měsíční kredit na API (organizaci v Claude Console je třeba
 propojit s plánem). Útratu lze omezit limitem v Console; počet shrnutí za běh `AI_LIMIT`.
