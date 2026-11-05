@@ -38,7 +38,7 @@ oznámení přílohy (až 10 příloh; PDF včetně map a skenů posílá celé,
 vytažený text; u oznámení bez příloh v seznamu i přílohy a text ze stránky oznámení) a vrátí dvě vrstvy:
 rychlou (jedna věta, co udělat a do kdy, důležitost) a rozbor příloh (co to znamená, koho se to týká,
 co přesně – parametry, částky, změny, klíčové údaje, data, kontakt, obsah každé přílohy). Hotová shrnutí se ukládají (`summaries.json.gz` ve větvi `data`), znovu se platí
-jen při změně oznámení. Limit shrnutí za běh: proměnná repozitáře `AI_LIMIT` (výchozí 40),
+jen při změně oznámení. Limit shrnutí za běh: proměnná repozitáře `AI_LIMIT` (výchozí 100),
 model: `AI_MODEL` (výchozí `claude-sonnet-5-5`; levnější `claude-haiku-5-5`, nejsilnější `claude-opus-5-5`), hloubka čtení: `AI_EFFORT` (výchozí `medium`).
 Změna obsahu shrnutí zvýší `ai.VERSION` – stará shrnutí se pak postupně přepočítají.
 

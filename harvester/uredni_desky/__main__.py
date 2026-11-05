@@ -113,7 +113,7 @@ def main() -> None:
     r = sub.add_parser("region", help="Sběr desek mikroregionu (data/region.json) s přílohami a popisy")
     r.add_argument("--out", default="site/data")
     r.add_argument("--state", default="state")
-    r.add_argument("--ai-limit", type=int, default=int(os.environ.get("AI_LIMIT", "40")),
+    r.add_argument("--ai-limit", type=int, default=int(os.environ.get("AI_LIMIT") or "100"),
                    help="Max. počet shrnutí od Claude za běh (jen s ANTHROPIC_API_KEY)")
 
     s = sub.add_parser("sample", help="Ukázková data z fixture (bez sítě)")

@@ -110,3 +110,27 @@ def test_single_future_date_is_until_and_date_titles_dropped():
     items = parse_board(html, BASE)
     assert [(i.title, i.posted, i.until) for i in items] == [
         ("Změna úředních hodin", None, "2099-10-08"), ("Závěrečný účet", None, "2099-06-30")]
+
+
+def test_folder_table_board_okrouhlo_style():
+    """Deska po složkách: tabulka „Úřední deska od / do / Název a anotace / Zodpovídá“, odkaz přímo na PDF."""
+    from uredni_desky import webpage
+
+    def row(od, do, title, href):
+        return (f'<tr><td>{od}</td><td>{do}</td><td><a href="{href}">{title}</a> [PDF, 120 kB]</td>'
+                '<td><a href="/obecni-urad/spravce">Správce stránek</a></td></tr>')
+
+    head = "<tr><th>Úřední deska od</th><th>Úřední deska do</th><th>Název a anotace</th><th>Zodpovídá</th></tr>"
+    html = ("<html><body><h2>Oznámení a výzvy občanům</h2><table>" + head
+            + row("23.10.2026", "13.11.2026", "ČEZ - plánovaná odstávka dodávky elektřiny 13.11.2026", "/assets/File.ashx?id=101")
+            + row("20.10.2026", "9.11.2026", "ČEZ - plánovaná odstávka dodávky elektřiny 9.11.2026", "/assets/File.ashx?id=103")
+            + "</table><h2>Rozpočty</h2><table>" + head
+            + row("16.10.2026", "30.6.2027", "Rozpočtové opatření č.5/2026", "/assets/File.ashx?id=104")
+            + "</table></body></html>")
+    items = webpage.parse_board(html, "https://www.okrouhlo.cz/uredni-deska/2")
+    assert [(i.title, i.posted, i.until) for i in items] == [
+        ("ČEZ - plánovaná odstávka dodávky elektřiny 13.11.2026", "2026-10-23", "2026-11-13"),
+        ("ČEZ - plánovaná odstávka dodávky elektřiny 9.11.2026", "2026-10-20", "2026-11-09"),
+        ("Rozpočtové opatření č.5/2026", "2026-10-16", "2027-06-30"),
+    ]
+    assert items[0].docs[0][1] == "https://www.okrouhlo.cz/assets/File.ashx?id=101"
