@@ -159,3 +159,18 @@ def test_posts_zvole_polydum():
         ("2027-01-05", "Novoroční koncert"),
     ]
     assert got[0]["place"] == "Polyfunkční dům Zvole"
+
+
+def test_linklist_brezova_olesko():
+    import json as _json
+    from pathlib import Path
+
+    region = _json.loads((Path(__file__).resolve().parent.parent / "uredni_desky" / "data" / "region.json").read_text())
+    cfg = {m["name"]: m.get("events") for m in region["members"]}["Březová-Oleško"]
+    html = """<a href="/vismo/kalendar-akci.asp?hledani=1&amp;datum_od=13.11.2026">13 počet akcí 1</a>
+      <ul><li class="u"><a href="/pozvanka%2Dsv%2Dmartin/a-1289">Pozvánka Sv. Martin</a>
+      <p>13.11.2026 17:00, v 17.00 hodin na Jezírka</p><p>Typ akce:</p><a href="/ap/hledani=1&amp;typ_akce=1104">Pro děti</a></li></ul>"""
+    got = events.parse_linklist(html, "https://www.brezova-olesko.cz/vismo/kalendar-akci.asp", cfg["match"])
+    assert got == [{"t": "Pozvánka Sv. Martin", "d": "2026-11-13", "time": "17:00", "place": "v 17.00 hodin na Jezírka",
+                    "url": "https://www.brezova-olesko.cz/pozvanka%2Dsv%2Dmartin/a-1289"}]
+    assert "{od}" in cfg["range_url"] and "{do}" in cfg["range_url"]
