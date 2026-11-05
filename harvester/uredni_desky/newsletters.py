@@ -10,6 +10,7 @@ Nastavení je u obce v data/region.json pod klíčem „newsletter“:
   exclude     (volitelně) odkazy, které vynechat
   page_param, pages  (volitelně) stránkování archivu: ?<page_param>=2 … <pages>
   num_re      (volitelně) skupiny num a year, když text odkazu nic neříká („Stáhnout“) – např. z názvu souboru
+  browser     (volitelně) true = hlavičky běžného prohlížeče (web odmítá roboty podle identifikace)
   detail      (volitelně) {"match", "exclude"}: archiv odkazuje na stránku čísla, PDF je až na ní – odkaz se
               nahradí prvním souborem, který vyhoví „match“; z textu stránky se vezme i měsíc a rok vydání.
               Vyřešené stránky se pamatují, každá se otevře jen jednou.
@@ -28,6 +29,7 @@ import httpx
 import lxml.html
 
 from .fetch import needs_proxy
+from .webpage import BROWSER_HEADERS
 
 log = logging.getLogger(__name__)
 
@@ -131,14 +133,16 @@ def parse_detail(html: str, base_url: str, detail: dict) -> dict:
     return out
 
 
-async def _get(client: httpx.AsyncClient, url: str, fallback: httpx.AsyncClient | None) -> httpx.Response:
+async def _get(client: httpx.AsyncClient, url: str, fallback: httpx.AsyncClient | None,
+               browser: bool = False) -> httpx.Response:
+    headers = BROWSER_HEADERS if browser else None
     try:
-        resp = await client.get(url)
+        resp = await client.get(url, headers=headers)
         resp.raise_for_status()
     except Exception as exc:
         if fallback is None or not needs_proxy(exc):
             raise
-        resp = await fallback.get(url)
+        resp = await fallback.get(url, headers=headers)
         resp.raise_for_status()
     return resp
 
@@ -176,7 +180,7 @@ async def fetch_newsletter(client: httpx.AsyncClient, cfg: dict,
     issues: list[dict] = []
     seen: set[str] = set()
     for page in archive_pages(cfg):
-        resp = await _get(client, page, fallback)
+        resp = await _get(client, page, fallback, bool(cfg.get("browser")))
         for issue in parse_archive(resp.text, str(resp.url), cfg):
             if issue["url"] not in seen:
                 seen.add(issue["url"])

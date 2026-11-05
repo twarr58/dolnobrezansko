@@ -17,7 +17,7 @@
      "source": {"fmt": "vismo", "url": "https://www.liber.cz/uredni-deska"}},
     {"name": "Ohrobec", "events": {"url": "https://www.ohrobec.cz/volny-cas/udalosti", "fmt": "rdc"}, "newsletter": {"name": "Ohrobecký zpravodaj", "url": "https://www.ohrobec.cz/obec/ohrobecky-obcasnik", "match": "/tiskoviny/.*zpravodaj"}, "publisher": "Obec Ohrobec", "qid": "Q2479240",
      "source": {"fmt": "html", "url": "https://www.ohrobec.cz/#uredni-deska"}},
-    {"name": "Vestec", "events": {"url": "https://vestec.cz/udalosti/", "fmt": "link"}, "newsletter": {"name": "Vestecké listy", "url": "https://vestec.cz/vestecke-listy/", "match": "/vl_\\d", "num_re": "vl_(?P<num>\\d{1,2})[-_](?P<year>\\d{4}|\\d{2})"}, "publisher": "Obec Vestec", "qid": "Q2183926", "web": "https://vestec.cz/",
+    {"name": "Vestec", "events": {"url": "https://vestec.cz/udalosti/", "fmt": "link"}, "newsletter": {"name": "Vestecké listy", "url": "https://vestec.cz/vestecke-listy/", "browser": true, "match": "/vl_\\d", "num_re": "vl_(?P<num>\\d{1,2})[-_](?P<year>\\d{4}|\\d{2})"}, "publisher": "Obec Vestec", "qid": "Q2183926", "web": "https://vestec.cz/",
      "source": {"fmt": "edesky", "url": "https://edesky.cz/desky/1208"}},
     {"name": "Jesenice", "newsletter": {"name": "Jesenický kurýr", "url": "https://www.mujesenice.cz/jesenicky-kuryr/ms-4026/p1=4026", "match": "^(?=.*(\\.pdf|file\\.ashx|id_dokumenty|/assets/))(?=.*kur[yý]r)"}, "publisher": "Město Jesenice", "web": "https://www.mujesenice.cz/",
      "source": {"fmt": "edesky", "url": "https://edesky.cz/desky/1194"}},

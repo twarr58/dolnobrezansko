@@ -108,3 +108,21 @@ def test_detail_page_gives_pdf_and_issue_date():
                     "page": "https://www.dolnibrezany.cz/r-77", "y": 2021}]
     asyncio.run(go(resolved))  # podruhé z paměti
     assert len(calls) == 1
+
+
+def test_browser_option_sends_browser_headers(tmp_path):
+    seen = []
+
+    def handler(req):
+        seen.append(req.headers.get("user-agent", ""))
+        return httpx.Response(200, text='<a href="/f/vl_01-26.pdf">Stáhnout</a>')
+
+    members = [{"name": "V", "newsletter": {"name": "Listy", "url": "https://v.cz/listy/", "match": r"/vl_\d",
+                                            "browser": True}}]
+
+    async def go():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler), headers={"User-Agent": "harvester"}) as c:
+            return await newsletters.collect(c, members, tmp_path, datetime(2026, 11, 5, tzinfo=timezone.utc))
+
+    asyncio.run(go())
+    assert seen and seen[0].startswith("Mozilla/5.0")
