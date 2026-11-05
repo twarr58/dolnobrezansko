@@ -9,7 +9,7 @@
      "source": {"fmt": "imunis", "subdomain": "brezany"}},
     {"name": "Vrané nad Vltavou", "events": {"url": "https://vranenadvltavou.cz/udalosti/", "fmt": "article"}, "newsletter": {"name": "Zrcadlo", "url": "https://vranenadvltavou.cz/zrcadlo---obecni-zpravodaj/", "match": "/formular/.*zrcadlo", "exclude": "cen[ií]k"}, "publisher": "Obec Vrané nad Vltavou", "qid": "Q164468",
      "source": {"fmt": "imunis", "subdomain": "vranenadvltavou"}},
-    {"name": "Zvole", "events": {"url": "https://www.zvole.info/aktualne/kalendar-akci/", "fmt": "link"}, "newsletter": {"name": "Zvolské noviny", "url": "https://www.zvole.info/aktualne/zvolske-noviny-1/?page=all", "match": "file_storage/download\\.php"}, "publisher": "Obec Zvole", "qid": "Q2703980",
+    {"name": "Zvole", "events": {"url": "https://www.zvole.info/aktualne/polyfunkcni-dum/zpravy-z-polydomu/", "fmt": "posts", "match": "/zpravy-z-polydomu/[^/]+\\.html", "place": "Polyfunkční dům Zvole"}, "newsletter": {"name": "Zvolské noviny", "url": "https://www.zvole.info/aktualne/zvolske-noviny-1/?page=all", "match": "file_storage/download\\.php"}, "publisher": "Obec Zvole", "qid": "Q2703980",
      "source": {"fmt": "galileo", "url": "https://www.zvole.info/urad/uredni-deska/"}},
     {"name": "Psáry", "events": {"url": "https://psary.cz/blizke-udalosti/", "fmt": "linklist", "match": "psary\\.cz/udalosti/[a-z0-9-]+"}, "newsletter": {"name": "Psárský zpravodaj", "url": "https://psary.cz/psarsky-zpravodaj/", "match": "psary\\.cz/psarsky-zpravodaj/[a-z0-9-]+/? ", "exclude": "o-psarskem", "detail": {"match": "\\.pdf"}}, "publisher": "Obec Psáry", "qid": "Q640046",
      "source": {"fmt": "rss", "url": "https://urednideska.alis.cz/obec-psary/rss"}},

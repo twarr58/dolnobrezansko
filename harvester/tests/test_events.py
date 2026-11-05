@@ -139,3 +139,23 @@ def test_munipolis_cards():
          "url": "https://zlatniky-hodkovice.cz/event-calendar"},
         {"t": "Zájezd", "d": "2026-11-14", "end": "2026-11-15", "time": "09:30", "url": "https://zlatniky-hodkovice.cz/event-calendar"},
     ]
+
+
+def test_posts_zvole_polydum():
+    html = """<a href="/aktualne/polyfunkcni-dum/zpravy-z-polydomu/411-divadelni-perlicky-2872cs.html">
+        <h3>4.11. Divadelní perličky pro naše dětičky</h3><p>Datum:</p><p>26. 10. 2026</p></a>
+      <a href="/aktualne/polyfunkcni-dum/zpravy-z-polydomu/uz-zitra-2855cs.html">Už zítra 14.10. v Polydomě vyprávění o Jordánsku. Datum: 13. 10. 2026</a>
+      <a href="/aktualne/polyfunkcni-dum/zpravy-z-polydomu/1212-vanocni-koncert-2628cs.html">12.12. Vánoční koncert Datum: 25. 11. 2025</a>
+      <a href="/aktualne/polyfunkcni-dum/zpravy-z-polydomu/21126-elisky-2656cs.html">21.1.26 cestovatelské vyprávění Datum: 5. 1. 2026</a>
+      <a href="/aktualne/polyfunkcni-dum/zpravy-z-polydomu/novy-rok-2700cs.html">5.1. Novoroční koncert Datum: 20. 12. 2026</a>
+      <a href="/aktualne/polyfunkcni-dum/zpravy-z-polydomu/nekona-2846cs.html">Dnes se představení nekoná. Datum: 7. 10. 2026</a>"""
+    got = events.parse_posts(html, "https://www.zvole.info/aktualne/polyfunkcni-dum/zpravy-z-polydomu/",
+                             r"/zpravy-z-polydomu/[^/]+\.html", "Polyfunkční dům Zvole")
+    assert [(e["d"], e["t"]) for e in got] == [
+        ("2026-11-04", "Divadelní perličky pro naše dětičky"),
+        ("2026-10-14", "Už zítra 14.10. v Polydomě vyprávění o Jordánsku."),
+        ("2025-12-12", "Vánoční koncert"),
+        ("2026-01-21", "Cestovatelské vyprávění"),
+        ("2027-01-05", "Novoroční koncert"),
+    ]
+    assert got[0]["place"] == "Polyfunkční dům Zvole"

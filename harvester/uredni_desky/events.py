@@ -12,6 +12,8 @@ Nastavení u obce v data/region.json pod klíčem „events“:
                  („17:00 - 07.11.2026“, „Farmářské trhy 21.11.2026“) – Psáry, Vestec
                  volitelně range_url s {od} a {do} (d.m.yyyy) pro výpis za celé okno – Jesenice
          munipolis karty akcí webů MUNIPOLIS (data-test="timeline-item": název, datum a čas, místo) – Zlatníky
+         posts   pozvánky jako články (Zvole – Polydům): datum akce na začátku nebo uvnitř názvu bez roku
+                 („4.11. Divadelní perličky…“), rok podle data zveřejnění; volby match, place
          link    akce nečteme (web nejde nebo nemá čitelný kalendář) – jen odkaz na kalendář
 """
 
@@ -235,6 +237,52 @@ def parse_munipolis(html: str, base_url: str) -> list[dict]:
     return out
 
 
+# ---------- posts (Zvole – Zprávy z Polydomu) ----------
+
+_DM = re.compile(r"(?<![\d.])(\d{1,2})\.\s?(\d{1,2})\.(?:\s?(\d{2}(?:\d{2})?)(?![\d.]))?")
+
+
+def parse_posts(html: str, base_url: str, match: str, place: str | None = None) -> list[dict]:
+    """Pozvánky jako články: termín z názvu („14.9. Klubové kino…“, „Už zítra 14.10. …“), rok z data zveřejnění."""
+    doc = lxml.html.fromstring(html)
+    pat = re.compile(match, re.I)
+    seen: set[str] = set()
+    out = []
+    for a in doc.iter("a"):
+        href = a.get("href") or ""
+        if not pat.search(href):
+            continue
+        url = urljoin(base_url, href)
+        if url in seen:
+            continue
+        text = _clean(a.text_content())
+        title, _, rest = text.partition("Datum:")
+        pub = _NUM_DATE.search(rest)
+        m = _DM.search(title)
+        if not m or not pub:
+            continue
+        seen.add(url)
+        day, month = int(m.group(1)), int(m.group(2))
+        published = date(int(pub.group(3)), int(pub.group(2)), int(pub.group(1)))
+        if m.group(3):
+            year = int(m.group(3)) + (2000 if len(m.group(3)) == 2 else 0)
+        else:  # pozvánka se zveřejňuje před akcí: měsíc dřív než zveřejnění = příští rok
+            year = published.year + (1 if (month, day) < (published.month, published.day - 7) else 0)
+        try:
+            d = date(year, month, day)
+        except ValueError:
+            continue
+        title = _clean(title)
+        if m.start() == 0:
+            title = title[m.end():].strip(" -–:,.")
+        t = _CLOCK.search(title)
+        out.append({k: v for k, v in {
+            "t": (title[:1].upper() + title[1:])[:140], "d": d.isoformat(),
+            "time": f"{int(t.group(1)):02d}:{t.group(2)}" if t else None, "place": place, "url": url,
+        }.items() if v})
+    return out
+
+
 # ---------- sběr ----------
 
 async def fetch_events(client: httpx.AsyncClient, cfg: dict, today: date,
@@ -255,6 +303,9 @@ async def fetch_events(client: httpx.AsyncClient, cfg: dict, today: date,
         url = cfg["range_url"].format(od=dm(today), do=dm(end)) if cfg.get("range_url") else cfg["url"]
         page = await _get(client, url, fallback, browser=cfg.get("browser"))
         events = parse_linklist(page.text, str(page.url), cfg["match"])
+    elif fmt == "posts":
+        page = await _get(client, cfg["url"], fallback, browser=cfg.get("browser"))
+        events = parse_posts(page.text, str(page.url), cfg["match"], cfg.get("place"))
     elif fmt == "munipolis":
         page = await _get(client, cfg["url"], fallback, browser=cfg.get("browser"))
         events = parse_munipolis(page.text, cfg["url"])
