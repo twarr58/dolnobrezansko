@@ -1,4 +1,4 @@
-name: Sběr úředních desek a nasazení
+name: Sběr desek mikroregionu a nasazení
 
 on:
   schedule:
@@ -33,7 +33,10 @@ jobs:
   harvest:
     needs: test
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 40
+    # Secret ANTHROPIC_API_KEY patří do prostředí „ai“ omezeného na větev main (viz README):
+    # klíč pak dostane jen tento job při běhu z main, ne pull requesty ani jiné větve.
+    environment: ai
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -42,6 +45,8 @@ jobs:
           cache: pip
           cache-dependency-path: harvester/pyproject.toml
       - run: pip install ./harvester
+      - name: OCR pro skenované přílohy
+        run: sudo apt-get install -y -qq tesseract-ocr tesseract-ocr-ces poppler-utils >/dev/null
 
       - name: Načíst předchozí stav z větve data
         run: |
@@ -51,11 +56,15 @@ jobs:
             mkdir -p state
           fi
 
-      - name: Sběr
+      - name: Sběr (mikroregion, přílohy, popisy)
         env:
           # Volitelné: proxy v ČR pro servery, které blokují zahraniční IP (viz README).
           HARVEST_FALLBACK_PROXY: ${{ secrets.HARVEST_FALLBACK_PROXY }}
-        run: python -m uredni_desky harvest --out site/data --state state
+          # Volitelné: shrnutí od Claude. Bez klíče se popisy dělají jen pravidly.
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          AI_MODEL: ${{ vars.AI_MODEL || 'claude-opus-5-5' }}
+          AI_LIMIT: ${{ vars.AI_LIMIT || '40' }}
+        run: python -m uredni_desky region --out site/data --state state
 
       - name: Sestavit web
         run: rsync -a --exclude data web/ site/
@@ -67,7 +76,9 @@ jobs:
           # Větev drží jen poslední stav (jeden commit bez historie), aby repozitář nebobtnal.
           git worktree add --orphan -b data-next out
           cp state/items.json.gz state/boards.json out/
-          for f in discovered.json obce.json; do [ -f "state/$f" ] && cp "state/$f" out/ || true; done
+          for f in docs.json.gz summaries.json.gz region_sources.json discovered.json obce.json; do
+            [ -f "state/$f" ] && cp "state/$f" out/ || true
+          done
           cd out
           git add -A
           git commit -qm "Stav sběru $(date -u +%FT%TZ)"

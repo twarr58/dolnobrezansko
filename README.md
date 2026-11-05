@@ -1,52 +1,64 @@
-# Úřední desky
+# Úřední deska Dolnobřežansko
 
-Webový agregátor oznámení z úředních desek českých obcí, městských částí a dalších úřadů.
+Oznámení z úředních desek 11 obcí **Mikroregionu Dolnobřežansko** (Březová-Oleško, Dolní Břežany,
+Jesenice, Libeř, Ohrobec, Okrouhlo, Psáry, Vestec, Vrané nad Vltavou, Zlatníky-Hodkovice, Zvole),
+vysvětlená jednou větou: co se děje, co s tím můžu udělat a do kdy. Harvester čte i přílohy
+oznámení (PDF, mapy a výkresy, skeny, DOCX).
 
-## Zdroj dat
-
-- Od 1. 2. 2022 mají úřady povinnost zveřejňovat úřední desku jako otevřená data
-  podle **[OFN Úřední desky](https://ofn.gov.cz/úřední-desky/2021-07-20/)** a evidovat ji
-  v **Národním katalogu otevřených dat (NKOD)**.
-- Seznam všech desek vrací GraphQL rozhraní NKOD `https://data.gov.cz/graphql`
-  (filtr `conformsTo` = URI normy). Dotaz vychází z oficiální ukázky
-  [datagov-cz/aplikace-uredni-desky](https://github.com/datagov-cz/aplikace-uredni-desky).
-- Každá deska je samostatný JSON soubor na serveru obce. Centrální API se všemi položkami
-  neexistuje a řada serverů nemá zapnutý CORS, proto data nesbírá prohlížeč, ale harvester.
-
-## Architektura („statický backend“)
+## Jak to funguje
 
 ```
-GitHub Actions (cron každou hodinu)
-  └─ harvester/ (Python, httpx, asyncio)
-       1. NKOD GraphQL → seznam desek
-       2. paralelní stažení JSON všech desek (timeouty, retry, limit velikosti)
-       3. normalizace OFN → kompaktní model, sanitace URL
-       4. sloučení s předchozím stavem → first_seen / removed (archiv sejmutých)
-       5. výstup pro web: site/data/boards.json, recent.json (30 dní), boards/<id>.json, meta.json
-  ├─ plný stav state/items.json se ukládá do větve `data` (jeden commit, bez historie)
-  └─ web/ + data → GitHub Pages
-web/ (statický frontend, bez buildu, vanilla JS)
-  └─ hledání v oznámeních za 30 dní, stránka desky (aktuální i sejmuté), detail, seznam desek, pokrytí
+GitHub Actions (každou hodinu) – python -m uredni_desky region
+  1. desky obcí: známé v harvester/uredni_desky/data/region.json; obce bez známé desky se hledají
+     automaticky (web obce z Wikidat → rozpoznání systému), výsledek v region_sources.json (týden)
+  2. stažení desek adaptéry (iMunis, Galileo, Vismo, RSS/ALIS, obecné HTML), archiv sejmutých
+  3. přílohy aktivních oznámení: stažení, text (pypdf, DOCX/ODT), druh: text / mapa nebo výkres
+     (formát nad A3, málo textu, název) / sken (OCR tesseract) – každá příloha jen jednou
+  4. popis: pravidla (téma, lhůty, termíny, parcely, částky) + volitelně shrnutí od Claude
+  5. výstup: site/data/region.json → GitHub Pages; stav do větve `data`
+web/ (statická stránka bez buildu): Teď řešit · Nové tento týden · filtr obcí · detail s přílohami
 ```
 
-Žádný běžící server ani databáze. Hosting zdarma.
+Návrh designu: https://claude.ai/artifact/7PsxZ3855TvghPqKjtp8g9
 
 ## Lokální vývoj
 
 ```bash
 make venv          # .venv + harvester v editable režimu
 make test          # pytest
-make sample        # ukázková data z fixture → web/data (bez sítě)
-make harvest LIMIT=50   # skutečný sběr z NKOD (prvních 50 desek)
+make sample        # ukázková data → web/data/region.json (bez sítě)
+make harvest       # skutečný sběr mikroregionu (do .state a web/data)
 make serve         # http://localhost:8000
 ```
 
-## Nasazení
+## Shrnutí od Claude (volitelné)
 
-1. Settings → Pages → Source: **GitHub Actions**.
-2. Workflow `.github/workflows/harvest.yml` běží při push do `main`, každou hodinu a ručně.
+Bez klíče se popisy dělají jen pravidly. S klíčem Claude přečte u každého **nového** oznámení
+přílohy (PDF včetně map a skenů posílá celé, delší než 40 stran jako vytažený text) a napíše
+krátké shrnutí. Hotová shrnutí se ukládají (`summaries.json.gz` ve větvi `data`), znovu se platí
+jen při změně oznámení. Limit shrnutí za běh: proměnná repozitáře `AI_LIMIT` (výchozí 40),
+model: `AI_MODEL` (výchozí `claude-opus-5-5`).
 
-## Obce mimo katalog (iMunis eDeska, Galileo)
+Nastavení tak, aby klíč mohl použít jen sběr z větve `main`:
+
+1. Settings → Environments → **New environment** `ai`.
+2. V něm *Deployment branches and tags* → **Selected branches** → přidat `main`.
+3. V něm *Environment secrets* → **Add secret** `ANTHROPIC_API_KEY`.
+
+Job `harvest` běží v prostředí `ai`, takže klíč dostane jen při běhu z `main` (plán, ruční spuštění,
+push). Pull requesty z forků ani jiné větve k němu přístup nemají; spustit workflow může jen
+někdo s právem zápisu do repozitáře. V logu GitHub hodnotu secretu maskuje.
+
+API kredit: předplatné Max obsahuje měsíční kredit na API (organizaci v Claude Console je třeba
+propojit s plánem). Útratu lze omezit limitem v Console.
+
+## Celostátní režim (vypnutý)
+
+Původní sběr všech desek z NKOD a webů obcí (`python -m uredni_desky harvest`, `discover`,
+`probe`, `diagnose`) zůstává v kódu a slouží jako zdroj adaptérů. Workflow `discover.yml`
+jde spustit ručně; hodinový sběr běží jen pro mikroregion.
+
+### Adaptéry: obce mimo katalog (iMunis eDeska, Galileo)
 
 Do NKOD má desku zapsanou jen zlomek obcí. Obce na službě **iMunis eDeska**
 (`<obec>.imunis.cz/edeska`, např. Dolní Břežany) se načítají z jejího RSS kanálu a stránek
@@ -58,7 +70,7 @@ Weby obcí na systému **Galileo Corporation** (deska na `<web>/urad/uredni-desk
 Bílé Podolí) se čtou z HTML seznamu a detailu položek – v sekci `galileo` stejného souboru:
 `{"url": "https://www.obec.cz/urad/uredni-deska/", "publisher": "Obec …"}`.
 
-## Hledání desek všech obcí
+### Hledání desek všech obcí
 
 Workflow `discover.yml` (týdně a ručně) vezme z Wikidat všechny obce ČR a jejich weby, stáhne
 titulní stránky a rozpozná systém desky: iMunis, Galileo (libovolná cesta …/uredni-deska/),
@@ -67,7 +79,7 @@ uloží do `discovered.json` ve větvi `data`, harvester je přidá ke zdrojům 
 nepodporovaných systémů ukazuje, pro které systémy psát další adaptéry. Detail oznámení se
 u adaptérů stahuje jen u nových položek (mezipaměť ze stavu), aby sběr nezatěžoval weby obcí.
 
-## Servery blokující zahraniční IP
+### Servery blokující zahraniční IP
 
 Diagnostika (`diagnose.yml`, 31. 10. 2026) ukázala, že 73 desek nepřijme z runneru GitHubu (USA)
 ani TCP spojení. 54 z nich běží u jednoho českého hostingu (78.156.158.x), zbytek na vlastních
@@ -80,19 +92,15 @@ Alternativa: spouštět sběr ze self-hosted runneru GitHub Actions v ČR.
 
 ## Formát dat pro web
 
-- `boards.json` – desky: `id`, `name` (zobrazovaný název), `publisher`, `title`, `access_url`, `dataset_iri`, `ok`, `error`, `count`, `fetched_at`
-- `recent.json` – odlehčené položky za posledních 30 dní: `id`, `b` (deska), `t` (název), `p` (vyvěšeno), `u` (do), `d` (počet příloh)
-- `boards/<id>.json` – všechny položky desky: `id`, `title`, `url`, `posted`, `until`, `cj`, `sz`, `agendas`, `docs[{name,url}]`, `first_seen`, `last_seen`, `removed`
-
-První ostrý sběr (31. 10. 2026): 560 desek v NKOD, 449 načteno, 148 248 oznámení,
-z toho 40 569 vyvěšených za posledních 30 dní (`recent.json` ≈ 6 MB, gzip ≈ 1 MB).
+`region.json`: `region`, `members[]` (obec, odkaz na desku, `connected`, `ok`, `status`),
+`categories`, `items[]`:
+`id`, `o` (obec), `t` (úřední název), `url`, `p` (vyvěšeno), `u` (do), `cj`, `r` (sejmuto),
+`docs[{n, url, k: text|mapa|sken|obrazek, x: přípona, pg: strany, ocr, w: co v ní je}]`,
+`s` (popis): `cat`, `label`, `tldr`, `action`, `deadline`, `event`, `time`, `event_end`, `where`,
+`bullets[]`, `src` (`pravidla` | `claude`).
 
 ## TODO
 
-- [ ] Ověřit normalizaci proti JSON schématu OFN
-- [ ] Proxy / runner v ČR pro 73 desek blokujících zahraniční IP
-- [ ] Seznam obcí na iMunis eDesce (zatím ručně v extra_sources.json)
-- [ ] Kraj/okres: mapování IČO poskytovatele → obec (RÚIAN / RPP), filtry a mapa
-- [ ] Fulltext i ve starších oznámeních (index po deskách nebo sql.js-httpvfs)
-- [ ] RSS/Atom pro obec a hledání, „sledovat obec“
-- [ ] Stránka pokrytí: chyby v čase, kontakt na poskytovatele
+- [ ] Ověřit desky Vestce, Jesenice, Zlatníků-Hodkovic, Březové-Oleška a Okrouhla po prvním běhu
+- [ ] Náhled první strany mapy v detailu (obrázek z pdftoppm)
+- [ ] Odběr novinek (RSS / e-mail) pro jednu obec

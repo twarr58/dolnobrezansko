@@ -13,9 +13,9 @@ test:
 sample:
 	$(PY) -m uredni_desky sample --out web/data
 
-# Skutečný sběr z NKOD (LIMIT=50 pro rychlý test)
+# Skutečný sběr desek mikroregionu (shrnutí od Claude jen s ANTHROPIC_API_KEY)
 harvest:
-	$(PY) -m uredni_desky harvest --out web/data --state .state $(if $(LIMIT),--limit $(LIMIT))
+	$(PY) -m uredni_desky region --out web/data --state .state
 
 serve:
 	$(PY) -m http.server -d web 8000
