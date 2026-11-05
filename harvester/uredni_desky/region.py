@@ -368,7 +368,7 @@ def item_description(it: dict, docs: list[dict], summary: dict | None) -> dict:
         bullets = a.get("details") or a.get("bullets") or []  # verze 1 měla jen bullets
         s.update(src="claude", tldr=a.get("tldr") or s["tldr"], bullets=[b for b in bullets if b][:10],
                  action=a.get("action") or s.get("action", ""))
-        if a.get("category") in digest.LABELS:
+        if a.get("category") in digest.LABELS and a["category"] != "ostatni" and s["cat"] not in digest.RULE_PREFERRED:
             s["cat"] = a["category"]
         for key in ("deadline", "event"):
             if d := _valid_date(a.get(key)):

@@ -10,7 +10,7 @@ const WEEKDAYS = ['ne', 'po', 'út', 'st', 'čt', 'pá', 'so'];
 const WEEKDAYS_LONG = ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'];
 const RESTRICTIONS = new Set(['doprava', 'energie', 'voda']); // akce, která omezuje (uzavírka, odstávka)
 
-const state = { data: null, filter: { obec: '', q: '' }, limit: STEP, listScroll: null };
+const state = { data: null, filter: { obec: '', tema: '', q: '' }, limit: STEP, listScroll: null };
 
 // ---------- pomocné funkce ----------
 
@@ -176,6 +176,7 @@ function route() {
     return;
   }
   state.filter.obec = params.get('obec') || '';
+  state.filter.tema = params.get('tema') || '';
   state.filter.q = params.get('q') || '';
   onList = true;
   renderHome();
@@ -187,6 +188,7 @@ function route() {
 function writeFilter() {
   const p = new URLSearchParams();
   if (state.filter.obec) p.set('obec', state.filter.obec);
+  if (state.filter.tema) p.set('tema', state.filter.tema);
   if (state.filter.q) p.set('q', state.filter.q);
   const qs = p.toString();
   history.replaceState(null, '', qs ? `#/?${qs}` : '#/');
@@ -212,10 +214,11 @@ function stem(term) {
 }
 
 function filtered() {
-  const { obec, q } = state.filter;
+  const { obec, tema, q } = state.filter;
   const terms = fold(q).split(/\s+/).filter(Boolean).map(stem);
   return state.data.items.filter((it) => {
     if (obec && it.o !== obec) return false;
+    if (tema && it.s?.cat !== tema) return false;
     if (!terms.length) return true;
     if (!it._q) it._q = searchText(it);
     return terms.every((t) => it._q.includes(t));
@@ -327,7 +330,7 @@ function renderHome() {
     more.addEventListener('click', () => { state.limit += STEP; paintUndated(); });
     paintUndated();
 
-    const filteredOut = state.filter.q || state.filter.obec;
+    const filteredOut = state.filter.q || state.filter.obec || state.filter.tema;
     const nothing = !items.length
       ? h('p', { class: 'empty' }, filteredOut ? 'Nic nenalezeno. Zkus jiné slovo nebo všechny obce.' : 'Na deskách teď nic nevisí.')
       : !dayNodes.length ? h('p', { class: 'empty' }, `V příštích ${HORIZON} dnech žádné lhůty ani termíny.`) : null;
@@ -359,6 +362,19 @@ function renderHome() {
     onclick: () => { state.filter.obec = state.filter.obec === name ? '' : name; state.limit = STEP; writeFilter(); paintChips(); paint(); },
   }, h('span', { class: 'place__name' }, name || 'Všechny obce'), h('span', { class: 'place__n' }, String(name ? counts.get(name) || 0 : total)))));
   paintChips();
+
+  // Témata (typy oznámení) – počty u aktivních oznámení, nejčastější nahoře
+  const labels = d.categories || {};
+  const catCounts = new Map();
+  for (const it of d.items) if (!it.r && it.s?.cat) catCounts.set(it.s.cat, (catCounts.get(it.s.cat) || 0) + 1);
+  const topics = h('div', { class: 'places', role: 'group', 'aria-label': 'Téma' });
+  const topicIds = ['', ...[...catCounts.keys()].sort((a, b) => catCounts.get(b) - catCounts.get(a) || (labels[a] || a).localeCompare(labels[b] || b, 'cs'))];
+  const paintTopics = () => topics.replaceChildren(...topicIds.map((id) => h('button', {
+    type: 'button', class: 'place', 'aria-pressed': String(state.filter.tema === id),
+    onclick: () => { state.filter.tema = state.filter.tema === id ? '' : id; state.limit = STEP; writeFilter(); paintTopics(); paint(); },
+  }, h('span', { class: 'place__name' }, id ? (labels[id] || id) : 'Všechna témata'),
+  h('span', { class: 'place__n' }, String(id ? catCounts.get(id) : total)))));
+  paintTopics();
 
   let timer;
   const search = h('input', {
@@ -392,6 +408,9 @@ function renderHome() {
           h('div', { class: 'panel__block' },
             h('h2', { class: 'panel__title' }, 'OBEC'),
             chips),
+          h('div', { class: 'panel__block' },
+            h('h2', { class: 'panel__title' }, 'TÉMA'),
+            topics),
           status),
         h('div', { class: 'main' }, body))));
   paint();
