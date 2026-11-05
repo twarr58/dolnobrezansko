@@ -64,6 +64,10 @@ svg { flex: 0 0 auto; }
 
 /* Hlavní přepínač sekcí: úřední desky / zpravodaje */
 .sitenav { display: flex; gap: 4px; border-bottom: 1px solid var(--rule); padding-top: 8px; overflow-x: auto; }
+.sitenav { align-items: center; }
+.sitenav__logo { flex: none; display: inline-flex; align-items: center; margin-right: 6px; padding: 2px 0; border-radius: 50%; }
+.sitenav__logo img { display: block; width: 40px; height: 40px; }
+@media (max-width: 420px) { .sitenav__logo img { width: 34px; height: 34px; } .sitenav__logo { margin-right: 0; } }
 .sitenav__tab { flex: none; display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; margin-bottom: -1px;
   border-bottom: 2px solid transparent; color: var(--muted); font-weight: 500; text-decoration: none; white-space: nowrap; }
 .sitenav__tab:hover { color: var(--ink); }

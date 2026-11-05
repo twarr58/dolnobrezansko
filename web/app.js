@@ -525,6 +525,8 @@ function villages(d) {
 function siteNav(active) {
   const tab = (key, href, label) => h('a', { class: 'sitenav__tab', href, 'aria-current': active === key ? 'page' : null }, label);
   return h('nav', { class: 'sitenav', 'aria-label': 'Sekce' },
+    h('a', { class: 'sitenav__logo', href: '#/', title: 'Mikroregion Dolnobřežansko' },
+      h('img', { src: 'logo.png', width: 40, height: 40, alt: 'Dolnobřežansko' })),
     tab('desky', '#/', 'Úřední desky'),
     tab('akce', '#/akce', 'Kalendář akcí'),
     tab('zpravodaje', '#/zpravodaje', 'Zpravodaje'));
