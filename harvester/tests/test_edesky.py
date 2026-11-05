@@ -116,10 +116,10 @@ def test_fallback_strategy_when_first_query_finds_nothing(monkeypatch, caplog):
 
 
 def test_alternative_attribute_names():
-    xml = b"""<?xml version='1.0' encoding='utf-8' ?><edesky_search_api version='1.0'><meta>
+    xml = """<?xml version='1.0' encoding='utf-8' ?><edesky_search_api version='1.0'><meta>
 <documents_count total="1">1</documents_count><page total_pages="1">1</page></meta><documents>
 <document loaded_at='2026-11-04 10:00:00 +0100' url='https://edesky.cz/dokument/5' title='Rozpočtové opatření'/>
-</documents></edesky_search_api>"""
+</documents></edesky_search_api>""".encode()
     page = edesky.parse_page(xml)
     assert page.raw == 1 and page.infos[0]["název"]["cs"] == "Rozpočtové opatření"
     assert page.infos[0]["vyvěšení"]["datum"] == "2026-11-04" and page.sample_attrs == ["loaded_at", "title", "url"]
