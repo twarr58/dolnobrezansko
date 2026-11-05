@@ -529,7 +529,8 @@ function issueLabel(i) {
   const m = /(?:č\.|číslo\.?)\s*(\d{1,4})/i.exec(i.t);
   if (!m) return i.t;
   const series = /rozkvět/i.test(i.t) ? 'Rozkvět ' : '';
-  return `${series}č. ${m[1]}`;
+  const month = /\((\p{L}+) \d{4}\)/u.exec(i.t); // „(prosinec 2021)“ ze stránky čísla
+  return `${series}č. ${m[1]}${month ? ` · ${month[1]}` : ''}`;
 }
 
 function renderNewsletters() {

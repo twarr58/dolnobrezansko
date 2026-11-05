@@ -10,6 +10,9 @@ Nastavení je u obce v data/region.json pod klíčem „newsletter“:
   exclude     (volitelně) odkazy, které vynechat
   page_param, pages  (volitelně) stránkování archivu: ?<page_param>=2 … <pages>
   num_re      (volitelně) skupiny num a year, když text odkazu nic neříká („Stáhnout“) – např. z názvu souboru
+  detail      (volitelně) {"match", "exclude"}: archiv odkazuje na stránku čísla, PDF je až na ní – odkaz se
+              nahradí prvním souborem, který vyhoví „match“; z textu stránky se vezme i měsíc a rok vydání.
+              Vyřešené stránky se pamatují, každá se otevře jen jednou.
 """
 
 from __future__ import annotations
@@ -101,6 +104,65 @@ def parse_archive(html: bytes | str, base_url: str, cfg: dict) -> list[dict]:
     return [{k: i[k] for k in ("t", "url", "y") if i[k]} for i in issues[:MAX_ISSUES]]
 
 
+_MONTHS = ("leden|únor|březen|duben|květen|červen|červenec|srpen|září|říjen|listopad|prosinec|"
+           "jaro|léto|podzim|zima")
+_ISSUE_DATE = re.compile(rf"(?<!\w)({_MONTHS})\w*\s+((?:19|20)\d\d)(?!\d)", re.I)
+DETAIL_BUDGET = 60  # stránek čísel za běh (první běh projde archiv postupně)
+
+
+def parse_detail(html: str, base_url: str, detail: dict) -> dict:
+    """Stránka čísla → {"pdf": odkaz na soubor, "y": rok, "when": „prosinec 2021“} (co se najde)."""
+    doc = lxml.html.fromstring(html)
+    match = re.compile(detail["match"], re.I)
+    exclude = re.compile(detail["exclude"], re.I) if detail.get("exclude") else None
+    out: dict = {}
+    for a in doc.iter("a"):
+        href = (a.get("href") or "").strip()
+        text = " ".join(a.text_content().split())
+        hay = unquote(href) + " " + text
+        if href and match.search(hay) and not (exclude and exclude.search(hay)):
+            out["pdf"] = urljoin(base_url, href)
+            break
+    for bad in doc.xpath("//script|//style|//nav|//footer"):  # <header> ne – bývá v něm i datum čísla
+        bad.drop_tree()
+    if m := _ISSUE_DATE.search(" ".join(" ".join(doc.itertext()).split())):
+        out["when"] = f"{m.group(1).lower()} {m.group(2)}"
+        out["y"] = int(m.group(2))
+    return out
+
+
+async def _get(client: httpx.AsyncClient, url: str, fallback: httpx.AsyncClient | None) -> httpx.Response:
+    try:
+        resp = await client.get(url)
+        resp.raise_for_status()
+    except Exception as exc:
+        if fallback is None or not needs_proxy(exc):
+            raise
+        resp = await fallback.get(url)
+        resp.raise_for_status()
+    return resp
+
+
+async def resolve_details(client: httpx.AsyncClient, issues: list[dict], detail: dict, resolved: dict,
+                          fallback: httpx.AsyncClient | None = None, budget: int = DETAIL_BUDGET) -> list[dict]:
+    """Odkazy na stránky čísel → přímé odkazy na PDF (resolved = paměť stránka → výsledek, mění se na místě)."""
+    out = []
+    for issue in issues:
+        page = issue["url"]
+        if page not in resolved and budget > 0:
+            budget -= 1
+            try:
+                resp = await _get(client, page, fallback)
+                resolved[page] = parse_detail(resp.text, str(resp.url), detail)
+            except Exception as exc:
+                log.info("Zpravodaj – stránka čísla %s: %r", page, exc)
+        info = resolved.get(page) or {}
+        title = issue["t"] + (f" ({info['when']})" if info.get("when") and info["when"] not in issue["t"] else "")
+        out.append({k: v for k, v in {"t": title, "url": info.get("pdf") or page, "page": page if info.get("pdf") else None,
+                                      "y": issue.get("y") or info.get("y")}.items() if v})
+    return out
+
+
 def archive_pages(cfg: dict) -> list[str]:
     pages = [cfg["url"]]
     if cfg.get("page_param"):
@@ -114,14 +176,7 @@ async def fetch_newsletter(client: httpx.AsyncClient, cfg: dict,
     issues: list[dict] = []
     seen: set[str] = set()
     for page in archive_pages(cfg):
-        try:
-            resp = await client.get(page)
-            resp.raise_for_status()
-        except Exception as exc:
-            if fallback is None or not needs_proxy(exc):
-                raise
-            resp = await fallback.get(page)
-            resp.raise_for_status()
+        resp = await _get(client, page, fallback)
         for issue in parse_archive(resp.text, str(resp.url), cfg):
             if issue["url"] not in seen:
                 seen.add(issue["url"])
@@ -150,10 +205,14 @@ async def collect(client: httpx.AsyncClient, members: list[dict], state_dir: Pat
         if not fresh:
             try:
                 issues = await fetch_newsletter(client, cfg, fallback)
-                entry = {"cfg": cfg, "checked": now.isoformat(timespec="seconds"), "issues": issues, "ok": True}
+                resolved = entry.get("resolved", {}) if entry.get("cfg") == cfg else {}
+                if cfg.get("detail"):
+                    issues = await resolve_details(client, issues, cfg["detail"], resolved, fallback)
+                entry = {"cfg": cfg, "checked": now.isoformat(timespec="seconds"), "issues": issues, "ok": True,
+                         "resolved": resolved}
                 log.info("Zpravodaj %s (%s): %d čísel", m["name"], cfg["name"], len(issues))
             except Exception as exc:  # web obce nejde – nechá se poslední známý seznam čísel
-                log.warning("Zpravodaj %s: %s", m["name"], exc)
+                log.warning("Zpravodaj %s: %r", m["name"], exc)
                 entry = {**entry, "cfg": cfg, "checked": now.isoformat(timespec="seconds"), "ok": False}
             cached[m["name"]] = entry
         out.append({k: v for k, v in {
