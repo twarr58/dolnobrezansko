@@ -201,3 +201,31 @@ def test_summarizer_survives_failed_login(monkeypatch):
     monkeypatch.setattr(s, "_call", boom)
     assert asyncio.run(s.summarize({"Název": "X"}, [])) is None
     assert s.stopped and not s.available()
+
+
+def test_edesky_like_categories():
+    from uredni_desky.digest import category
+
+    cases = {
+        "Smlouva o poskytnutí dotace z rozpočtu Obce na rok 2023 - TJ Orion": "smlouvy",
+        "Veřejnoprávní smlouva o poskytnutí dotace": "smlouvy",
+        "Výběrové řízení na obsazení pracovní pozice referent stavebního úřadu": "zamestnani",
+        "Obec Dolní Břežany hledá referenta/referentku stavebního úřadu": "zamestnani",
+        "Výzva k podání nabídek – veřejná zakázka malého rozsahu na opravu chodníků": "zakazky",
+        "Dražební vyhláška – prodej pozemku": "drazby",
+        "Oznámení o zahájení zjišťovacího řízení EIA": "priroda",
+        "Rozpočtové opatření č. 5/2026": "rozpocet",
+        "Záměr obce pronajmout pozemek": "majetek",
+    }
+    assert {t: category(t, "") for t in cases} == cases
+
+
+def test_rule_category_wins_for_contracts_over_old_ai_summary():
+    from uredni_desky import region
+
+    it = {"id": "i1", "board": "b1", "title": "Smlouva o poskytnutí dotace z rozpočtu Obce na rok 2023 - TJ Orion",
+          "posted": "2024-05-14"}
+    s = region.item_description(it, [], {"sig": "x", "ai": {"tldr": "Obec dala dotaci.", "category": "rozpocet"}})
+    assert s["cat"] == "smlouvy" and s["label"] == "Smlouvy a dotace"
+    s2 = region.item_description({**it, "title": "Oznámení obce"}, [], {"sig": "x", "ai": {"tldr": "x", "category": "doprava"}})
+    assert s2["cat"] == "doprava"  # jinak rozhoduje Claude

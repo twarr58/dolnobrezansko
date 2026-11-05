@@ -16,25 +16,34 @@ CATEGORIES: list[tuple[str, str, str]] = [
     ("uzemni", "Územní plán", r"uzemni(ho|m)? plan|uzemni studi|regulacni plan|zmen[ay] c\. ?\d+ uzemni"),
     ("doprava", "Doprava a uzavírky", r"uzavirk|objizd|omezeni provozu|dopravni opatreni|prechodn\w* uprav\w* provozu|"
                                      r"mistni uprav\w* provozu|uzavreni (silnice|komunikace)"),
+    ("drazby", "Dražby a exekuce", r"drazb|drazebn|exekuc|insolvenc"),
+    ("zakazky", "Veřejné zakázky", r"verejn\w* zakazk|zakazk\w* mal\w* rozsah|vyzv\w* k podani nabid|zadavaci (rizeni|dokumentac)|"
+                                  r"poptavkov\w* rizeni|vyberov\w* rizeni na (dodavatel|zhotovitel)"),
+    ("zamestnani", "Zaměstnání", r"vyberov\w* rizeni na (obsazeni|pozic|pracovni|misto|funkci|referent|vedouci|reditel)|"
+                                r"voln\w* (pracovni )?mist|hleda\w* (noveho |novou )?(referent|pracovni|kolegu|kolegyni|zamestnan|"
+                                r"ucetn|technik|pracovnik|uklizec|ucitel)|nabidka zamestnani|pracovni pozic"),
     ("stavba", "Stavba", r"stavebni\w* (rizeni|povoleni|zamer)|povoleni (stavby|zameru)|umisten\w* stavby|rodinn\w* dum|"
                         r"rodinneho domu|kolaudac|spolecne (uzemni a stavebni )?povoleni|dodatecn\w* povoleni|"
                         r"odstraneni stavby|zmen[ay] stavby|stavba |stavby "),
     ("majetek", "Pozemky a majetek", r"zamer\w* (obce )?(prodat|prodej|pronaj|pronajmout|propacht|pacht|vypujc|smen|darov)|"
                                    r"pronajem|pacht|prodej pozemk|vypujcka|bezuplatn\w* prevod"),
+    ("smlouvy", "Smlouvy a dotace", r"smlouv\w* o poskytnuti (dotace|dotaci|daru|prispevku)|verejnopravni smlouv|darovaci smlouv|"
+                                   r"poskytnuti (dotace|dotaci)|dotac\w* z rozpoctu|zverejneni smlouv"),
     ("rozpocet", "Rozpočet", r"rozpoct|rozpocet|zaverecn\w* ucet|rozpoctov\w* opatreni|strednedob\w* vyhled"),
     ("vyhlasky", "Vyhlášky obce", r"obecne zavazn\w* vyhlas|nariz\w* obce|\bozv\b"),
     ("volby", "Volby", r"\bvolb|volic|okrskov\w* volebn"),
     ("voda", "Voda a kanalizace", r"vodovod|kanaliz|vodopravni|vodni\w* zakon|odber\w* (podzemnich |povrchovych )?vod|"
                                  r"cistirn|\bcov\b|vodni dil"),
-    ("priroda", "Příroda a odpady", r"kaceni|dreviny|\beia\b|vliv\w* na zivotni prostredi|odpad|ochran\w* prirody|"
-                                   r"myslivost|honitb|lesni"),
+    ("priroda", "Životní prostředí a EIA", r"kaceni|dreviny|\beia\b|vliv\w* na zivotni prostredi|posuzovani vlivu|odpad|"
+                                          r"ochran\w* prirody|myslivost|honitb|lesni"),
     ("energie", "Elektřina a plyn", r"preruseni dodavky|preruseni distribuce|odstavk\w* (elektr|plyn)|"
                                   r"distribuce elektriny|dodavk\w* (elektriny|plynu)"),
-    ("drazby", "Dražby a exekuce", r"drazb|exekuc|insolvenc"),
     ("dane", "Daně a poplatky", r"dan[eiy]? z nemovit|mistni\w* poplat|financni urad|hromadn\w* predpisn"),
     ("pisemnost", "Písemnost k vyzvednutí", r"ulozen\w* pisemnost|oznameni o ulozeni|k vyzvednuti|"
                                           r"neznam\w* pobyt|nezastizen"),
 ]
+# Kategorie, kde má přednost určení pravidly (spolehlivé podle názvu; starší shrnutí od Claude je neznala).
+RULE_PREFERRED = {"drazby", "zakazky", "zamestnani", "smlouvy"}
 LABELS = {cid: label for cid, label, _ in CATEGORIES} | {"ostatni": "Ostatní"}
 _CAT_RE = [(cid, re.compile(rx)) for cid, _, rx in CATEGORIES]
 

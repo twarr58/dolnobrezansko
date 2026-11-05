@@ -368,7 +368,7 @@ def item_description(it: dict, docs: list[dict], summary: dict | None) -> dict:
         bullets = a.get("details") or a.get("bullets") or []  # verze 1 měla jen bullets
         s.update(src="claude", tldr=a.get("tldr") or s["tldr"], bullets=[b for b in bullets if b][:10],
                  action=a.get("action") or s.get("action", ""))
-        if a.get("category") in digest.LABELS:
+        if a.get("category") in digest.LABELS and a["category"] != "ostatni" and s["cat"] not in digest.RULE_PREFERRED:
             s["cat"] = a["category"]
         for key in ("deadline", "event"):
             if d := _valid_date(a.get(key)):
@@ -386,6 +386,9 @@ def item_description(it: dict, docs: list[dict], summary: dict | None) -> dict:
     if a and summary:
         s["summarized"] = (summary.get("at") or "")[:10] or None
         s["updated"] = (summary.get("updated_at") or "")[:10] or None
+        s["summarized_at"] = summary.get("at") or None  # plný čas zpracování (ISO s časovou zónou)
+        s["updated_at"] = summary.get("updated_at") or None
+        s["model"] = summary.get("model") or None
         if it.get("_sig") and summary.get("sig") != it["_sig"]:
             s["pending"] = True  # oznámení se změnilo, nové shrnutí přijde v dalším běhu
     s["label"] = digest.LABELS.get(s["cat"], "Ostatní")
@@ -499,6 +502,7 @@ def sample(out_dir: Path) -> dict:
         if r.get("ai"):
             raw_ai = re.sub(r"\{iso([+-]\d+)\}", lambda m: day(int(m.group(1))).isoformat(), json.dumps(r["ai"]))
             summaries[f"u{n}"] = {"ai": json.loads(fill(raw_ai)), "at": now.isoformat(timespec="seconds"),
+                                   "model": "claude-sonnet-5-5",
                                    "updated_at": now.isoformat(timespec="seconds") if r.get("updated") else None}
     data = build_output(region, members, boards, items, docs, summaries, now)
     data["sample"] = True
