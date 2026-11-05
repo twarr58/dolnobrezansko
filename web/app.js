@@ -522,14 +522,55 @@ function villages(d) {
 // ---------- navigace a zpravodaje ----------
 
 /** Hlavní přepínač nahoře: úřední desky (výchozí), kalendář akcí a zpravodaje obcí. */
+// ---------- vzhled: systém / světlý / tmavý ----------
+
+const THEMES = [
+  ['system', 'Podle systému', 'M3 4h18v12H3zM8 20h8M12 16v4'],
+  ['light', 'Světlý', 'M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z'],
+  ['dark', 'Tmavý', 'M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z'],
+];
+
+function currentTheme() {
+  try { return localStorage.getItem('theme') || 'system'; } catch { return 'system'; }
+}
+
+function applyTheme(theme) {
+  if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
+  else delete document.documentElement.dataset.theme;
+  try { if (theme === 'system') localStorage.removeItem('theme'); else localStorage.setItem('theme', theme); } catch { /* bez úložiště jen pro tuto návštěvu */ }
+}
+
+/** Přepínač vzhledu: na počítači tři tlačítka, na telefonu jedno, které je střídá. */
+function themeSwitch() {
+  const now = currentTheme();
+  let wrap;
+  const pick = (key) => { applyTheme(key); wrap.replaceWith(themeSwitch()); };
+  const group = h('div', { class: 'theme', role: 'group', 'aria-label': 'Vzhled' },
+    THEMES.map(([key, label, path]) => h('button', {
+      type: 'button', class: 'theme__btn', 'aria-pressed': String(now === key), title: label, 'aria-label': `Vzhled: ${label}`,
+      onclick: () => pick(key),
+    }, icon(path, 16))));
+  const i = Math.max(0, THEMES.findIndex(([key]) => key === now));
+  const [, label, path] = THEMES[i];
+  const [nextKey, nextLabel] = THEMES[(i + 1) % THEMES.length];
+  const cycle = h('button', {
+    type: 'button', class: 'theme__cycle', title: `Vzhled: ${label} (klikni: ${nextLabel.toLowerCase()})`,
+    'aria-label': `Vzhled: ${label}. Přepnout na: ${nextLabel}`, onclick: () => pick(nextKey),
+  }, icon(path, 18));
+  wrap = h('div', { class: 'theme-wrap' }, group, cycle);
+  return wrap;
+}
+
 function siteNav(active) {
   const tab = (key, href, label) => h('a', { class: 'sitenav__tab', href, 'aria-current': active === key ? 'page' : null }, label);
   return h('nav', { class: 'sitenav', 'aria-label': 'Sekce' },
     h('a', { class: 'sitenav__logo', href: '#/', title: 'Mikroregion Dolnobřežansko' },
       h('img', { src: 'logo.png', width: 40, height: 40, alt: 'Dolnobřežansko' })),
-    tab('desky', '#/', 'Úřední desky'),
-    tab('akce', '#/akce', 'Kalendář akcí'),
-    tab('zpravodaje', '#/zpravodaje', 'Zpravodaje'));
+    h('div', { class: 'sitenav__tabs' },
+      tab('desky', '#/', 'Úřední desky'),
+      tab('akce', '#/akce', 'Kalendář akcí'),
+      tab('zpravodaje', '#/zpravodaje', 'Zpravodaje')),
+    themeSwitch());
 }
 
 /** Krátký popisek staršího čísla do seznamu („č. 95“); celý název je v title odkazu. */
