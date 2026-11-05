@@ -154,6 +154,8 @@ async def resolve_sources(client: httpx.AsyncClient, region: dict, state_dir: Pa
 
 SIG_PREFIX = "s2:"  # podpis z obsahu příloh a termínů desky (starší podpisy jen z názvu a adres)
 REVALIDATE_HOURS = 24  # jak často se ověřuje, že se příloha na stejné adrese nezměnila
+# Verze čtení příloh: zvýšit, když se mění, jak přílohy čteme (ne úřad) – nové shrnutí pak není „změna oznámení“.
+SOURCE_VERSION = 2  # 2: přílohy z edesky.cz jako rozpoznaný text místo stránky edesky.cz
 
 
 def _signature(item: dict, doc_cache: dict[str, dict] | None = None) -> str:
@@ -209,6 +211,25 @@ async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, 
     recheck_before = (now - timedelta(hours=REVALIDATE_HOURS)).isoformat()
     fresh_bytes: dict[str, tuple[bytes, str]] = {}  # stažené v tomto běhu (pro Claude se nestahuje znovu)
 
+    async def edesky_text_doc(url: str, ref: dict | None, name: str, cached: dict | None) -> dict:
+        """Příloha z edesky.cz jako rozpoznaný text (veřejný soubor edesky_text_url nebo text z API)."""
+        text = edesky.TEXTS.get(url, "")
+        if not text and ref is not None:
+            try:
+                async with dl_sem:
+                    text = await edesky.attachment_text(client, ref)
+            except httpx.HTTPError as exc:
+                log.info("Text přílohy z edesky.cz %s: %s %s", url, type(exc).__name__, exc)
+                return cached or {"url": url, "error": f"{type(exc).__name__}: {exc}"[:200]}
+        full = documents._clean(text)
+        ext = documents.sniff(b"", url)
+        kind = documents.KIND_MAP if documents._MAP_NAME.search(f"{name} {url}") and len(full) < 3000 \
+            else documents.KIND_TEXT
+        info = documents.DocInfo(url=url, ext=ext, kind=kind, chars=len(full), text=full[:documents.EXCERPT],
+                                 sha=documents.fingerprint(full.encode("utf-8")), checked=stamp)
+        doc_cache[url] = info.to_cache()
+        return {**info.to_cache(), "full_text": full}
+
     async def get_doc(doc: dict, need_bytes: bool) -> dict:
         """Příloha z mezipaměti; jednou za REVALIDATE_HOURS se podmíněně ověří (ETag / Last-Modified)."""
         url = doc["url"]
@@ -216,6 +237,12 @@ async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, 
         if url in fresh_bytes:
             content, full_text = fresh_bytes[url]
             return {**(cached or {}), "bytes": content, "full_text": full_text}
+        ref = edesky.ATTACHMENTS.get(url)
+        if ref is not None and fallback is None:
+            # příloha z edesky.cz: originál je na webu obce, který z runneru nejde – stačí rozpoznaný text
+            if cached and cached.get("checked", "") > recheck_before and cached.get("chars"):
+                return cached
+            return await edesky_text_doc(url, ref, doc.get("name") or "", cached)
         if cached and not need_bytes and cached.get("checked", "") > recheck_before:
             return cached
         if budget["docs"] <= 0:
@@ -228,12 +255,8 @@ async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, 
                     c, url, etag=cached.get("etag", "") if conditional else "",
                     last_modified=cached.get("lm", "") if conditional else ""))
             except (httpx.HTTPError, ValueError) as exc:
-                if url in edesky.TEXTS:  # soubor z edesky.cz nejde stáhnout – rozpoznaný text z API stačí
-                    info = documents.DocInfo(url=url, kind=documents.KIND_TEXT, checked=stamp)
-                    info.full_text = documents._clean(edesky.TEXTS[url])
-                    info.text, info.chars = info.full_text[:documents.EXCERPT], len(info.full_text)
-                    doc_cache[url] = info.to_cache()
-                    return {**info.to_cache(), "full_text": info.full_text}
+                if ref is not None or url in edesky.TEXTS:  # originál nejde ani přes proxy – text z edesky.cz
+                    return await edesky_text_doc(url, ref, doc.get("name") or "", cached)
                 log.info("Příloha %s: %s %s", url, type(exc).__name__, exc)
                 return cached or {"url": url, "error": f"{type(exc).__name__}: {exc}"[:200]}
         if dl.content is None:  # 304 – beze změny
@@ -304,8 +327,9 @@ async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, 
                 out = await summarizer.summarize(meta, payload)
             if out:
                 # „aktualizováno“ jen při skutečné změně oznámení (ne při změně formátu podpisu nebo schématu)
-                changed = bool(prev.get("ai") and str(prev.get("sig", "")).startswith(SIG_PREFIX) and not same)
-                result.update(sig=sig, ai=out, v=ai.VERSION, at=stamp, model=ai.MODEL)
+                changed = bool(prev.get("ai") and str(prev.get("sig", "")).startswith(SIG_PREFIX) and not same
+                               and prev.get("src_v") == SOURCE_VERSION)
+                result.update(sig=sig, ai=out, v=ai.VERSION, at=stamp, model=ai.MODEL, src_v=SOURCE_VERSION)
                 result.setdefault("first_at", prev.get("at") or stamp)
                 if changed:
                     result["updated_at"] = stamp
