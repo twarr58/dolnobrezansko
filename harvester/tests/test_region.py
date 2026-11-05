@@ -90,3 +90,31 @@ def test_enrich_downloads_each_document_once(tmp_path, monkeypatch):
     assert docs["https://x.cz/z.txt"]["kind"] == "text"
     asyncio.run(go())
     assert hits == ["https://x.cz/z.txt"]
+
+
+def test_enrich_loads_attachments_from_notice_page(tmp_path, monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_FEDERATION_RULE_ID", raising=False)
+    page = ('<html><nav><a href="/menu.pdf">Menu</a></nav><main><h1>Rozpočtové opatření č. 6/2026</h1>'
+            '<p>Námitky lze podat do 20. 11. 2026.</p><a href="/obec-psary/soubor/77">Rozpočtové opatření</a></main></html>')
+
+    def handler(req):
+        if req.url.path.endswith("/vyveseni/390"):
+            return httpx.Response(200, html=page)
+        return httpx.Response(200, content=b"Rozpocet", headers={"content-type": "text/plain"})
+
+    items = [{"id": "i1", "board": "b1", "title": "Rozpočtové opatření č. 6/2026", "posted": "2026-11-01",
+              "url": "https://urednideska.alis.cz/obec-psary/vyveseni/390"}]
+
+    async def go():
+        async with _client(handler) as c:
+            return await region.enrich(c, items, tmp_path, ai_limit=0, now=NOW)
+
+    docs, _ = asyncio.run(go())
+    assert items[0]["docs"] == [{"name": "Rozpočtové opatření", "url": "https://urednideska.alis.cz/obec-psary/soubor/77"}]
+    assert "https://urednideska.alis.cz/obec-psary/soubor/77" in docs
+    out = region.build_output(region.load_region(), [{"name": "Psáry", "publisher": "Obec Psáry", "board": "b1"}],
+                              [{"id": "b1", "ok": True}], items, docs, {}, NOW)
+    s = out["items"][0]["s"]
+    assert s["deadline"] == "2026-11-20"  # lhůta z textu stránky oznámení
+    assert out["items"][0]["docs"][0]["n"] == "Rozpočtové opatření"

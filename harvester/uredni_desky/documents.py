@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import io
 import logging
+import os
 import re
 import shutil
 import subprocess
@@ -20,6 +21,10 @@ from xml.etree import ElementTree
 import httpx
 
 log = logging.getLogger(__name__)
+logging.getLogger("pypdf").setLevel(logging.ERROR)  # stovky varování o fontech na PDF z úřadů
+
+# Tesseract si jinak bere všechna jádra (OpenMP) a souběžné OCR několika příloh se zahltí.
+_OCR_ENV = {**os.environ, "OMP_THREAD_LIMIT": "1"}
 
 MAX_BYTES = 30 * 1024 * 1024
 TEXT_PAGES = 40  # z delších PDF se text čte jen z prvních stran
@@ -123,7 +128,8 @@ def _ocr_pdf(content: bytes, pages: int) -> str:
                         str(Path(tmp) / "p")], check=True, timeout=120, capture_output=True)
         texts = []
         for img in sorted(Path(tmp).glob("p*.png")):
-            r = subprocess.run(["tesseract", str(img), "-", "-l", "ces+eng"], timeout=120, capture_output=True)
+            r = subprocess.run(["tesseract", str(img), "-", "-l", "ces+eng"], timeout=120, capture_output=True,
+                               env=_OCR_ENV)
             texts.append(r.stdout.decode("utf-8", "replace"))
         return "\n".join(texts)
 
@@ -190,3 +196,43 @@ async def download(client: httpx.AsyncClient, url: str) -> tuple[bytes, str]:
             if len(buf) > MAX_BYTES:
                 raise ValueError("příloha je větší než 30 MB")
         return bytes(buf), resp.headers.get("content-type", "")
+
+
+# ---------- stránka oznámení: přílohy a text ----------
+
+_ANCHOR = re.compile(r'<a\b[^>]*?href\s*=\s*["\']([^"\'#]+)["\'][^>]*>(.*?)</a>', re.I | re.S)
+_DROP = re.compile(r"<(script|style|noscript|nav|header|footer|form)\b.*?</\1\s*>", re.I | re.S)
+_MAIN = re.compile(r"<(main|article)\b[^>]*>(.*?)</\1\s*>", re.I | re.S)
+_FILE_EXT = re.compile(r"\.(pdf|docx?|odt|rtf|xlsx?|ods|jpe?g|png|tiff?|zip)(?:$|[?#])", re.I)
+_FILE_HINT = re.compile(r"(download|getfile|/file[/?]|soubor|priloh|attachment|e_download|dokument[/?])", re.I)
+_TAG = re.compile(r"<[^>]+>")
+
+
+def page_attachments(html: str, base: str) -> tuple[list[dict], str]:
+    """Odkazy na přílohy a čitelný text ze stránky detailu oznámení (desky bez příloh v seznamu)."""
+    from html import unescape
+    from urllib.parse import urljoin, urlsplit
+
+    html = _DROP.sub(" ", html)
+    m = _MAIN.search(html)
+    body = m.group(2) if m else html
+    host = (urlsplit(base).hostname or "").removeprefix("www.")
+    links, seen = [], set()
+    for href, inner in _ANCHOR.findall(html):
+        href = unescape(href.strip())
+        if href.lower().startswith(("mailto:", "tel:", "javascript:")):
+            continue
+        url = urljoin(base, href)
+        if not url.startswith(("http://", "https://")) or url in seen:
+            continue
+        path = urlsplit(url).path + "?" + urlsplit(url).query
+        if not (_FILE_EXT.search(path) or _FILE_HINT.search(path)):
+            continue
+        uhost = (urlsplit(url).hostname or "").removeprefix("www.")
+        if uhost != host and not _FILE_EXT.search(path):  # cizí web jen s přímým odkazem na soubor
+            continue
+        seen.add(url)
+        name = " ".join(unescape(_TAG.sub(" ", inner)).split()) or url.rstrip("/").rsplit("/", 1)[-1]
+        links.append({"name": name[:200], "url": url})
+    text = _clean(unescape(_TAG.sub("\n", body)))
+    return links[:20], text[:EXCERPT]

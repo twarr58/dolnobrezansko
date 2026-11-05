@@ -79,3 +79,13 @@ def test_rss_and_vismo_sources_fetch(tmp_path):
 
     res = asyncio.run(go())
     assert all(r.ok and len(r.payload["informace"]) == 1 for r in res.values())
+
+
+def test_vismo_skips_tag_links():
+    from uredni_desky.vismo import parse_board
+
+    html = ('<div class="site_board"><a href="/oznameni-1">Oznámení o uložení písemnosti</a>'
+            '<a href="/vyhledavani/?tags=14264">Aktuality</a>'
+            '<span class="site_board__date site_board__date-from"><time datetime="2026-11-01">1. 11.</time></span></div>')
+    infos = parse_board(html, "https://www.liber.cz/uredni-deska")
+    assert [i["název"]["cs"] for i in infos] == ["Oznámení o uložení písemnosti"]

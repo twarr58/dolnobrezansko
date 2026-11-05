@@ -22,7 +22,7 @@ from pathlib import Path
 
 import httpx
 
-from . import USER_AGENT, ai, cache, digest, documents
+from . import USER_AGENT, ai, cache, digest, documents, webpage
 from .build import load_state, run_build
 from .extra import sources_from_entries
 from .fetch import fetch_all
@@ -184,14 +184,40 @@ async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, 
             try:
                 content, ctype = await documents.download(client, url)
             except (httpx.HTTPError, ValueError) as exc:
-                log.info("Příloha %s: %s", url, exc)
-                return cached or {"url": url, "error": str(exc)[:200]}
+                log.info("Příloha %s: %s %s", url, type(exc).__name__, exc)
+                return cached or {"url": url, "error": f"{type(exc).__name__}: {exc}"[:200]}
         info = await asyncio.to_thread(documents.analyze, content, url, doc.get("name") or "", ctype)
         doc_cache[url] = info.to_cache()
         return {**info.to_cache(), "bytes": content, "full_text": info.full_text}
 
     active = [i for i in items if not i.get("removed")]
     active.sort(key=lambda i: (i.get("posted") or "", i.get("first_seen") or ""), reverse=True)
+
+    async def load_page(it: dict) -> None:
+        """Oznámení bez příloh v seznamu (ALIS, Vismo…): přílohy a text ze stránky oznámení."""
+        url = it.get("url") or ""
+        if it.get("docs") or not url.startswith(("http://", "https://")) or documents._FILE_EXT.search(url):
+            return
+        key = f"page:{url}"
+        cached = doc_cache.get(key)
+        stale = not cached or (not cached.get("links")
+                               and cached.get("checked", "") < (now - timedelta(days=1)).isoformat())
+        if stale and budget["docs"] > 0:
+            budget["docs"] -= 1
+            async with dl_sem:
+                try:
+                    r = await client.get(url, headers=webpage.HTML_HEADERS, timeout=30)
+                    r.raise_for_status()
+                    links, text = documents.page_attachments(webpage.response_text(r), str(r.url))
+                    cached = {"links": links, "text": text, "checked": now.isoformat(timespec="seconds")}
+                    doc_cache[key] = cached
+                except (httpx.HTTPError, ValueError) as exc:
+                    log.info("Stránka oznámení %s: %s %s", url, type(exc).__name__, exc)
+        if cached:
+            it["docs"] = cached.get("links", [])
+            it["_body"] = cached.get("text", "")
+
+    await asyncio.gather(*(load_page(it) for it in active))
 
     async def process(it: dict) -> None:
         sig = _signature(it)
@@ -201,7 +227,8 @@ async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, 
         result = {"sig": sig, "ai": prev.get("ai") if prev and prev.get("sig") == sig else None}
         if want_ai and summarizer.available():
             meta = {"Název": it["title"], "Vyvěšeno": it.get("posted"), "Vyvěšeno do": it.get("until"),
-                    "Číslo jednací": it.get("cj"), "Dnešní datum": now.date().isoformat()}
+                    "Číslo jednací": it.get("cj"), "Dnešní datum": now.date().isoformat(),
+                    "Text na stránce oznámení": (it.get("_body") or "")[:4000]}
             payload = [{"name": d0.get("name"), "ext": d.get("ext"), "pages": d.get("pages", 0),
                         "bytes": d.get("bytes"), "text": d.get("full_text") or d.get("text", "")}
                        for d0, d in zip(it.get("docs", []), docs)]
@@ -222,7 +249,7 @@ async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, 
                  summarizer.used, summarizer.tokens_in, summarizer.tokens_out, ai.MODEL)
     keep = {i["id"] for i in items}
     summaries = {k: v for k, v in summaries.items() if k in keep}
-    live_docs = {d["url"] for i in items for d in i.get("docs", [])}
+    live_docs = {d["url"] for i in items for d in i.get("docs", [])} | {f"page:{i.get('url')}" for i in items}
     doc_cache = {k: v for k, v in doc_cache.items() if k in live_docs}
     _write_gz(state_dir / "docs.json.gz", doc_cache)
     _write_gz(state_dir / "summaries.json.gz", summaries)
@@ -237,7 +264,8 @@ def _valid_date(s) -> str | None:
 
 
 def item_description(it: dict, docs: list[dict], summary: dict | None) -> dict:
-    s = digest.describe(it["title"], it.get("posted"), it.get("until"), docs, it.get("agendas"))
+    s = digest.describe(it["title"], it.get("posted"), it.get("until"), docs, it.get("agendas"),
+                        body=it.get("_body", ""))
     a = (summary or {}).get("ai")
     if a:
         s.update(src="claude", tldr=a.get("tldr") or s["tldr"], bullets=[b for b in a.get("bullets", []) if b][:4],
