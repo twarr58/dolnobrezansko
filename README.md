@@ -39,8 +39,15 @@ vytažený text; u oznámení bez příloh v seznamu i přílohy a text ze strá
 rychlou (jedna věta, co udělat a do kdy, důležitost) a rozbor příloh (co to znamená, koho se to týká,
 co přesně – parametry, částky, změny, klíčové údaje, data, kontakt, obsah každé přílohy). Hotová shrnutí se ukládají (`summaries.json.gz` ve větvi `data`), znovu se platí
 jen při změně oznámení. Limit shrnutí za běh: proměnná repozitáře `AI_LIMIT` (výchozí 40),
-model: `AI_MODEL` (výchozí `claude-opus-5-5`), hloubka čtení: `AI_EFFORT` (výchozí `medium`).
+model: `AI_MODEL` (výchozí `claude-sonnet-5-5`; levnější `claude-haiku-5-5`, nejsilnější `claude-opus-5-5`), hloubka čtení: `AI_EFFORT` (výchozí `medium`).
 Změna obsahu shrnutí zvýší `ai.VERSION` – stará shrnutí se pak postupně přepočítají.
+
+Kdy se shrnutí dělá znovu: každé oznámení má otisk z názvu, data vyvěšení a lhůty z desky a obsahu
+příloh (SHA-256). Přílohy se jednou za 24 hodin ověří podmíněným dotazem (`ETag` / `Last-Modified`,
+nezměněný soubor se nestahuje). Když úřad vymění PDF na stejné adrese, přidá přílohu nebo posune lhůtu,
+otisk se změní a Claude oznámení shrne znovu; web u něj ukáže „změna“ a datum aktualizace. Do té doby
+zůstává předchozí shrnutí s poznámkou, že se připravuje nové. U nezměněných oznámení se Claude znovu
+nevolá. Claude dostane prvních 10 příloh; PDF do 100 stran celé, delší jako text z celého dokumentu.
 
 ### Přihlášení bez klíče (doporučeno): Workload Identity Federation
 

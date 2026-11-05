@@ -21,7 +21,7 @@ from .digest import LABELS
 
 log = logging.getLogger(__name__)
 
-MODEL = os.environ.get("AI_MODEL", "claude-opus-5-5")
+MODEL = os.environ.get("AI_MODEL") or "claude-sonnet-5-5"  # na shrnutí úředních textů stačí Sonnet
 PDF_MAX_PAGES = 100  # delší PDF jdou jako vytažený text (cena a limity požadavku)
 PDF_MAX_BYTES = 20 * 1024 * 1024
 IMAGE_MAX_BYTES = 4 * 1024 * 1024

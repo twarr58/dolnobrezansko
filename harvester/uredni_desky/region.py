@@ -150,9 +150,19 @@ async def resolve_sources(client: httpx.AsyncClient, region: dict, state_dir: Pa
     return sources, members
 
 
-def _signature(item: dict) -> str:
-    key = item["title"] + "|" + "|".join(sorted(d["url"] for d in item.get("docs", [])))
-    return hashlib.sha1(key.encode("utf-8")).hexdigest()[:12]
+SIG_PREFIX = "s2:"  # podpis z obsahu příloh a termínů desky (starší podpisy jen z názvu a adres)
+REVALIDATE_HOURS = 24  # jak často se ověřuje, že se příloha na stejné adrese nezměnila
+
+
+def _signature(item: dict, doc_cache: dict[str, dict] | None = None) -> str:
+    """Otisk toho, co Claude o oznámení čte: název, termíny z desky a obsah příloh (SHA-256).
+
+    Změní se, když úřad oznámení upraví – i když vymění PDF na stejné adrese nebo posune lhůtu.
+    """
+    cache = doc_cache or {}
+    docs = sorted(f"{d['url']}#{cache.get(d['url'], {}).get('sha', '')}" for d in item.get("docs", []))
+    key = "|".join([item["title"], item.get("posted") or "", item.get("until") or "", *docs])
+    return SIG_PREFIX + hashlib.sha1(key.encode("utf-8")).hexdigest()[:12]
 
 
 async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, ai_limit: int,
@@ -172,23 +182,44 @@ async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, 
     dl_sem = asyncio.Semaphore(4)
     ai_sem = asyncio.Semaphore(3)
 
+    stamp = now.isoformat(timespec="seconds")
+    recheck_before = (now - timedelta(hours=REVALIDATE_HOURS)).isoformat()
+    fresh_bytes: dict[str, tuple[bytes, str]] = {}  # stažené v tomto běhu (pro Claude se nestahuje znovu)
+
     async def get_doc(doc: dict, need_bytes: bool) -> dict:
+        """Příloha z mezipaměti; jednou za REVALIDATE_HOURS se podmíněně ověří (ETag / Last-Modified)."""
         url = doc["url"]
         cached = doc_cache.get(url)
-        if cached and not need_bytes:
+        if url in fresh_bytes:
+            content, full_text = fresh_bytes[url]
+            return {**(cached or {}), "bytes": content, "full_text": full_text}
+        if cached and not need_bytes and cached.get("checked", "") > recheck_before:
             return cached
         if budget["docs"] <= 0:
             return cached or {"url": url}
         budget["docs"] -= 1
+        conditional = cached and cached.get("sha") and not need_bytes
         async with dl_sem:
             try:
-                content, ctype = await documents.download(client, url)
+                dl = await documents.download(client, url, etag=cached.get("etag", "") if conditional else "",
+                                              last_modified=cached.get("lm", "") if conditional else "")
             except (httpx.HTTPError, ValueError) as exc:
                 log.info("Příloha %s: %s %s", url, type(exc).__name__, exc)
                 return cached or {"url": url, "error": f"{type(exc).__name__}: {exc}"[:200]}
-        info = await asyncio.to_thread(documents.analyze, content, url, doc.get("name") or "", ctype)
+        if dl.content is None:  # 304 – beze změny
+            cached["checked"] = stamp
+            return cached
+        sha = documents.fingerprint(dl.content)
+        if cached and cached.get("sha") == sha and not need_bytes:
+            cached.update(checked=stamp, etag=dl.etag, lm=dl.lm)
+            return cached
+        info = await asyncio.to_thread(documents.analyze, dl.content, url, doc.get("name") or "", dl.ctype)
+        info.sha, info.etag, info.lm, info.checked = sha, dl.etag, dl.lm, stamp
+        if cached and cached.get("sha") and cached["sha"] != sha:
+            log.info("Příloha se změnila (nový obsah na stejné adrese): %s", url)
         doc_cache[url] = info.to_cache()
-        return {**info.to_cache(), "bytes": content, "full_text": info.full_text}
+        fresh_bytes[url] = (dl.content, info.full_text)
+        return {**info.to_cache(), "bytes": dl.content, "full_text": info.full_text}
 
     active = [i for i in items if not i.get("removed")]
     active.sort(key=lambda i: (i.get("posted") or "", i.get("first_seen") or ""), reverse=True)
@@ -220,13 +251,15 @@ async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, 
     await asyncio.gather(*(load_page(it) for it in active))
 
     async def process(it: dict) -> None:
-        sig = _signature(it)
-        prev = summaries.get(it["id"])
-        current = bool(prev and prev.get("sig") == sig and prev.get("ai") and prev.get("v") == ai.VERSION)
-        want_ai = summarizer is not None and not current
-        docs = [await get_doc(d, want_ai) for d in it.get("docs", [])]
-        result = {"sig": sig, "ai": prev.get("ai") if prev and prev.get("sig") == sig else None}
-        if want_ai and summarizer.available():
+        docs = [await get_doc(d, False) for d in it.get("docs", [])]  # nejdřív ověřit obsah příloh
+        sig = _signature(it, doc_cache)
+        prev = summaries.get(it["id"]) or {}
+        same = prev.get("sig") == sig
+        current = bool(same and prev.get("ai") and prev.get("v") == ai.VERSION)
+        result = dict(prev)  # bez nového shrnutí zůstává předchozí (i u změněného oznámení – web ukáže, že se aktualizuje)
+        result.setdefault("sig", sig)
+        if summarizer is not None and not current and summarizer.available():
+            docs = [await get_doc(d, True) for d in it.get("docs", [])]
             meta = {"Název": it["title"], "Vyvěšeno": it.get("posted"), "Vyvěšeno do": it.get("until"),
                     "Číslo jednací": it.get("cj"), "Dnešní datum": now.date().isoformat(),
                     "Text na stránce oznámení": (it.get("_body") or "")[:4000]}
@@ -236,10 +269,14 @@ async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, 
             async with ai_sem:
                 out = await summarizer.summarize(meta, payload)
             if out:
-                result.update(ai=out, v=ai.VERSION, at=now.isoformat(timespec="seconds"))
-            elif prev and prev.get("sig") == sig:
-                result["v"] = prev.get("v")
+                # „aktualizováno“ jen při skutečné změně oznámení (ne při změně formátu podpisu nebo schématu)
+                changed = bool(prev.get("ai") and str(prev.get("sig", "")).startswith(SIG_PREFIX) and not same)
+                result.update(sig=sig, ai=out, v=ai.VERSION, at=stamp, model=ai.MODEL)
+                result.setdefault("first_at", prev.get("at") or stamp)
+                if changed:
+                    result["updated_at"] = stamp
         summaries[it["id"]] = result
+        it["_sig"] = sig
 
     try:
         await asyncio.gather(*(process(it) for it in active))
@@ -288,8 +325,13 @@ def item_description(it: dict, docs: list[dict], summary: dict | None) -> dict:
         if dates := [{"date": d, "what": x["what"]} for x in a.get("dates", [])
                      if (d := _valid_date(x.get("date"))) and x.get("what")]:
             s["dates"] = sorted(dates, key=lambda x: x["date"])[:12]
+    if a and summary:
+        s["summarized"] = (summary.get("at") or "")[:10] or None
+        s["updated"] = (summary.get("updated_at") or "")[:10] or None
+        if it.get("_sig") and summary.get("sig") != it["_sig"]:
+            s["pending"] = True  # oznámení se změnilo, nové shrnutí přijde v dalším běhu
     s["label"] = digest.LABELS.get(s["cat"], "Ostatní")
-    return {k: v for k, v in s.items() if v not in (None, "", [])}
+    return {k: v for k, v in s.items() if v not in (None, "", [], False)}
 
 
 def build_output(region: dict, members: list[dict], boards: list[dict], items: list[dict],
@@ -395,7 +437,8 @@ def sample(out_dir: Path) -> dict:
                       "docs": item_docs, "first_seen": now.isoformat(timespec="seconds")})
         if r.get("ai"):
             raw_ai = re.sub(r"\{iso([+-]\d+)\}", lambda m: day(int(m.group(1))).isoformat(), json.dumps(r["ai"]))
-            summaries[f"u{n}"] = {"ai": json.loads(fill(raw_ai))}
+            summaries[f"u{n}"] = {"ai": json.loads(fill(raw_ai)), "at": now.isoformat(timespec="seconds"),
+                                   "updated_at": now.isoformat(timespec="seconds") if r.get("updated") else None}
     data = build_output(region, members, boards, items, docs, summaries, now)
     data["sample"] = True
     out_dir.mkdir(parents=True, exist_ok=True)
