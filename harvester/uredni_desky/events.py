@@ -10,6 +10,7 @@ Nastavení u obce v data/region.json pod klíčem „events“:
          article seznam <div class="article"> s datem „pátek, 06. listopad 2026“ (Vrané nad Vltavou)
          linklist seznam odkazů na akce (adresa vyhoví „match“), datum a čas v textu odkazu nebo hned za ním
                  („17:00 - 07.11.2026“, „Farmářské trhy 21.11.2026“) – Psáry, Vestec
+                 volitelně range_url s {od} a {do} (d.m.yyyy) pro výpis za celé okno – Jesenice
          link    akce nečteme (web nejde nebo nemá čitelný kalendář) – jen odkaz na kalendář
 """
 
@@ -153,6 +154,7 @@ def parse_article(html: str, base_url: str) -> list[dict]:
 
 # ---------- linklist (Psáry, Vestec) ----------
 
+_CLOCK = re.compile(r"(?<!\d)([01]?\d|2[0-3]):([0-5]\d)(?!\d)")
 _NUM_DATE = re.compile(r"(?<!\d)(\d{1,2})\.\s?(\d{1,2})\.\s?(20\d\d)(?!\d)")
 
 
@@ -193,8 +195,14 @@ def parse_linklist(html: str, base_url: str, match: str) -> list[dict]:
             continue
         d = date(int(m.group(3)), int(m.group(2)), int(m.group(1))).isoformat()
         title = _clean(_NUM_DATE.sub("", title)).strip(" -–|")
-        t = next((x for x in (_TIME.search(t) for t in [a.text_content(), *texts]) if x), None)
-        place = next((x for x in texts if not _NUM_DATE.search(x) and not _TIME.search(x) and len(x) < 80), None)
+        # čas jen s dvojtečkou a mimo datum („6.11.2026“ není 06:11)
+        t = next((x for x in (_CLOCK.search(_NUM_DATE.sub(" ", t)) for t in [a.text_content(), *texts]) if x), None)
+        # místo: za datem v témž řádku („7.11.2026 9:00, Jesenice - Hodkovice“), jinak krátký text před datem (Psáry)
+        date_line = next((x for x in texts if _NUM_DATE.search(x)), "")
+        after = re.match(r"^[\d.:\s–-]+,\s*(?:\d{1,2}:\d\d\s*)?(.+)$", date_line)
+        before = texts[:texts.index(date_line)] if date_line in texts else []
+        place = _clean(after.group(1))[:80] if after else next(
+            (x for x in before if not _CLOCK.search(x) and len(x) < 80), None)
         out[url] = {k: v for k, v in {"t": title, "d": d, "time": f"{int(t.group(1)):02d}:{t.group(2)}" if t else None,
                                       "place": place, "url": url}.items() if v}
     return list(out.values())
@@ -215,7 +223,10 @@ async def fetch_events(client: httpx.AsyncClient, cfg: dict, today: date,
             "ObjectId": obj, "ElementTypeOfObjectTypeBlockId": block})
         events = parse_vismo(resp.json(), str(page.url))
     elif fmt == "linklist":
-        page = await _get(client, cfg["url"], fallback, browser=cfg.get("browser"))
+        # range_url: výpis akcí za celé okno ({od}/{do} = d.m.yyyy), jinak stránka kalendáře
+        dm = lambda d: f"{d.day}.{d.month}.{d.year}"  # noqa: E731
+        url = cfg["range_url"].format(od=dm(today), do=dm(end)) if cfg.get("range_url") else cfg["url"]
+        page = await _get(client, url, fallback, browser=cfg.get("browser"))
         events = parse_linklist(page.text, str(page.url), cfg["match"])
     elif fmt in ("rdc", "article"):
         page = await _get(client, cfg["url"], fallback, browser=cfg.get("browser"))

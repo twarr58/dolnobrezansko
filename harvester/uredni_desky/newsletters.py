@@ -11,6 +11,7 @@ Nastavení je u obce v data/region.json pod klíčem „newsletter“:
   page_param, pages  (volitelně) stránkování archivu: ?<page_param>=2 … <pages>
   num_re      (volitelně) skupiny num a year, když text odkazu nic neříká („Stáhnout“) – např. z názvu souboru
   browser     (volitelně) true = hlavičky běžného prohlížeče (web odmítá roboty podle identifikace)
+  year_headings (volitelně) true = rok čísla z nadpisu („2026“) nad seznamem měsíců
   also        (volitelně) další stránky se stejnými odkazy (např. „aktuální číslo“ mimo archiv)
   detail      (volitelně) {"match", "exclude"}: archiv odkazuje na stránku čísla, PDF je až na ní – odkaz se
               nahradí prvním souborem, který vyhoví „match“; z textu stránky se vezme i měsíc a rok vydání.
@@ -79,7 +80,16 @@ def parse_archive(html: bytes | str, base_url: str, cfg: dict) -> list[dict]:
     exclude = re.compile(cfg["exclude"], re.I) if cfg.get("exclude") else None
     num_re = re.compile(cfg["num_re"], re.I) if cfg.get("num_re") else None
     found: dict[str, dict] = {}
-    for a in doc.iter("a"):
+    heading_year = None
+    for a in doc.iter():
+        if not isinstance(a.tag, str):
+            continue
+        own = (a.text or "").strip()
+        if cfg.get("year_headings") and a.tag != "a" and re.fullmatch(r"(19|20)\d\d", own):
+            heading_year = int(own)  # archiv po letech: „2026“ nad seznamem měsíců
+            continue
+        if a.tag != "a":
+            continue
         href = (a.get("href") or "").strip()
         if not href or href.startswith(("#", "mailto:", "tel:", "javascript:")):
             continue
@@ -93,6 +103,9 @@ def parse_archive(html: bytes | str, base_url: str, cfg: dict) -> list[dict]:
         title = "" if _GENERIC.match(text) else text
         from_text = bool(title)
         year = _year(title)
+        if title and not year and heading_year:
+            year = heading_year
+            title = f"{title} {year}"
         num = None
         if num_re and (m := num_re.search(unquote(url).rsplit("/", 1)[-1] + " " + text)):
             num, y = m.groupdict().get("num"), m.groupdict().get("year")
@@ -116,7 +129,7 @@ def parse_archive(html: bytes | str, base_url: str, cfg: dict) -> list[dict]:
     titles: set[str] = set()
     issues = []
     for i in found.values():
-        if i["_text"] and i["t"] in titles:
+        if i["t"] in titles:
             continue
         titles.add(i["t"])
         issues.append(i)
