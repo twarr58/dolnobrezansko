@@ -141,7 +141,8 @@ async def collect(client: httpx.AsyncClient, members: list[dict], state_dir: Pat
     for m in members:
         cfg = m.get("newsletter")
         if not cfg or not cfg.get("url"):
-            out.append({"obec": m["name"]})
+            # newsletter: false = obec zpravodaj nevydává (ověřeno), chybějící klíč = zatím nevíme
+            out.append({"obec": m["name"], "none": True} if cfg is False else {"obec": m["name"]})
             continue
         entry = cached.get(m["name"]) or {}
         fresh = entry.get("checked") and entry.get("cfg") == cfg and \

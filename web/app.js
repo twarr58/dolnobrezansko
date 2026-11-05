@@ -460,7 +460,8 @@ function issueLabel(i) {
 function renderNewsletters() {
   const all = state.data.newsletters || [];
   const withNews = all.filter((n) => n.name && safeUrl(n.archive));
-  const missing = all.filter((n) => !n.name).map((n) => n.obec);
+  const none = all.filter((n) => !n.name && n.none).map((n) => n.obec);
+  const missing = all.filter((n) => !n.name && !n.none).map((n) => n.obec);
   const card = (n) => {
     const issues = (n.issues || []).filter((i) => safeUrl(i.url));
     const [latest, ...older] = issues;
@@ -496,7 +497,8 @@ function renderNewsletters() {
       withNews.length
         ? h('div', { class: 'news-grid' }, withNews.map(card))
         : h('p', { class: 'muted' }, 'Zatím tu nejsou žádné zpravodaje.'),
-      missing.length ? h('p', { class: 'news__missing' }, `Zpravodaj na webu jsme zatím nenašli: ${missing.join(', ')}.`) : null));
+      none.length ? h('p', { class: 'news__missing' }, `Zpravodaj nevydávají: ${none.join(', ')}.`) : null,
+      missing.length ? h('p', { class: 'news__missing' }, `Zpravodaj zatím nemáme: ${missing.join(', ')}.`) : null));
 }
 
 // ---------- detail ----------

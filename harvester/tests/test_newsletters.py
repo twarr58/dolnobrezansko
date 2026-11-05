@@ -62,3 +62,21 @@ def test_collect_pages_cache_and_failure(tmp_path):
     asyncio.run(go())  # do REFRESH_HOURS se archiv znovu nestahuje
     assert len(calls) == n
     assert json.loads((tmp_path / "newsletters.json").read_text())["A"]["ok"] is True
+
+
+def test_psary_and_jesenice_match_only_issue_files():
+    import json as _json
+    from pathlib import Path
+
+    region = _json.loads((Path(__file__).resolve().parent.parent / "uredni_desky" / "data" / "region.json").read_text())
+    cfg = {m["name"]: m.get("newsletter") for m in region["members"]}
+    psary = """<a href="/psarsky-zpravodaj/">Psárský zpravodaj</a>
+      <a href="/wp-content/uploads/2026/10/psarskyzpravodajrijen2026web.pdf">Psárský zpravodaj říjen 2026</a>
+      <a href="/wp-content/uploads/2026/01/cenik-inzerce.pdf">Ceník inzerce</a>"""
+    got = newsletters.parse_archive(psary, "https://psary.cz/psarsky-zpravodaj/", cfg["Psáry"])
+    assert [i["t"] for i in got] == ["Psárský zpravodaj říjen 2026"]
+    jes = """<a href="/jesenicky-kuryr/ms-4026/p1=4026">Jesenický kurýr</a>
+      <a href="/assets/File.ashx?id_org=1&id_dokumenty=9">Jesenický kurýr 10/2026</a>"""
+    got = newsletters.parse_archive(jes, "https://www.mujesenice.cz/jesenicky-kuryr/ms-4026/p1=4026", cfg["Jesenice"])
+    assert [(i["t"], i["y"]) for i in got] == [("Jesenický kurýr 10/2026", 2026)]
+    assert cfg["Okrouhlo"] is False
