@@ -99,7 +99,8 @@ async def resolve_sources(client: httpx.AsyncClient, region: dict, state_dir: Pa
             entry = next((s for s in discovered if (m.get("qid") and s.get("qid") == m["qid"])
                           or (s.get("publisher") == m["publisher"] and s.get("area") == area)), None)
         if not entry and (prev := found.get(m["name"])):
-            fresh = prev.get("checked", "") > (now - timedelta(days=REDETECT_DAYS)).isoformat()
+            fresh = prev.get("checked", "") > (now - timedelta(days=REDETECT_DAYS)).isoformat() \
+                and not prev.get("status", "").startswith("web nedostupný")  # výpadek webu: zkusit příště znovu
             if prev.get("entry") or fresh:
                 entry = prev.get("entry")
                 info["web"] = info["web"] or prev.get("web", "")

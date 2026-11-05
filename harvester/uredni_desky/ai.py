@@ -218,4 +218,8 @@ class Summarizer:
             log.info("Claude: chyba spojení %s", exc)
         except (json.JSONDecodeError, StopIteration) as exc:
             log.info("Claude: nečitelná odpověď %s", exc)
+        except Exception as exc:  # noqa: BLE001 – např. odmítnuté přihlášení přes federaci (WorkloadIdentityError)
+            log.warning("Claude: přihlášení nebo požadavek selhal (%s: %s) – zbytek běhu jen popisy pravidly",
+                        type(exc).__name__, str(exc)[:300])
+            self.stopped = True
         return None
