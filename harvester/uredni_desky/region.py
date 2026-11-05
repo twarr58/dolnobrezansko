@@ -507,7 +507,7 @@ def sample(out_dir: Path) -> dict:
         if r.get("ai"):
             raw_ai = re.sub(r"\{iso([+-]\d+)\}", lambda m: day(int(m.group(1))).isoformat(), json.dumps(r["ai"]))
             summaries[f"u{n}"] = {"ai": json.loads(fill(raw_ai)), "at": now.isoformat(timespec="seconds"),
-                                   "model": "claude-sonnet-5-5",
+                                   "model": "claude-haiku-5-5",
                                    "updated_at": now.isoformat(timespec="seconds") if r.get("updated") else None}
     data = build_output(region, members, boards, items, docs, summaries, now)
     data["sample"] = True

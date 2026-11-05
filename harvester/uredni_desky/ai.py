@@ -21,7 +21,7 @@ from .digest import LABELS
 
 log = logging.getLogger(__name__)
 
-MODEL = os.environ.get("AI_MODEL") or "claude-sonnet-5-5"  # na shrnutí úředních textů stačí Sonnet
+MODEL = os.environ.get("AI_MODEL") or "claude-haiku-5-5"  # na výtah z úředních textů stačí Haiku (AI_MODEL přepne)
 PDF_MAX_PAGES = 100  # delší PDF jdou jako vytažený text (cena a limity požadavku)
 PDF_MAX_BYTES = 20 * 1024 * 1024
 IMAGE_MAX_BYTES = 4 * 1024 * 1024
@@ -29,7 +29,7 @@ MAX_DOCS = 10
 TEXT_MAX_CHARS = 150_000
 EFFORT = os.environ.get("AI_EFFORT", "medium")
 # Verze obsahu shrnutí: zvýšení přepočítá shrnutí všech aktivních oznámení (postupně, AI_LIMIT za běh).
-VERSION = 3  # 3: věcné pojmenování („vypnutí elektřiny“) – přegeneruje i stará shrnutí
+VERSION = 4  # 4: přechod na Haiku 5.5 – přepíše všechna shrnutí; 3: věcné pojmenování
 _IMAGE_TYPES = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg", "gif": "image/gif", "webp": "image/webp"}
 
 SYSTEM = """Jsi pomocník, který lidem z obcí mikroregionu Dolnobřežansko vysvětluje oznámení z úředních desek.

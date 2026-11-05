@@ -78,7 +78,7 @@ jobs:
           ANTHROPIC_SERVICE_ACCOUNT_ID: ${{ vars.ANTHROPIC_SERVICE_ACCOUNT_ID }}
           ANTHROPIC_WORKSPACE_ID: ${{ vars.ANTHROPIC_WORKSPACE_ID }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          AI_MODEL: ${{ vars.AI_MODEL || 'claude-sonnet-5-5' }}
+          AI_MODEL: ${{ vars.AI_MODEL || 'claude-haiku-5-5' }}
           AI_LIMIT: ${{ vars.AI_LIMIT || '100' }}
         run: python -m uredni_desky region --out site/data --state state
 
