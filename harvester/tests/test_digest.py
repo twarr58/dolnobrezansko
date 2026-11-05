@@ -147,3 +147,40 @@ def test_summarizer_request_and_response(monkeypatch):
     assert body["model"] == ai.MODEL and body["output_config"]["format"]["type"] == "json_schema"
     assert body["fallbacks"] == "default" and "server-side-fallback-2026-07-01" in seen["beta"]
     assert asyncio.run(s.summarize({"Název": "Y"}, [])) is None  # limit za běh vyčerpán
+
+
+def test_empty_api_key_does_not_shadow_federation(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "")
+    monkeypatch.setenv("ANTHROPIC_FEDERATION_RULE_ID", "fdrl_x")
+    import os
+
+    assert ai.enabled() is True
+    assert "ANTHROPIC_API_KEY" not in os.environ
+
+
+def test_disabled_without_credentials(monkeypatch):
+    for var in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_FEDERATION_RULE_ID"):
+        monkeypatch.delenv(var, raising=False)
+    assert ai.enabled() is False
+
+
+def test_github_federation_writes_token_file(monkeypatch, tmp_path):
+    import asyncio
+
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.setenv("ANTHROPIC_FEDERATION_RULE_ID", "fdrl_x")
+    monkeypatch.setenv("ACTIONS_ID_TOKEN_REQUEST_URL", "https://gha.example/token?x=1")
+    monkeypatch.setenv("ACTIONS_ID_TOKEN_REQUEST_TOKEN", "t")
+    monkeypatch.setenv("ANTHROPIC_IDENTITY_TOKEN_FILE", str(tmp_path / "jwt"))
+
+    async def fake_token():
+        return "jwt-1"
+
+    monkeypatch.setattr(ai, "_github_oidc_token", fake_token)
+
+    async def go():
+        task = await ai.prepare_github_federation()
+        task.cancel()
+
+    asyncio.run(go())
+    assert (tmp_path / "jwt").read_text() == "jwt-1"

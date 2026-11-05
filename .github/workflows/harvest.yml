@@ -34,8 +34,8 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 40
-    # Secret ANTHROPIC_API_KEY patří do prostředí „ai“ omezeného na větev main (viz README):
-    # klíč pak dostane jen tento job při běhu z main, ne pull requesty ani jiné větve.
+    # Prostředí „ai“ omezené na větev main (viz README). Pro Claude se job přihlašuje bez klíče
+    # přes Workload Identity Federation: token GitHubu s subject repo:twarr58/uredni_desky:environment:ai.
     environment: ai
     steps:
       - uses: actions/checkout@v4
@@ -60,7 +60,13 @@ jobs:
         env:
           # Volitelné: proxy v ČR pro servery, které blokují zahraniční IP (viz README).
           HARVEST_FALLBACK_PROXY: ${{ secrets.HARVEST_FALLBACK_PROXY }}
-          # Volitelné: shrnutí od Claude. Bez klíče se popisy dělají jen pravidly.
+          # Volitelné: shrnutí od Claude. Bez přihlášení se popisy dělají jen pravidly.
+          # Doporučeno: Workload Identity Federation – ID z Claude Console jako proměnné prostředí „ai“
+          # (nejsou tajná, klíč neexistuje). Alternativa: secret ANTHROPIC_API_KEY v prostředí „ai“.
+          ANTHROPIC_FEDERATION_RULE_ID: ${{ vars.ANTHROPIC_FEDERATION_RULE_ID }}
+          ANTHROPIC_ORGANIZATION_ID: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
+          ANTHROPIC_SERVICE_ACCOUNT_ID: ${{ vars.ANTHROPIC_SERVICE_ACCOUNT_ID }}
+          ANTHROPIC_WORKSPACE_ID: ${{ vars.ANTHROPIC_WORKSPACE_ID }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           AI_MODEL: ${{ vars.AI_MODEL || 'claude-opus-5-5' }}
           AI_LIMIT: ${{ vars.AI_LIMIT || '40' }}

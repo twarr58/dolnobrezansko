@@ -1,4 +1,8 @@
-"""Volitelné shrnutí oznámení od Claude (zapne se proměnnou ANTHROPIC_API_KEY).
+"""Volitelné shrnutí oznámení od Claude.
+
+Zapne se API klíčem (ANTHROPIC_API_KEY), nebo bez klíče přes Workload Identity Federation
+(ANTHROPIC_FEDERATION_RULE_ID, ANTHROPIC_ORGANIZATION_ID, ANTHROPIC_SERVICE_ACCOUNT_ID; v GitHub Actions
+si token GitHubu obstará prepare_github_federation()).
 
 Claude dostane metadata oznámení a přílohy: PDF přímo (přečte i mapy a skeny), obrázky jako obrázky,
 ostatní jako vytažený text. Vrátí strukturovaný popis pro rychlé čtení.
@@ -7,6 +11,7 @@ Shrnutí se dělá jen u nových oznámení (mezipaměť ve stavu) a s limitem p
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import json
 import logging
@@ -61,8 +66,64 @@ SCHEMA = {
 }
 
 
+GHA_AUDIENCE = "https://api.anthropic.com"
+GHA_REFRESH_SECONDS = 240  # token GitHubu platí ~5 min a jde použít jen jednou
+
+
+def _federation() -> bool:
+    return bool(os.environ.get("ANTHROPIC_FEDERATION_RULE_ID"))
+
+
 def enabled() -> bool:
-    return bool(os.environ.get("ANTHROPIC_API_KEY"))
+    """Shrnutí běží s API klíčem, nebo s Workload Identity Federation (bez klíče, např. z GitHub Actions)."""
+    # Prázdná proměnná (nenastavený secret ve workflow) by v SDK zastínila federaci – pryč s ní.
+    for var in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_FEDERATION_RULE_ID",
+                "ANTHROPIC_ORGANIZATION_ID", "ANTHROPIC_SERVICE_ACCOUNT_ID", "ANTHROPIC_WORKSPACE_ID"):
+        if var in os.environ and not os.environ[var].strip():
+            del os.environ[var]
+    return bool(os.environ.get("ANTHROPIC_API_KEY")) or _federation()
+
+
+async def _github_oidc_token() -> str:
+    import httpx
+
+    url = os.environ["ACTIONS_ID_TOKEN_REQUEST_URL"]
+    async with httpx.AsyncClient(timeout=30) as c:
+        r = await c.get(url, params={"audience": GHA_AUDIENCE},
+                        headers={"Authorization": f"Bearer {os.environ['ACTIONS_ID_TOKEN_REQUEST_TOKEN']}"})
+        r.raise_for_status()
+        return r.json()["value"]
+
+
+async def prepare_github_federation() -> asyncio.Task | None:
+    """V GitHub Actions s federací: zapíše čerstvý OIDC token do souboru a průběžně ho obnovuje.
+
+    SDK si soubor přečte při každé výměně tokenu; token GitHubu je jednorázový a krátkodobý.
+    """
+    import tempfile
+
+    if not _federation() or os.environ.get("ANTHROPIC_API_KEY") or "ACTIONS_ID_TOKEN_REQUEST_URL" not in os.environ:
+        return None
+    path = os.environ.get("ANTHROPIC_IDENTITY_TOKEN_FILE") or os.path.join(tempfile.mkdtemp(), "gha-jwt")
+    os.environ["ANTHROPIC_IDENTITY_TOKEN_FILE"] = path
+
+    async def write() -> None:
+        token = await _github_oidc_token()
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(token)
+
+    await write()
+
+    async def loop() -> None:
+        while True:
+            await asyncio.sleep(GHA_REFRESH_SECONDS)
+            try:
+                await write()
+            except Exception as exc:  # noqa: BLE001 – další pokus za chvíli
+                log.info("Obnova tokenu GitHub OIDC selhala: %s", exc)
+
+    log.info("Claude: přihlášení přes Workload Identity Federation (GitHub OIDC)")
+    return asyncio.create_task(loop())
 
 
 def build_content(meta: dict, docs: list[dict], text_only: bool = False) -> list[dict]:

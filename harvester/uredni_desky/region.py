@@ -159,7 +159,14 @@ async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, 
     """Přílohy a popisy aktivních oznámení. Vrátí (přílohy podle URL, popisy podle id oznámení)."""
     doc_cache: dict[str, dict] = _read_json(state_dir / "docs.json.gz", {})
     summaries: dict[str, dict] = _read_json(state_dir / "summaries.json.gz", {})
-    summarizer = ai.Summarizer(ai_limit) if ai.enabled() and ai_limit > 0 else None
+    summarizer = None
+    refresher = None
+    if ai.enabled() and ai_limit > 0:
+        try:
+            refresher = await ai.prepare_github_federation()
+            summarizer = ai.Summarizer(ai_limit)
+        except Exception as exc:  # noqa: BLE001 – bez přihlášení jen popisy pravidly
+            log.warning("Claude: přihlášení se nepovedlo (%s) – jen popisy pravidly", exc)
     budget = {"docs": DOC_BUDGET}
     dl_sem = asyncio.Semaphore(4)
     ai_sem = asyncio.Semaphore(3)
@@ -204,7 +211,11 @@ async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, 
                 result["at"] = now.isoformat(timespec="seconds")
         summaries[it["id"]] = result
 
-    await asyncio.gather(*(process(it) for it in active))
+    try:
+        await asyncio.gather(*(process(it) for it in active))
+    finally:
+        if refresher:
+            refresher.cancel()
     if summarizer:
         log.info("Claude: %d shrnutí, tokeny %d vstup / %d výstup (model %s)",
                  summarizer.used, summarizer.tokens_in, summarizer.tokens_out, ai.MODEL)
