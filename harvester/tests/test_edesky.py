@@ -87,3 +87,39 @@ def test_attachment_text_used_when_download_blocked(tmp_path, monkeypatch):
 
     docs, _ = asyncio.run(go())
     assert docs[url]["kind"] == "text" and "13. 11. 2026" in docs[url]["text"]
+
+
+def _empty():
+    return b"""<?xml version='1.0' encoding='utf-8' ?><edesky_search_api version='1.0'><meta>
+<documents_count total="0">0</documents_count><page total_pages="0">1</page></meta><documents></documents></edesky_search_api>"""
+
+
+def test_fallback_strategy_when_first_query_finds_nothing(monkeypatch, caplog):
+    monkeypatch.setenv("EDESKY_API_KEY", "tajny-klic")
+    seen = []
+
+    def handler(req):
+        p = dict(req.url.params)
+        seen.append((p["search_with"], "created_from" in p))
+        if p["search_with"] == "es":
+            return httpx.Response(200, content=_xml(docs=3))
+        return httpx.Response(200, content=_empty())
+
+    async def go():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as c:
+            return await edesky.fetch_board(c, "https://edesky.cz/desky/2334")
+
+    with caplog.at_level(logging.INFO, logger="uredni_desky.edesky"):
+        out = asyncio.run(go())
+    assert len(out["informace"]) == 3 and seen == [("sql", True), ("es", True)]
+    assert "API uvádí 0 dokumentů" in caplog.text and "tajny-klic" not in caplog.text
+
+
+def test_alternative_attribute_names():
+    xml = b"""<?xml version='1.0' encoding='utf-8' ?><edesky_search_api version='1.0'><meta>
+<documents_count total="1">1</documents_count><page total_pages="1">1</page></meta><documents>
+<document loaded_at='2026-11-04 10:00:00 +0100' url='https://edesky.cz/dokument/5' title='Rozpočtové opatření'/>
+</documents></edesky_search_api>"""
+    page = edesky.parse_page(xml)
+    assert page.raw == 1 and page.infos[0]["název"]["cs"] == "Rozpočtové opatření"
+    assert page.infos[0]["vyvěšení"]["datum"] == "2026-11-04" and page.sample_attrs == ["loaded_at", "title", "url"]
