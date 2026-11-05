@@ -44,8 +44,17 @@ jobs:
           cache: pip
           cache-dependency-path: harvester/pyproject.toml
       - run: pip install ./harvester
+      # OCR je volitelné (bez něj se skeny jen nepřečtou) – zaseknutý apt nesmí zastavit sběr.
       - name: OCR pro skenované přílohy
-        run: sudo apt-get install -y -qq tesseract-ocr tesseract-ocr-ces poppler-utils >/dev/null
+        timeout-minutes: 5
+        continue-on-error: true
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          APT="-o DPkg::Lock::Timeout=120 -o Acquire::Retries=3 -o Acquire::http::Timeout=30"
+          sudo apt-get $APT install -y -qq --no-install-recommends tesseract-ocr tesseract-ocr-ces poppler-utils >/dev/null \
+            || { sudo apt-get $APT update -qq && sudo apt-get $APT install -y -qq --no-install-recommends tesseract-ocr tesseract-ocr-ces poppler-utils >/dev/null; }
+          tesseract --version | head -1
 
       - name: Načíst předchozí stav z větve data
         run: |
