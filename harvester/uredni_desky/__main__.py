@@ -19,10 +19,7 @@ from . import cache
 from .build import SKIPPED, load_state, run_build
 from .extra import load_extra_sources
 from .fetch import FetchResult, fetch_all
-from .nkod import BoardSource, board_id, discover_boards, discover_extra, is_municipal
-
-FIXTURE = Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "deska.json"
-
+from .nkod import BoardSource, discover_boards, discover_extra, is_municipal
 
 async def _harvest(args: argparse.Namespace) -> None:
     limits = httpx.Limits(max_connections=args.concurrency, max_keepalive_connections=args.concurrency)
@@ -73,12 +70,6 @@ def rotate(sources: list[BoardSource], boards_path: Path, slot: int) -> tuple[li
     return fetch, skip
 
 
-def _sample(args: argparse.Namespace) -> None:
-    """Vygeneruje ukázková data z testovací fixture – pro vývoj frontendu bez sítě."""
-    payload = json.loads(FIXTURE.read_text("utf-8"))
-    iri = "https://example.org/datové-sady/ukázková-deska"
-    src = BoardSource(board_id(iri), iri, "Úřední deska (ukázka)", "Obec Ukázkov", "https://example.org/deska.json")
-    run_build([src], {src.id: FetchResult(True, payload)}, Path(args.out), None)
 
 
 def main() -> None:
@@ -119,12 +110,21 @@ def main() -> None:
     pr.add_argument("--failed", default="", help="Přidat nenačtené desky daného fmt z boards.json (např. galileo)")
     pr.add_argument("--seed", type=int, default=0)
 
+    r = sub.add_parser("region", help="Sběr desek mikroregionu (data/region.json) s přílohami a popisy")
+    r.add_argument("--out", default="site/data")
+    r.add_argument("--state", default="state")
+    r.add_argument("--ai-limit", type=int, default=int(os.environ.get("AI_LIMIT", "40")),
+                   help="Max. počet shrnutí od Claude za běh (jen s ANTHROPIC_API_KEY)")
+
     s = sub.add_parser("sample", help="Ukázková data z fixture (bez sítě)")
     s.add_argument("--out", default="web/data")
 
     args = p.parse_args()
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO, format="%(levelname)s %(name)s: %(message)s")
-    if args.cmd == "harvest":
+    if args.cmd == "region":
+        from .region import run as region_run
+        asyncio.run(region_run(Path(args.out), Path(args.state), args.ai_limit))
+    elif args.cmd == "harvest":
         asyncio.run(_harvest(args))
     elif args.cmd == "discover":
         from .discover import run as discover
@@ -149,7 +149,8 @@ def main() -> None:
         from .diagnose import run
         asyncio.run(run(Path(args.boards), {k for k in args.kinds.split(",") if k}))
     else:
-        _sample(args)
+        from .region import sample
+        sample(Path(args.out))
 
 
 if __name__ == "__main__":

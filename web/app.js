@@ -1,26 +1,51 @@
-// Úřední desky – statický frontend bez buildu.
-// Data generuje harvester: data/boards.json, data/recent.json, data/boards/<id>.json, data/meta.json.
+// Úřední deska Dolnobřežansko – statický frontend bez buildu.
+// Data: data/region.json (generuje `python -m uredni_desky region`).
 
-const DATA = './data';
-const STEP = 200;
-const SOON_DAYS = 3;
+const DATA = './data/region.json';
+const NOW_DAYS = 7; // „Teď řešit“: lhůta nebo akce do 7 dní
+const NEW_DAYS = 7;
+const STEP = 20;
 
-const TOPICS = [
-  { id: 'zastupitelstvo', label: 'zastupitelstvo', terms: ['zastupitelstv'] },
-  { id: 'uzemni', label: 'územní plán', terms: ['uzemni plan', 'uzemniho planu', 'uzemni studi', 'uzemni rozhodnuti', 'uzemniho rizeni'] },
-  { id: 'stavby', label: 'stavební řízení', terms: ['stavebni', 'stavby', 'kolaudac'] },
-  { id: 'majetek', label: 'prodej a pronájem', terms: ['zamer', 'pronaj', 'prodej', 'pacht', 'vypujck'] },
-  { id: 'drazby', label: 'dražby', terms: ['drazb'] },
-  { id: 'rozpocet', label: 'rozpočet', terms: ['rozpoct', 'rozpocet', 'zaverecny ucet'] },
-  { id: 'doprava', label: 'uzavírky', terms: ['uzavirk', 'objizd', 'omezeni provozu', 'dopravni opatreni'] },
-  { id: 'nalez', label: 'ztráty a nálezy', terms: ['nalez', 'ztrat'] },
-];
+const TONE = {
+  stavba: 'green', uzemni: 'green', zastupitelstvo: 'purple', rozpocet: 'purple', vyhlasky: 'purple', volby: 'purple',
+  doprava: 'yellow', energie: 'yellow', voda: 'blue', majetek: 'blue', dane: 'blue', priroda: 'green',
+  drazby: 'red', pisemnost: 'gray', ostatni: 'gray',
+};
 
-const state = { boards: new Map(), recent: [], meta: null, boardItems: new Map() };
+// Ikony (stroke SVG, 24×24) podle tématu.
+const ICON = {
+  stavba: 'M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6',
+  uzemni: 'M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15',
+  zastupitelstvo: 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM17 11.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM3 20c0-3 3-5 6-5s6 2 6 5M15 15c3 0 6 1.5 6 4',
+  doprava: 'M4 20L9 4M20 20L15 4M12 6v2M12 11v2M12 16v2',
+  majetek: 'M4 20V9l8-5 8 5v11zM9 20v-5h6v5',
+  rozpocet: 'M4 19h16M6 16V9M10 16V6M14 16v-4M18 16V8',
+  vyhlasky: 'M6 2h9l5 5v15H6zM14 2v6h6M9 13h8M9 17h6',
+  volby: 'M4 12l4 4 8-9M3 21h18',
+  voda: 'M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z',
+  priroda: 'M12 22V12M12 12c-4 0-7-3-7-7 4 0 7 3 7 7zM12 12c4 0 7-3 7-7-4 0-7 3-7 7z',
+  energie: 'M13 2L4 14h7l-1 8 9-12h-7z',
+  drazby: 'M14 4l6 6M11 7l6 6M4 20l8-8M15 3l6 6-3 3-6-6z',
+  dane: 'M5 4h14v16H5zM9 8h6M9 12h6M9 16h3',
+  pisemnost: 'M3 6h18v12H3zM3 6l9 7 9-7',
+  ostatni: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 11v6M12 7.5v.5',
+};
+const DOC_ICON = {
+  text: 'M6 2h9l5 5v15H6zM14 2v6h6M9 13h8M9 17h6',
+  mapa: 'M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15',
+  sken: 'M3 4h18v16H3zM7 9h10M7 13h6',
+  obrazek: 'M3 4h18v16H3zM3 16l5-5 4 4 3-3 6 6',
+  jine: 'M6 2h9l5 5v15H6zM14 2v6h6',
+};
+const CLOCK = 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2';
+const CAL = 'M3 5h18v16H3zM3 10h18M8 3v4M16 3v4';
+const BACK = 'M15 5l-7 7 7 7';
+
+const state = { data: null, filter: { obec: '', q: '' }, limit: STEP };
 
 // ---------- pomocné funkce ----------
 
-/** Vytvoří element. Text se vkládá jen jako textový uzel – data z desek jsou nedůvěryhodná. */
+/** Vytvoří element. Text jde jen jako textový uzel – data z desek jsou nedůvěryhodná. */
 function h(tag, attrs, ...children) {
   const el = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs || {})) {
@@ -36,638 +61,296 @@ function h(tag, attrs, ...children) {
   return el;
 }
 
+function icon(path, size = 14, stroke = 'currentColor') {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  for (const [k, v] of Object.entries({ width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke, 'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true' })) svg.setAttribute(k, v);
+  const p = document.createElementNS(ns, 'path');
+  p.setAttribute('d', path);
+  svg.append(p);
+  return svg;
+}
+
 const safeUrl = (u) => (typeof u === 'string' && /^https?:\/\//i.test(u) ? u : null);
 const fold = (s) => (s || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
-const num = (n) => Number(n || 0).toLocaleString('cs-CZ');
 const todayIso = () => new Date().toLocaleDateString('sv-SE');
-const daysBetween = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000);
+const daysTo = (iso) => Math.round((Date.parse(iso) - Date.parse(todayIso())) / 86400000);
+const plural = (n, one, few, many) => (n === 1 ? one : n >= 2 && n <= 4 ? few : many);
+const WEEKDAY = ['ne', 'po', 'út', 'st', 'čt', 'pá', 'so'];
 
-function plural(n, one, few, many) {
-  if (n === 1) return one;
-  if (n >= 2 && n <= 4) return few;
-  return many;
-}
-
-function dateCz(iso, withYear = true) {
+function dateCz(iso, { year = false, weekday = false } = {}) {
   if (!iso) return '';
   const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
-  const thisYear = new Date().getFullYear();
-  return withYear || y !== thisYear ? `${d}. ${m}. ${y}` : `${d}. ${m}.`;
+  const wd = weekday ? `${WEEKDAY[new Date(y, m - 1, d).getDay()]} ` : '';
+  return `${wd}${d}. ${m}.${year || y !== new Date().getFullYear() ? ` ${y}` : ''}`;
 }
 
-function dateTimeCz(iso) {
-  if (!iso) return '–';
-  const d = new Date(iso);
-  return `${d.getDate()}. ${d.getMonth() + 1}. ${d.getFullYear()} v ${d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })}`;
+function inDays(iso) {
+  const n = daysTo(iso);
+  if (n === 0) return 'dnes';
+  if (n === 1) return 'zítra';
+  if (n > 1) return `za ${n} ${plural(n, 'den', 'dny', 'dní')}`;
+  return null;
 }
 
-function dayHeading(iso) {
-  const diff = daysBetween(iso, todayIso());
-  const long = new Date(`${iso}T12:00:00`).toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' });
-  if (diff === 0) return ['Dnes', long];
-  if (diff === 1) return ['Včera', long];
-  return [long.charAt(0).toUpperCase() + long.slice(1), ''];
+/** Nejbližší termín, kvůli kterému je oznámení „teď řešit“: {kind, date, text}. */
+function urgency(it) {
+  const s = it.s || {};
+  if (it.r) return null;
+  const cands = [];
+  if (s.deadline && daysTo(s.deadline) >= 0) cands.push({ kind: 'deadline', date: s.deadline });
+  if (s.event && daysTo(s.event) >= 0) cands.push({ kind: 'event', date: s.event });
+  else if (s.event_end && daysTo(s.event) < 0 && daysTo(s.event_end) >= 0) cands.push({ kind: 'running', date: s.event_end });
+  cands.sort((a, b) => a.date.localeCompare(b.date));
+  const c = cands[0];
+  if (!c || daysTo(c.date) > NOW_DAYS) return null;
+  return c;
 }
 
-function endsIn(until) {
-  if (!until) return null;
-  const left = daysBetween(todayIso(), until);
-  if (left < 0 || left > SOON_DAYS) return null;
-  if (left === 0) return 'končí dnes';
-  if (left === 1) return 'končí zítra';
-  return `končí za ${left} ${plural(left, 'den', 'dny', 'dní')}`;
-}
-
-function attachments(n) {
-  if (!n) return '';
-  return `${n} ${plural(n, 'příloha', 'přílohy', 'příloh')}`;
-}
-
-function extOf(url) {
-  const m = /\.([a-z0-9]{2,5})(?:$|[?#])/i.exec(url || '');
-  return m ? m[1].toUpperCase() : '';
-}
-
-const boardName = (id) => state.boards.get(id)?.name || 'Neznámá deska';
-
-async function loadJson(path) {
-  const res = await fetch(`${DATA}/${path}`, { cache: 'no-cache' });
-  if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
-  return res.json();
-}
-
-async function boardItems(id) {
-  if (!state.boardItems.has(id)) {
-    const items = await loadJson(`boards/${encodeURIComponent(id)}.json`);
-    for (const it of items) it._q = fold(`${it.title} ${it.cj || ''} ${it.sz || ''}`);
-    state.boardItems.set(id, items);
+function dueText(it, u) {
+  const s = it.s;
+  if (u.kind === 'deadline') {
+    const what = /námitk/i.test(s.action || '') ? 'Námitky' : /připomín/i.test(s.action || '') ? 'Připomínky' : /nabídk/i.test(s.action || '') ? 'Nabídky' : 'Lhůta';
+    return [CLOCK, `${what} do ${dateCz(u.date, { weekday: true })} · ${inDays(u.date)}`];
   }
-  return state.boardItems.get(id);
+  if (u.kind === 'running') return [CAL, `Platí ještě do ${dateCz(u.date, { weekday: true })}`];
+  const end = s.event_end ? ` – ${dateCz(s.event_end)}` : '';
+  return [CAL, `${dateCz(u.date, { weekday: true })}${s.time ? ` v ${s.time}` : ''}${end} · ${inDays(u.date)}`];
+}
+
+const DOC_KIND = { text: 'Text', mapa: 'Mapa', sken: 'Sken', obrazek: 'Obrázek', jine: 'Soubor' };
+
+function docChip(d) {
+  const kind = DOC_KIND[d.k] || (d.x ? d.x.toUpperCase() : 'Příloha');
+  const pages = d.pg ? ` · ${d.pg} str.` : '';
+  return `${kind}${pages}`;
+}
+
+function tag(it) {
+  const s = it.s || {};
+  return h('span', { class: `tag tag--${TONE[s.cat] || 'gray'}` }, icon(ICON[s.cat] || ICON.ostatni), s.label || 'Ostatní');
 }
 
 // ---------- směrování ----------
 
 function parseHash() {
-  const raw = location.hash.replace(/^#/, '') || '/';
+  const raw = location.hash.replace(/^#\/?/, '');
   const [path, query = ''] = raw.split('?');
   return { parts: path.split('/').filter(Boolean).map(decodeURIComponent), params: new URLSearchParams(query) };
 }
 
-function setNav(key) {
-  for (const a of document.querySelectorAll('[data-nav]')) {
-    if (a.dataset.nav === key) a.setAttribute('aria-current', 'page');
-    else a.removeAttribute('aria-current');
-  }
-}
-
 function mount(title, ...nodes) {
-  document.title = title ? `${title} – Úřední desky` : 'Úřední desky';
-  document.getElementById('app').replaceChildren(...nodes.flat(Infinity).filter((n) => n != null && n !== false));
+  document.title = title ? `${title} – Úřední deska Dolnobřežansko` : 'Úřední deska Dolnobřežansko';
+  document.getElementById('app').replaceChildren(...nodes.flat(Infinity).filter(Boolean));
 }
 
-let routeSeq = 0;
-async function route() {
-  const seq = ++routeSeq;
+function route() {
   const { parts, params } = parseHash();
-  const [section, a, b] = parts;
-  window.scrollTo(0, 0);
-  try {
-    if (!section) return renderHome(params);
-    if (section === 'deska' && a && b) return await renderItem(a, b, seq);
-    if (section === 'deska' && a) return await renderBoard(a, params, seq);
-    if (section === 'desky') return renderIndex();
-    if (section === 'okoli') return renderNearby(params);
-    if (section === 'pokryti') return renderCoverage();
-    if (section === 'o-projektu') return renderAbout();
-    return renderNotFound();
-  } catch (err) {
-    if (seq === routeSeq) mount('Chyba', h('h1', {}, 'Něco se nepovedlo'), h('p', {}, String(err)));
-  }
+  if (parts[0] === 'o' && parts[1]) return renderDetail(parts[1]);
+  state.filter.obec = params.get('obec') || '';
+  state.filter.q = params.get('q') || '';
+  return renderHome();
 }
 
-// ---------- přehled oznámení ----------
+// ---------- přehled ----------
 
-function readFilters(p) {
-  return {
-    q: p.get('q') || '',
-    obec: p.get('obec') || '',
-    tema: p.get('tema') || '',
-    dni: ['7', '14', '30'].includes(p.get('dni')) ? p.get('dni') : '7',
-    prilohy: p.get('prilohy') === '1',
-    konci: p.get('konci') === '1',
-    razeni: p.get('razeni') === 'konec' ? 'konec' : 'vyveseni',
-  };
+function card(it, urgent) {
+  const s = it.s || {};
+  const u = urgent ? urgency(it) : null;
+  const files = (it.docs || []).slice(0, 3);
+  const line = !urgent && [
+    s.event && daysTo(s.event) >= -1 ? `${dateCz(s.event, { weekday: true })}${s.time ? ` v ${s.time}` : ''}${s.event_end ? ` – ${dateCz(s.event_end)}` : ''}` : null,
+    s.deadline && daysTo(s.deadline) >= 0 ? `lhůta do ${dateCz(s.deadline)}` : null,
+    s.where,
+    (it.docs || []).some((d) => d.k === 'mapa') ? 'mapa v příloze' : null,
+  ].filter(Boolean).join(' · ');
+  return h('a', { class: `card${urgent ? ' card--urgent' : ''}`, href: `#/o/${encodeURIComponent(it.id)}` },
+    h('div', { class: 'card__meta' }, tag(it), h('span', {}, `${it.o} · vyvěšeno ${dateCz(it.p)}`)),
+    h('h3', {}, s.tldr || it.t),
+    u ? h('div', { class: 'due' }, icon(dueText(it, u)[0], 18), dueText(it, u)[1]) : null,
+    line ? h('div', { class: 'card__line' }, line) : null,
+    urgent && files.length ? h('div', { class: 'files' }, files.map((d) => h('span', {}, docChip(d)))) : null);
 }
 
-function writeFilters(f) {
+function filtered() {
+  const { obec, q } = state.filter;
+  const terms = fold(q).split(/\s+/).filter(Boolean);
+  return state.data.items.filter((it) => {
+    if (obec && it.o !== obec) return false;
+    if (!terms.length) return true;
+    const hay = it._q || (it._q = fold(`${it.t} ${it.s?.tldr || ''} ${it.s?.where || ''} ${it.cj || ''} ${it.o} ${it.s?.label || ''}`));
+    return terms.every((t) => hay.includes(t));
+  });
+}
+
+function writeFilter() {
   const p = new URLSearchParams();
-  if (f.q) p.set('q', f.q);
-  if (f.obec) p.set('obec', f.obec);
-  if (f.tema) p.set('tema', f.tema);
-  if (f.dni !== '7') p.set('dni', f.dni);
-  if (f.prilohy) p.set('prilohy', '1');
-  if (f.konci) p.set('konci', '1');
-  if (f.razeni !== 'vyveseni') p.set('razeni', f.razeni);
+  if (state.filter.obec) p.set('obec', state.filter.obec);
+  if (state.filter.q) p.set('q', state.filter.q);
   const qs = p.toString();
   history.replaceState(null, '', qs ? `#/?${qs}` : '#/');
 }
 
-function filterRecent(f) {
-  const terms = fold(f.q).split(/\s+/).filter(Boolean);
-  const where = fold(f.obec).trim();
-  const topic = TOPICS.find((t) => t.id === f.tema);
-  const today = todayIso();
-  const since = new Date(Date.parse(today) - Number(f.dni) * 86400000).toISOString().slice(0, 10);
-
-  const out = state.recent.filter((it) => {
-    if (it.p < since) return false;
-    if (f.prilohy && !it.d) return false;
-    if (f.konci && !endsIn(it.u)) return false;
-    if (where && !it._b.includes(where)) return false;
-    if (topic && !topic.terms.some((t) => it._q.includes(t))) return false;
-    return terms.every((t) => it._q.includes(t) || it._b.includes(t));
-  });
-  if (f.razeni === 'konec') {
-    out.sort((x, y) => (x.u || '9999').localeCompare(y.u || '9999') || y.p.localeCompare(x.p));
-  }
-  return out;
-}
-
-function noticeRow(it) {
-  const soon = endsIn(it.u);
-  const until = it.u ? `do ${dateCz(it.u, false)}` : '';
-  // Na mobilu se termín zobrazuje v řádku s přílohami (.row__meta), na širokém displeji ve vlastním sloupci.
-  const meta = [attachments(it.d), until].filter(Boolean).join(' · ');
-  return h('li', { class: 'row' },
-    h('div', { class: 'row__who' }, h('a', { href: `#/deska/${it.b}` }, boardName(it.b))),
-    h('div', { class: 'row__what' },
-      h('a', { href: `#/deska/${it.b}/${it.id}` }, it.t),
-      it.d ? h('div', { class: 'row__meta wide' }, attachments(it.d)) : null,
-      meta || soon ? h('div', { class: 'row__meta narrow' }, meta, soon ? h('span', { class: 'warn' }, `${meta ? ' · ' : ''}${soon}`) : null) : null),
-    h('div', { class: 'row__until wide' },
-      until,
-      soon ? h('span', { class: 'warn' }, soon) : null));
-}
-
-function renderRegister(container, items, grouped, limit) {
-  const shown = items.slice(0, limit);
-  if (!shown.length) {
-    container.replaceChildren(h('p', { class: 'empty' }, 'Nic nenalezeno. Zkuste jiný výraz nebo delší období.'));
-    return;
-  }
-  if (!grouped) {
-    container.replaceChildren(h('ol', { class: 'rows', style: 'border-top:2px solid var(--ink);margin-top:20px' }, shown.map(noticeRow)));
-    return;
-  }
+function renderHome() {
+  const d = state.data;
+  const updated = new Date(d.generated_at);
+  const connected = d.members.filter((m) => m.connected);
   const counts = new Map();
-  for (const it of items) counts.set(it.p, (counts.get(it.p) || 0) + 1);
-  const days = [];
-  let current = null;
-  for (const it of shown) {
-    if (!current || current.day !== it.p) {
-      current = { day: it.p, rows: [] };
-      days.push(current);
-    }
-    current.rows.push(it);
-  }
-  container.replaceChildren(...days.map((d) => {
-    const [main, sub] = dayHeading(d.day);
-    const total = counts.get(d.day);
-    return h('section', { class: 'day' },
-      h('div', { class: 'day__head' },
-        h('h2', {}, main, sub ? h('span', {}, ` · ${sub}`) : null),
-        h('span', { class: 'count' }, `${num(total)} ${plural(total, 'oznámení', 'oznámení', 'oznámení')}`)),
-      h('ol', { class: 'rows' }, d.rows.map(noticeRow)));
-  }));
-}
+  for (const it of d.items) if (!it.r) counts.set(it.o, (counts.get(it.o) || 0) + 1);
 
-function renderHome(params) {
-  setNav('home');
-  const f = readFilters(params);
-  let limit = STEP;
-  let results = [];
-
-  const summary = h('p', { class: 'summary', 'aria-live': 'polite' });
-  const register = h('div');
-  const more = h('button', { type: 'button', class: 'more' }, 'Zobrazit další');
-
+  const list = h('div', { class: 'content col' });
   const paint = () => {
-    renderRegister(register, results, f.razeni === 'vyveseni', limit);
-    const rest = results.length - limit;
-    more.hidden = rest <= 0;
-    more.textContent = `Zobrazit dalších ${num(Math.min(STEP, rest))} z ${num(rest)}`;
+    const items = filtered();
+    const active = items.filter((it) => !it.r);
+    const now = active.filter((it) => urgency(it))
+      .sort((a, b) => urgency(a).date.localeCompare(urgency(b).date));
+    const nowIds = new Set(now.map((it) => it.id));
+    const since = new Date(Date.parse(todayIso()) - NEW_DAYS * 86400000).toISOString().slice(0, 10);
+    const fresh = active.filter((it) => !nowIds.has(it.id) && (it.p || '') >= since);
+    const freshIds = new Set(fresh.map((it) => it.id));
+    const older = active.filter((it) => !nowIds.has(it.id) && !freshIds.has(it.id));
+    const removed = items.filter((it) => it.r);
+
+    const more = h('button', { type: 'button', class: 'btn' });
+    const olderBox = h('div', { class: 'section' });
+    const paintOlder = () => {
+      olderBox.replaceChildren(...older.slice(0, state.limit).map((it) => card(it, false)));
+      more.hidden = older.length <= state.limit;
+      more.textContent = `Ukázat další (${older.length - state.limit})`;
+    };
+    more.addEventListener('click', () => { state.limit += STEP; paintOlder(); });
+    paintOlder();
+
+    list.replaceChildren(...[
+      h('section', { class: 'section', 'aria-labelledby': 'h-now' },
+        h('div', { class: 'section__head' }, h('h2', { id: 'h-now' }, 'Teď řešit'), h('span', {}, `lhůta nebo termín do ${NOW_DAYS} dní`)),
+        now.length ? now.map((it) => card(it, true)) : h('p', { class: 'empty' }, 'Nic naléhavého. Klid.')),
+      h('section', { class: 'section', 'aria-labelledby': 'h-new' },
+        h('div', { class: 'section__head' }, h('h2', { id: 'h-new' }, 'Nové tento týden'), h('span', {}, `${fresh.length} ${plural(fresh.length, 'oznámení', 'oznámení', 'oznámení')}`)),
+        fresh.length ? fresh.map((it) => card(it, false)) : h('p', { class: 'empty' }, 'Za posledních 7 dní nic nového.')),
+      older.length ? h('section', { class: 'section', 'aria-labelledby': 'h-old' },
+        h('div', { class: 'section__head' }, h('h2', { id: 'h-old' }, 'Dál visí na deskách'), h('span', {}, `${older.length}`)),
+        olderBox, more) : null,
+      removed.length ? h('details', { class: 'section' },
+        h('summary', {}, `Sejmuté za posledních 30 dní (${removed.length})`),
+        removed.map((it) => card(it, false))) : null,
+      villages(d)].filter(Boolean));
   };
-  const update = () => {
-    writeFilters(f);
-    limit = STEP;
-    results = filterRecent(f);
-    const n = results.length;
-    summary.replaceChildren(
-      h('strong', {}, `${num(n)} ${plural(n, 'oznámení', 'oznámení', 'oznámení')}`),
-      ` vyvěšených za posledních ${f.dni} dní na ${num(state.meta.boards_ok)} úředních deskách.`);
-    paint();
-  };
-  more.addEventListener('click', () => { limit += STEP; paint(); });
+
+  const chips = h('nav', { class: 'chips', 'aria-label': 'Obce' });
+  const paintChips = () => chips.replaceChildren(...['', ...connected.map((m) => m.name)]
+    .sort((a, b) => (a === '' ? -1 : b === '' ? 1 : (counts.get(b) || 0) - (counts.get(a) || 0)))
+    .map((name) => h('button', {
+      type: 'button', class: 'chip', 'aria-pressed': String(state.filter.obec === name),
+      onclick: () => { state.filter.obec = name; state.limit = STEP; writeFilter(); paintChips(); paint(); },
+    }, name || 'Vše', name && counts.get(name) ? h('span', { class: 'vh' }, ` (${counts.get(name)})`) : null)));
+  paintChips();
 
   let timer;
-  const onText = (key) => (e) => {
-    f[key] = e.target.value;
-    clearTimeout(timer);
-    timer = setTimeout(update, 180);
-  };
-
-  const topicButtons = TOPICS.map((t) => h('button', {
-    type: 'button',
-    'aria-pressed': String(f.tema === t.id),
-    onclick: () => {
-      f.tema = f.tema === t.id ? '' : t.id;
-      for (const b of topicButtons) b.setAttribute('aria-pressed', String(b.dataset.id === f.tema));
-      update();
-    },
-    'data-id': t.id,
-  }, t.label));
-
-  const period = h('select', { id: 'dni', onchange: (e) => { f.dni = e.target.value; update(); } },
-    h('option', { value: '7' }, 'posledních 7 dní'),
-    h('option', { value: '14' }, 'posledních 14 dní'),
-    h('option', { value: '30' }, 'posledních 30 dní'));
-  period.value = f.dni;
-
-  const order = h('select', { id: 'razeni', onchange: (e) => { f.razeni = e.target.value; update(); } },
-    h('option', { value: 'vyveseni' }, 'podle data vyvěšení'),
-    h('option', { value: 'konec' }, 'podle konce vyvěšení'));
-  order.value = f.razeni;
-
-  const names = h('datalist', { id: 'board-names' },
-    [...state.boards.values()].map((b) => h('option', { value: b.name })));
-
-  mount('',
-    h('form', { class: 'search', role: 'search', onsubmit: (e) => { e.preventDefault(); clearTimeout(timer); update(); } },
-      h('label', { class: 'vh', for: 'q' }, 'Co hledáte'),
-      h('input', { id: 'q', type: 'search', value: f.q, placeholder: 'Co hledáte, např. pozemek, kanalizace, č. j.', oninput: onText('q') }),
-      h('label', { class: 'vh', for: 'obec' }, 'Obec nebo úřad'),
-      h('input', { id: 'obec', type: 'text', list: 'board-names', value: f.obec, placeholder: 'Obec nebo úřad', autocomplete: 'off', oninput: onText('obec') }),
-      h('button', { type: 'submit' }, 'Hledat'),
-      names),
-    h('details', { class: 'filterbox', open: matchMedia('(min-width: 641px)').matches },
-      h('summary', {}, 'Filtry'),
-      h('div', { class: 'filters' },
-      h('div', { class: 'topics' }, h('span', { class: 'muted' }, 'Téma:'), topicButtons),
-      h('label', {}, h('span', { class: 'vh' }, 'Období'), period),
-      h('label', {}, h('input', { type: 'checkbox', checked: f.prilohy, onchange: (e) => { f.prilohy = e.target.checked; update(); } }), 's přílohami'),
-      h('label', {}, h('input', { type: 'checkbox', checked: f.konci, onchange: (e) => { f.konci = e.target.checked; update(); } }), `končí do ${SOON_DAYS} dnů`),
-      h('label', {}, h('span', { class: 'vh' }, 'Řazení'), order))),
-    summary, register, more);
-  update();
-}
-
-// ---------- deska ----------
-
-async function renderBoard(id, params, seq) {
-  setNav('desky');
-  const b = state.boards.get(id);
-  if (!b) return renderNotFound();
-  mount(b.name, h('p', { class: 'muted' }, 'Načítám desku…'));
-  const items = await boardItems(id);
-  if (seq !== routeSeq) return;
-
-  const archive = params.has('sejmuto');
-  const active = items.filter((i) => !i.removed);
-  const removed = items.filter((i) => i.removed);
-  const list = archive ? removed : active;
-  list.sort((x, y) => (y.posted || '').localeCompare(x.posted || ''));
-
-  const tbody = h('tbody');
-  const paint = (q) => {
-    const terms = fold(q).split(/\s+/).filter(Boolean);
-    const rows = list.filter((it) => terms.every((t) => it._q.includes(t))).slice(0, 1000);
-    tbody.replaceChildren(...rows.map((it) => {
-      const soon = !archive && endsIn(it.until);
-      return h('tr', {},
-        h('td', { class: 'num' }, dateCz(it.posted)),
-        h('td', {}, h('a', { href: `#/deska/${id}/${it.id}` }, it.title),
-          it.cj ? h('div', { class: 'row__meta' }, `č. j. ${it.cj}`) : null),
-        h('td', { class: 'num' }, archive ? dateCz(it.removed) : (it.until ? dateCz(it.until) : '–'),
-          soon ? h('div', { class: 'warn' }, soon) : null),
-        h('td', { class: 'num muted' }, it.docs?.length ? String(it.docs.length) : ''));
-    }));
-    if (!rows.length) tbody.append(h('tr', {}, h('td', { colspan: '4', class: 'muted' }, archive ? 'Archiv je zatím prázdný – sejmutá oznámení se začnou ukládat od prvních sběrů.' : 'Nic nenalezeno.')));
-  };
-
-  const source = safeUrl(b.access_url);
-  const nkod = `https://data.gov.cz/datová-sada?iri=${encodeURIComponent(b.dataset_iri)}`;
-  const status = b.ok
-    ? h('span', {}, `Staženo ${dateTimeCz(b.fetched_at)}.`)
-    : h('span', { class: 'bad' }, `Poslední stažení se nepovedlo: ${KINDS[b.kind]?.title || 'chyba'} (${b.error || 'bez podrobností'}). Zobrazuje se stav z dřívějška. `, h('a', { href: '#/pokryti' }, 'Co to znamená'), '.');
-
-  mount(b.name,
-    h('p', { class: 'crumbs' }, h('a', { href: '#/desky' }, 'Seznam desek'), ' / '),
-    h('h1', {}, b.name),
-    h('p', { class: 'lede' }, b.publisher && b.publisher !== b.name ? `${b.publisher} · ` : '', b.title),
-    h('p', { class: 'facts' }, status, ' ',
-      source ? h('a', { href: source, rel: 'noopener noreferrer' }, 'Zdrojová data') : null,
-      ' · ', b.fmt && b.fmt !== 'ofn'
-        ? h('span', { class: 'muted' }, b.fmt === 'imunis'
-          ? 'Obec desku nezveřejňuje v katalogu otevřených dat, údaje jsou převzaty z její eDesky (iMunis).'
-          : 'Obec desku nezveřejňuje v katalogu otevřených dat, údaje jsou převzaty z jejích webových stránek.')
-        : h('a', { href: nkod, rel: 'noopener noreferrer' }, 'Záznam v katalogu')),
-    h('nav', { class: 'tabs', 'aria-label': 'Výběr' },
-      h('a', { href: `#/deska/${id}`, 'aria-current': archive ? null : 'page' }, `Vyvěšeno (${num(active.length)})`),
-      h('a', { href: `#/deska/${id}?sejmuto`, 'aria-current': archive ? 'page' : null }, `Sejmuto (${num(removed.length)})`)),
-    h('div', { class: 'boardfilter' },
-      h('label', { class: 'vh', for: 'bq' }, 'Hledat na této desce'),
-      h('input', { id: 'bq', type: 'search', placeholder: 'Hledat na této desce', oninput: (e) => paint(e.target.value) })),
-    h('div', { class: 'scroll' }, h('table', { class: 'table' },
-      h('thead', {}, h('tr', {},
-        h('th', { scope: 'col' }, 'Vyvěšeno'),
-        h('th', { scope: 'col' }, 'Oznámení'),
-        h('th', { scope: 'col' }, archive ? 'Sejmuto' : 'Do'),
-        h('th', { scope: 'col' }, 'Přílohy'))),
-      tbody)),
-    list.length > 1000 ? h('p', { class: 'muted' }, `Zobrazeno prvních 1 000 z ${num(list.length)}. Pro starší použijte hledání.`) : null);
-  paint('');
-}
-
-// ---------- detail oznámení ----------
-
-async function renderItem(boardId, itemId, seq) {
-  setNav('');
-  const b = state.boards.get(boardId);
-  if (!b) return renderNotFound();
-  const items = await boardItems(boardId);
-  if (seq !== routeSeq) return;
-  const it = items.find((x) => x.id === itemId);
-  if (!it) return renderNotFound();
-
-  const rows = [
-    ['Vyvěšeno', dateCz(it.posted) || 'neuvedeno'],
-    ['Relevantní do', it.until ? [dateCz(it.until), endsIn(it.until) ? h('span', { class: 'warn' }, ` (${endsIn(it.until)})`) : null] : 'neuvedeno'],
-    it.cj && ['Číslo jednací', it.cj],
-    it.sz && ['Spisová značka', it.sz],
-    it.agendas?.length && ['Agenda', it.agendas.join(', ')],
-    it.removed && ['Sejmuto', dateCz(it.removed)],
-    it.first_seen && ['Poprvé zachyceno', dateTimeCz(it.first_seen)],
-  ].filter(Boolean);
-
-  const docs = (it.docs || []).map((d) => ({ ...d, url: safeUrl(d.url) })).filter((d) => d.url);
-  const original = safeUrl(it.url);
-
-  mount(it.title,
-    h('article', { class: 'detail' },
-      h('p', { class: 'crumbs' }, h('a', { href: `#/deska/${boardId}` }, b.name), ' / '),
-      h('h1', {}, it.title),
-      h('dl', { class: 'dl' }, rows.map(([k, v]) => [h('dt', {}, k), h('dd', {}, v)])),
-      h('h2', { class: 'section' }, docs.length ? 'Dokumenty' : 'Bez dokumentů'),
-      docs.length ? h('ol', { class: 'docs' }, docs.map((d) => h('li', {},
-        h('a', { href: d.url, rel: 'noopener noreferrer' }, d.name || d.url),
-        extOf(d.url) ? h('span', { class: 'ext' }, ` ${extOf(d.url)}`) : null))) : null,
-      original ? h('p', { class: 'original' }, h('a', { href: original, rel: 'noopener noreferrer' }, `Zobrazit na úřední desce: ${b.name}`)) : null));
-}
-
-// ---------- v okolí ----------
-
-const RADII = [5, 10, 20, 50];
-
-/** Vzdálenost dvou bodů na Zemi v km (haversine). */
-function distanceKm(a, b) {
-  const rad = (x) => (x * Math.PI) / 180;
-  const dLat = rad(b.lat - a.lat);
-  const dLon = rad(b.lon - a.lon);
-  const s = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLon / 2) ** 2;
-  return 12742 * Math.asin(Math.sqrt(s));
-}
-
-const km = (d) => `${d < 10 ? d.toFixed(1).replace('.', ',') : Math.round(d)} km`;
-
-function renderNearby(params) {
-  setNav('okoli');
-  const placed = [...state.boards.values()].filter((b) => typeof b.lat === 'number' && typeof b.lon === 'number');
-  const byName = new Map(placed.map((b) => [fold(b.name), b]));
-  let radius = RADII.includes(Number(params.get('km'))) ? Number(params.get('km')) : 20;
-  let center = null; // { lat, lon, label } – poloha zůstává jen v prohlížeči, nikam se neodesílá
-  let limit = STEP;
-  let notices = [];
-
-  const status = h('p', { class: 'summary', 'aria-live': 'polite' });
-  const boardList = h('div');
-  const register = h('div');
-  const more = h('button', { type: 'button', class: 'more', hidden: true }, 'Zobrazit další');
-
-  const paintNotices = () => {
-    if (!notices.length) {
-      register.replaceChildren(h('p', { class: 'empty' }, 'Za posledních 30 dní tu nic nevyvěsili.'));
-      more.hidden = true;
-      return;
-    }
-    renderRegister(register, notices, true, limit);
-    const rest = notices.length - limit;
-    more.hidden = rest <= 0;
-    more.textContent = `Zobrazit dalších ${num(Math.min(STEP, rest))} z ${num(rest)}`;
-  };
-  more.addEventListener('click', () => { limit += STEP; paintNotices(); });
-
-  const paint = () => {
-    const q = new URLSearchParams({ km: String(radius) });
-    history.replaceState(null, '', `#/okoli?${q}`);
-    if (!center) {
-      status.replaceChildren('Zvolte svou polohu nebo zadejte obec. Zobrazí se úřední desky obcí do zvolené vzdálenosti a jejich oznámení za posledních 30 dní.');
-      boardList.replaceChildren();
-      register.replaceChildren();
-      more.hidden = true;
-      return;
-    }
-    const near = placed.map((b) => ({ b, d: distanceKm(center, b) })).filter((x) => x.d <= radius).sort((x, y) => x.d - y.d);
-    const ids = new Set(near.map((x) => x.b.id));
-    notices = state.recent.filter((it) => ids.has(it.b));
-    limit = STEP;
-    status.replaceChildren(
-      h('strong', {}, `${num(near.length)} ${plural(near.length, 'úřední deska', 'úřední desky', 'úředních desek')}`),
-      ` do ${radius} km od ${center.label}, `,
-      h('strong', {}, `${num(notices.length)} ${plural(notices.length, 'oznámení', 'oznámení', 'oznámení')}`),
-      ' za posledních 30 dní.');
-    boardList.replaceChildren(near.length ? h('details', { class: 'filterbox', open: near.length <= 12 },
-      h('summary', {}, 'Desky v okolí'),
-      h('ul', { class: 'docs nearby' }, near.map(({ b, d }) => h('li', {},
-        h('a', { href: `#/deska/${b.id}` }, b.name),
-        h('span', { class: 'ext' }, ` ${km(d)} · `, b.ok ? `${num(b.count)} vyvěšeno` : h('span', { class: 'bad' }, 'nedostupná')))))) : h('p', { class: 'empty' }, 'V této vzdálenosti nemáme žádnou desku. Zkuste větší okruh.'));
-    paintNotices();
-  };
-
-  const locate = h('button', { type: 'button' }, 'Použít moji polohu');
-  locate.addEventListener('click', () => {
-    if (!('geolocation' in navigator)) {
-      status.textContent = 'Prohlížeč neumí zjistit polohu. Zadejte obec.';
-      return;
-    }
-    status.textContent = 'Zjišťuji polohu…';
-    navigator.geolocation.getCurrentPosition(
-      (pos) => { center = { lat: pos.coords.latitude, lon: pos.coords.longitude, label: 'vaší polohy' }; paint(); },
-      (err) => {
-        status.textContent = err.code === 1
-          ? 'Přístup k poloze je zakázaný. Povolte ho v prohlížeči, nebo zadejte obec.'
-          : 'Polohu se nepodařilo zjistit. Zadejte obec.';
-      },
-      { enableHighAccuracy: false, timeout: 15000, maximumAge: 600000 });
+  const search = h('input', {
+    type: 'search', id: 'q', value: state.filter.q, placeholder: 'Hledat (ulice, parcela, téma…)',
+    oninput: (e) => { clearTimeout(timer); timer = setTimeout(() => { state.filter.q = e.target.value; state.limit = STEP; writeFilter(); paint(); }, 150); },
   });
 
-  const place = h('input', { id: 'misto', type: 'text', list: 'placed-names', placeholder: 'nebo obec, např. Semtěš', autocomplete: 'off' });
-  const pick = () => {
-    const b = byName.get(fold(place.value));
-    if (b) { center = { lat: b.lat, lon: b.lon, label: b.name }; paint(); }
-  };
-  place.addEventListener('change', pick);
-  place.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); pick(); } });
-
-  const range = h('select', { id: 'km', onchange: (e) => { radius = Number(e.target.value); paint(); } },
-    RADII.map((r) => h('option', { value: String(r) }, `do ${r} km`)));
-  range.value = String(radius);
-
-  mount('V okolí',
-    h('h1', {}, 'V okolí'),
-    h('form', { class: 'search nearbyform', onsubmit: (e) => { e.preventDefault(); pick(); } },
-      locate,
-      h('label', { class: 'vh', for: 'misto' }, 'Obec'),
-      place,
-      h('label', { class: 'vh', for: 'km' }, 'Vzdálenost'),
-      range,
-      h('datalist', { id: 'placed-names' }, placed.map((b) => h('option', { value: b.name })))),
-    h('p', { class: 'note' }, `Poloha se použije jen ve vašem prohlížeči a nikam se neodesílá. Polohu známe u ${num(placed.length)} desek.`),
-    status, boardList, register, more);
+  mount('',
+    h('header', { class: 'top' }, h('div', { class: 'top__inner col' },
+      h('div', { class: 'top__kicker' }, `${d.region.name} · ${d.members.length} obcí`),
+      h('h1', {}, 'Co se vyvěsilo'),
+      h('div', { class: 'top__meta' }, `Aktualizováno ${updated.toLocaleDateString('cs-CZ')} v ${updated.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })}`),
+      d.sample ? h('div', { class: 'sample' }, 'Ukázková data – nejde o skutečná oznámení.') : null)),
+    h('div', { class: 'bar' }, h('div', { class: 'col' }, chips,
+      h('div', { class: 'find' }, h('label', { class: 'vh', for: 'q' }, 'Hledat v oznámeních'), search))),
+    list);
   paint();
 }
 
-// ---------- seznam desek, pokrytí, o projektu ----------
-
-function renderIndex() {
-  setNav('desky');
-  const all = [...state.boards.values()].sort((x, y) => x.name.localeCompare(y.name, 'cs'));
-  const container = h('div', { class: 'az' });
-  const paint = (q) => {
-    const t = fold(q);
-    const groups = new Map();
-    for (const b of all) {
-      if (t && !fold(`${b.name} ${b.publisher} ${b.title}`).includes(t)) continue;
-      const letter = b.name.charAt(0).toLocaleUpperCase('cs');
-      if (!groups.has(letter)) groups.set(letter, []);
-      groups.get(letter).push(b);
-    }
-    container.replaceChildren(...[...groups].map(([letter, list]) => h('section', {},
-      h('h2', {}, letter),
-      h('ul', {}, list.map((b) => h('li', {},
-        h('a', { href: `#/deska/${b.id}` }, b.name),
-        h('span', { class: b.ok ? null : 'bad' }, b.ok ? num(b.count) : 'nedostupná')))))));
-  };
-  mount('Seznam desek',
-    h('h1', {}, 'Seznam desek'),
-    h('p', { class: 'lede' }, `${num(all.length)} úředních desek obcí a městských částí – z Národního katalogu otevřených dat a z webů obcí. Číslo udává počet vyvěšených oznámení.`),
-    h('div', { class: 'boardfilter' },
-      h('label', { class: 'vh', for: 'iq' }, 'Hledat desku'),
-      h('input', { id: 'iq', type: 'search', placeholder: 'Hledat obec nebo úřad', oninput: (e) => paint(e.target.value) })),
-    container);
-  paint('');
+function villages(d) {
+  return h('section', { class: 'villages', 'aria-labelledby': 'h-vil' },
+    h('h2', { id: 'h-vil' }, 'Které desky čteme'),
+    h('ul', {}, d.members.map((m) => {
+      const url = safeUrl(m.board_url) || safeUrl(m.web);
+      const status = m.connected
+        ? (m.ok ? h('span', { class: 'ok' }, 'připojeno') : h('span', { class: 'miss' }, 'poslední stažení selhalo'))
+        : h('span', { class: 'miss' }, m.status || 'deska zatím nenalezena');
+      return h('li', {}, url ? h('a', { href: url, rel: 'noopener noreferrer' }, m.name) : h('span', {}, m.name), status);
+    })),
+    h('p', {}, d.ai_model
+      ? 'Shrnutí píše automaticky AI (Claude) z textu a příloh. Může se splést.'
+      : 'Shrnutí vznikají automaticky z textu oznámení a příloh.',
+    ' Právně platí znění na úřední desce obce.'));
 }
 
-// Vysvětlení druhů chyb (pole `kind` z harvesteru). `who` říká, kdo může problém odstranit.
-const KINDS = {
-  timeout: { title: 'Server blokuje přístup ze zahraničí', who: 'my',
-    text: 'Server úřadu nepřijímá spojení ze zahraničí. Sběr zatím běží na serverech GitHubu v USA a tyto weby (většinou u jednoho českého poskytovatele hostingu) přístup z nich blokují. Pracujeme na stahování přes server v Česku.' },
-  connect: { title: 'Nelze se připojit', who: 'úřad',
-    text: 'Spojení se serverem úřadu selhalo (neexistující adresa, odmítnuté spojení).' },
-  tls: { title: 'Chyba zabezpečeného spojení', who: 'úřad',
-    text: 'Certifikát HTTPS serveru je neplatný nebo neúplný a nepodařilo se ho automaticky doplnit.' },
-  not_found: { title: 'Odkaz v katalogu nefunguje', who: 'úřad',
-    text: 'Úřad má v Národním katalogu otevřených dat zapsanou adresu, na které data nejsou (HTTP 404). Opravit ji musí úřad v katalogu.' },
-  server: { title: 'Chyba serveru úřadu', who: 'úřad',
-    text: 'Server úřadu vrací chybu (HTTP 5xx nebo chybovou hlášku místo dat). Bývá to dočasné.' },
-  http: { title: 'Server odmítl přístup', who: 'úřad',
-    text: 'Server vrací jinou chybu HTTP, nejčastěji 403 (zakázaný přístup).' },
-  html: { title: 'Místo dat webová stránka', who: 'úřad',
-    text: 'Na zapsané adrese je běžná webová stránka, ne data podle normy. Úřad v katalogu uvedl špatný odkaz.' },
-  empty: { title: 'Prázdná odpověď', who: 'úřad',
-    text: 'Server vrací prázdný soubor.' },
-  invalid: { title: 'Poškozená data', who: 'úřad',
-    text: 'Soubor není platný JSON a nepodařilo se ho ani automaticky opravit.' },
-  format: { title: 'Data neodpovídají normě', who: 'úřad',
-    text: 'Soubor je čitelný, ale nemá strukturu podle OFN Úřední desky.' },
-};
+// ---------- detail ----------
 
-function renderCoverage() {
-  setNav('pokryti');
-  const m = state.meta;
-  const boards = [...state.boards.values()];
-  const failed = boards.filter((b) => !b.ok);
-  const warned = boards.filter((b) => b.ok && b.warnings?.length);
-  const groups = new Map();
-  for (const b of failed) {
-    const kind = KINDS[b.kind] ? b.kind : 'format';
-    if (!groups.has(kind)) groups.set(kind, []);
-    groups.get(kind).push(b);
+function renderDetail(id) {
+  const it = state.data.items.find((x) => x.id === id);
+  window.scrollTo(0, 0);
+  const back = h('a', { class: 'back', href: '#/' }, icon(BACK, 20), 'Zpět na přehled');
+  if (!it) {
+    return mount('Nenalezeno', h('header', { class: 'top top--detail' }, h('div', { class: 'top__inner col' }, back)),
+      h('div', { class: 'content col' }, h('p', {}, 'Oznámení už na desce není nebo odkaz neplatí.')));
   }
-  const byName = (x, y) => x.name.localeCompare(y.name, 'cs');
-  const share = m.boards_total ? Math.round((m.boards_ok / m.boards_total) * 100) : 0;
+  const s = it.s || {};
+  const u = urgency(it);
+  const docs = (it.docs || []).map((d) => ({ ...d, url: safeUrl(d.url) })).filter((d) => d.url);
+  const original = safeUrl(it.url);
 
-  const failedSection = ([kind, list]) => h('section', {},
-    h('h2', { class: 'section' }, `${KINDS[kind].title} (${list.length})`),
-    h('p', { class: 'note' }, KINDS[kind].text, KINDS[kind].who === 'úřad' ? ' Náprava je na straně úřadu.' : ''),
-    h('ul', { class: 'docs' }, list.sort(byName).map((b) => {
-      const url = safeUrl(b.used_url || b.access_url);
-      return h('li', {}, h('a', { href: `#/deska/${b.id}` }, b.name),
-        h('span', { class: 'ext' }, ` ${b.error || ''}`),
-        url ? [' · ', h('a', { href: url, rel: 'noopener noreferrer', class: 'ext' }, 'adresa dat')] : null);
-    })));
+  const todoBox = s.action
+    ? h('section', { class: u ? 'todo' : 'calm', 'aria-labelledby': 'h-todo' },
+      u ? h('h2', { id: 'h-todo' }, icon(CLOCK, 18), u.kind === 'deadline' ? 'Co můžeš udělat' : 'Kdy') : h('h2', { id: 'h-todo', class: 'vh' }, 'Co můžeš udělat'),
+      h('p', { class: u ? 'todo__main' : '' }, s.action),
+      u ? h('p', { class: 'muted' }, u.kind === 'running' ? `Platí ještě do ${dateCz(u.date)}.` : `${inDays(u.date).charAt(0).toUpperCase()}${inDays(u.date).slice(1)}.`) : null)
+    : h('p', { class: 'calm' }, 'Jen pro informaci, nic dělat nemusíš.');
 
-  mount('Pokrytí',
-    h('h1', {}, 'Pokrytí'),
-    h('div', { class: 'prose' },
-      h('p', {}, `V katalogu je ${num(m.boards_total)} úředních desek obcí a městských částí. Při posledním stažení (${dateTimeCz(m.generated_at)}) se podařilo načíst ${num(m.boards_ok)} z nich (${share} %), dohromady ${num(m.items_active)} vyvěšených oznámení.`),
-      h('p', {}, 'Desky, které se nepodařilo načíst, se zobrazují ve stavu z posledního úspěšného stažení. Obce, které úřední desku jako otevřená data nezveřejňují nebo ji neevidují v katalogu, tu chybí úplně.')),
-    [...groups].sort((x, y) => y[1].length - x[1].length).map(failedSection),
-    warned.length ? h('section', {},
-      h('h2', { class: 'section' }, `Načteno s výhradami (${warned.length})`),
-      h('p', { class: 'note' }, 'Tyto desky se načetly, ale jejich data nebo server neodpovídají normě. Harvester je opravil automaticky.'),
-      h('ul', { class: 'docs' }, warned.sort(byName).map((b) => h('li', {},
-        h('a', { href: `#/deska/${b.id}` }, b.name), h('span', { class: 'ext' }, ` ${b.warnings.join('; ')}`))))) : null);
-}
-
-function renderAbout() {
-  setNav('about');
-  mount('O projektu',
-    h('h1', {}, 'O projektu'),
-    h('div', { class: 'prose' },
-      h('p', {}, 'Obce a městské části mohou (a podle zákona o svobodném přístupu k informacím by měly) zveřejňovat obsah své úřední desky také jako otevřená data a evidovat ji v Národním katalogu otevřených dat. Každá deska je ale samostatný soubor na serveru obce, takže je pracné sledovat víc než jednu.'),
-      h('p', {}, 'Tento web každou hodinu stáhne všechny desky obcí a městských částí z katalogu, sjednotí je a umožní v nich hledat najednou. Desky krajů, ministerstev a soudů nesbírá. Oznámení, která z desky zmizí, zůstávají rok v záložce Sejmuto.'),
-      h('p', {}, 'Hledání na úvodní stránce prochází oznámení vyvěšená za posledních 30 dní. Starší najdete na stránce konkrétní desky.'),
-      h('p', {}, 'Stránka V okolí ukáže desky obcí do zvolené vzdálenosti od vaší polohy nebo od zadané obce. Poloha se zjišťuje jen ve vašem prohlížeči a nikam se neodesílá.'),
-      h('p', {}, 'Některé obce, které desku do katalogu nezapsaly, se načítají přímo z jejich úřední desky na webu: služba iMunis eDeska (například Dolní Břežany) a weby na systému Galileo (například Semtěš a Bílé Podolí).'),
-      h('p', {}, 'Zdrojový kód: ', h('a', { href: 'https://github.com/twarr58/uredni_desky' }, 'github.com/twarr58/uredni_desky'), '.')));
-}
-
-function renderNotFound() {
-  mount('Nenalezeno', h('h1', {}, 'Stránka nenalezena'), h('p', {}, h('a', { href: '#/' }, 'Zpět na přehled oznámení')));
+  mount(s.tldr || it.t,
+    h('header', { class: 'top top--detail' }, h('div', { class: 'top__inner col' }, back)),
+    h('article', { class: 'content col detail' },
+      h('div', { class: 'section' },
+        h('div', { class: 'card__meta' }, tag(it), h('span', {}, `${it.o} · vyvěšeno ${dateCz(it.p, { year: true })}`)),
+        h('h1', {}, s.tldr || it.t)),
+      todoBox,
+      s.bullets?.length ? h('section', { class: 'section', 'aria-labelledby': 'h-gist' },
+        h('h2', { id: 'h-gist', style: 'margin:0;font-size:18px' }, 'Ve zkratce'),
+        h('ul', { class: 'bullets' }, s.bullets.map((b) => h('li', {}, b)))) : null,
+      s.where ? h('section', { class: 'section', 'aria-labelledby': 'h-where' },
+        h('h2', { id: 'h-where', style: 'margin:0;font-size:18px' }, 'Kde'),
+        h('p', { style: 'margin:0' }, s.where)) : null,
+      h('section', { class: 'section', 'aria-labelledby': 'h-docs' },
+        h('h2', { id: 'h-docs', style: 'margin:0;font-size:18px' }, docs.length ? 'Přílohy' : 'Bez příloh'),
+        docs.map((d) => h('a', { class: 'doc', href: d.url, rel: 'noopener noreferrer' },
+          icon(DOC_ICON[d.k] || DOC_ICON.jine, 28, 'var(--link)'),
+          h('span', { class: 'doc__body' },
+            h('span', { class: 'doc__name' }, d.n || 'Příloha'),
+            h('span', { class: 'doc__info' }, [
+              d.x ? d.x.toUpperCase() : null,
+              d.k === 'sken' ? (d.ocr ? 'sken, text rozpoznán (OCR)' : 'sken') : d.k === 'mapa' ? 'mapa / výkres' : null,
+              d.pg ? `${d.pg} ${plural(d.pg, 'strana', 'strany', 'stran')}` : null,
+              d.w,
+            ].filter(Boolean).join(' · ')))))),
+      h('section', { class: 'official' },
+        h('div', {}, 'Úřední název: ', it.t),
+        it.cj ? h('div', {}, `Č. j.: ${it.cj}`) : null,
+        it.u ? h('div', {}, `Visí do ${dateCz(it.u, { year: true })}`) : null,
+        it.r ? h('div', {}, `Sejmuto ${dateCz(it.r, { year: true })}`) : null,
+        original ? h('a', { href: original, rel: 'noopener noreferrer' }, `Původní znění na úřední desce (${it.o})`) : null,
+        h('p', {}, s.src === 'claude'
+          ? 'Shrnutí napsala AI (Claude) z textu a příloh. Může se splést – právně platí znění na úřední desce.'
+          : 'Shrnutí vzniklo automaticky z textu oznámení. Právně platí znění na úřední desce.'))));
 }
 
 // ---------- start ----------
 
-async function init() {
+async function start() {
   try {
-    const [boards, recent, meta] = await Promise.all([loadJson('boards.json'), loadJson('recent.json'), loadJson('meta.json')]);
-    for (const b of boards) state.boards.set(b.id, b);
-    for (const it of recent) {
-      const b = state.boards.get(it.b);
-      it._q = fold(it.t);
-      it._b = fold(b ? `${b.name} ${b.publisher}` : '');
-    }
-    recent.sort((x, y) => y.p.localeCompare(x.p));
-    state.recent = recent;
-    state.meta = meta;
-    document.getElementById('generated').textContent = dateTimeCz(meta.generated_at);
+    const res = await fetch(DATA, { cache: 'no-cache' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    state.data = await res.json();
   } catch (err) {
-    mount('Chyba', h('h1', {}, 'Data se nepodařilo načíst'), h('p', {}, String(err)),
-      h('p', { class: 'muted' }, 'Lokálně: make sample && make serve'));
+    mount('Chyba', h('div', { class: 'content col' }, h('h1', {}, 'Data se nepodařilo načíst'), h('p', {}, String(err))));
     return;
   }
   window.addEventListener('hashchange', route);
   route();
 }
 
-init();
+start();

@@ -23,6 +23,11 @@ def load_extra_sources(discovered: Path | None = None) -> list[BoardSource]:
         raw["rss"] = [s for s in found if s.get("fmt") == "rss"]
         raw["vismo"] = [s for s in found if s.get("fmt") == "vismo"]
         raw["html"] = [s for s in found if s.get("fmt") == "html"]
+    return sources_from_entries(raw)
+
+
+def sources_from_entries(raw: dict) -> list[BoardSource]:
+    """Zdroje ze záznamů seskupených podle formátu: {"imunis": [...], "galileo": [...], "rss": [...], …}."""
     sources = []
     for entry in raw.get("imunis", []):
         sub = entry["subdomain"].strip().lower()

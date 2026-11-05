@@ -1,8 +1,8 @@
 name: Hledání desek všech obcí
 
+# Celostátní hledání desek – jen ručně. Web teď ukazuje jen mikroregion (harvest.yml, příkaz region),
+# který si chybějící desky svých obcí hledá sám.
 on:
-  schedule:
-    - cron: "41 3 * * 1" # jednou týdně
   workflow_dispatch:
     inputs:
       recheck:
