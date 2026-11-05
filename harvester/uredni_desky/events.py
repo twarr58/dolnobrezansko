@@ -346,7 +346,7 @@ async def collect(client: httpx.AsyncClient, members: list[dict], state_dir: Pat
                 log.info("Akce %s: %d", m["name"], len(events))
             except Exception as exc:  # web obce nejde – nechají se naposledy známé akce
                 log.warning("Akce %s: %r", m["name"], exc)
-                entry = {**entry, "cfg": cfg, "checked": now.isoformat(timespec="seconds"), "ok": False}
+                entry = {**entry, "cfg": cfg, "checked": now.isoformat(timespec="seconds"), "ok": False, "v": PARSER_VERSION}
             cached[m["name"]] = entry
         live = [e for e in entry.get("events", []) if (e.get("end") or e["d"]) >= today.isoformat()]
         items += [{"o": m["name"], **e} for e in live]

@@ -128,3 +128,22 @@ def test_browser_option_sends_browser_headers(tmp_path):
 
     asyncio.run(go())
     assert seen and seen[0].startswith("Mozilla/5.0")
+
+
+def test_year_as_loose_text_between_tags_jesenice():
+    """Skutečná struktura archivu Jesenického kurýru: rok je volný text („<br />2026<br />“, „</div>2024<br />“)."""
+    import json as _json
+    from pathlib import Path
+
+    region = _json.loads((Path(__file__).resolve().parent.parent / "uredni_desky" / "data" / "region.json").read_text())
+    cfg = {m["name"]: m.get("newsletter") for m in region["members"]}["Jesenice"]
+    html = """<td><h2>VYDANÁ ČÍSLA - ARCHIV</h2>
+      <br />2026<br /><ul><li><a href="https://zpravodaj.munipolis.cz/jesenice/leden-2026/">Leden  </a></li>
+      <li><a href="/assets/File.ashx?id_org=5861&amp;id_dokumenty=17562">Únor</a></li>
+      <li><a href=" https://zpravodaj.munipolis.cz/jesenice/rijen-2026/">Říjen</a></li></ul>
+      <div><hr /></div><div><span style="color: rgb(51, 51, 51)">2025</span></div>
+      <ul><li><a href="/assets/File.ashx?id_org=5861&amp;id_dokumenty=16696">Září</a></li>
+      <li><a href="https://zpravodaj.munipolis.cz/jesenice/prosinec-2025/">Prosinec</a></li></ul>
+      <div><hr /></div><div></div>2024<br /><ul><li><a href="/assets/File.ashx?id_org=5861&amp;id_dokumenty=1">Leden</a></li></ul></td>"""
+    got = newsletters.parse_archive(html, cfg["url"], cfg)
+    assert [i["t"] for i in got] == ["Říjen 2026", "Únor 2026", "Leden 2026", "Prosinec 2025", "Září 2025", "Leden 2024"]
