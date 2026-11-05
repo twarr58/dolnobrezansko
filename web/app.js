@@ -239,7 +239,7 @@ function weekStrip(groups, onPick) {
         'aria-label': items.length ? `${name}: ${items.length} ${plural(items.length, 'termín', 'termíny', 'termínů')}` : `${name}: nic`,
         onclick: () => onPick(iso),
       },
-      h('span', { class: 'day-btn__wd' }, weekday(iso)),
+      h('span', { class: 'day-btn__wd' }, i === 0 ? 'dnes' : weekday(iso)),
       h('span', { class: 'day-btn__d' }, String(+iso.slice(8, 10))),
       h('span', { class: 'day-btn__full' }, `${weekday(iso)} ${dateCz(iso)}`),
       h('span', { class: 'day-btn__rel' }, i < 2 ? relDay(iso) : ''),
