@@ -19,7 +19,7 @@ GitHub Actions (každou hodinu) – python -m uredni_desky region
 web/ (statická stránka bez buildu): Teď řešit · Nové tento týden · filtr obcí · detail s přílohami
 ```
 
-Návrh designu: https://claude.ai/artifact/7PsxZ3855TvghPqKjtp8g9
+Web: https://twarr58.github.io/dolnobrezansko/ · návrh designu: https://claude.ai/artifact/7PsxZ3855TvghPqKjtp8g9
 
 ## Lokální vývoj
 
@@ -43,11 +43,11 @@ model: `AI_MODEL` (výchozí `claude-opus-5-5`).
 
 GitHub Actions se u Claude prokáže svým krátkodobým tokenem (OIDC). V repozitáři není žádný klíč,
 který by mohl uniknout. Pravidlo v Claude Console přijme jen token z repozitáře
-`twarr58/uredni_desky` a větve `main`; do `main` může zapisovat jen vlastník repozitáře,
+`twarr58/dolnobrezansko` a větve `main`; do `main` může zapisovat jen vlastník repozitáře,
 pull requesty (i z forků) mají jiný ref a neprojdou.
 
 1. **Claude Console:** Settings → Workload identity → **Connect workload** → **GitHub Actions**.
-   - Rule name `uredni-desky-main`, organization `twarr58`, repository `uredni_desky`
+   - Rule name `uredni-desky-main`, organization `twarr58`, repository `dolnobrezansko`
    - Branch / ref `refs/heads/main` (vypsat, prázdné = jakákoli větev)
    - Allowed events: ne „Only push“ – sběr běží podle plánu (`schedule`) a ručně (`workflow_dispatch`)
    - Target: nový service account (např. `uredni-desky`), role developer, výchozí workspace

@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     # Claude: přihlášení bez klíče přes Workload Identity Federation (viz README). Pravidlo v Claude Console
-    # přijímá jen token GitHubu z repo:twarr58/uredni_desky:ref:refs/heads/main.
+    # přijímá jen token GitHubu z repo:twarr58/dolnobrezansko:ref:refs/heads/main.
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
