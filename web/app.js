@@ -180,13 +180,30 @@ function writeFilter() {
 
 // ---------- přehled ----------
 
+/** Text, ve kterém hledá vyhledávání: oznámení, shrnutí i popis příloh (bez diakritiky, malými písmeny). */
+function searchText(it) {
+  const s = it.s || {};
+  return fold([
+    it.t, it.o, it.cj, s.tldr, s.action, s.where, s.label, s.impact, s.affects, s.contact,
+    ...(s.bullets || []), ...(s.facts || []).map((f) => `${f.label} ${f.value}`), ...(s.dates || []).map((x) => x.what),
+    ...(it.docs || []).map((x) => `${x.n || ''} ${x.w || ''} ${x.sum || ''}`),
+  ].filter(Boolean).join(' '));
+}
+
+/** Kmen slova pro hledání: „pražská“ najde i „pražské“, „uzavírka“ i „uzavírky“ (čísla zůstávají přesná). */
+function stem(term) {
+  if (term.length < 5 || /\d/.test(term)) return term;
+  const cut = term.replace(/(ami|ach|ech|emu|eho|ych|ymi|ich|ove|ova|ou|em|ym|a|e|i|o|u|y)$/, '');
+  return cut.length >= 4 ? cut : term;
+}
+
 function filtered() {
   const { obec, q } = state.filter;
-  const terms = fold(q).split(/\s+/).filter(Boolean);
+  const terms = fold(q).split(/\s+/).filter(Boolean).map(stem);
   return state.data.items.filter((it) => {
     if (obec && it.o !== obec) return false;
     if (!terms.length) return true;
-    if (!it._q) it._q = fold(`${it.t} ${it.s?.tldr || ''} ${it.s?.where || ''} ${it.s?.action || ''} ${it.cj || ''} ${it.o} ${it.s?.label || ''}`);
+    if (!it._q) it._q = searchText(it);
     return terms.every((t) => it._q.includes(t));
   });
 }
@@ -317,17 +334,18 @@ function renderHome() {
   };
 
   const chips = h('div', { class: 'chips', role: 'group', 'aria-label': 'Obec' });
+  const total = d.items.filter((it) => !it.r).length;
   const names = ['', ...connected.map((m) => m.name)
     .sort((a, b) => (counts.get(b) || 0) - (counts.get(a) || 0) || a.localeCompare(b, 'cs'))];
   const paintChips = () => chips.replaceChildren(...names.map((name) => h('button', {
     type: 'button', class: 'chip', 'aria-pressed': String(state.filter.obec === name),
-    onclick: () => { state.filter.obec = name; state.limit = STEP; writeFilter(); paintChips(); paint(); },
-  }, name || 'Všechny obce')));
+    onclick: () => { state.filter.obec = state.filter.obec === name ? '' : name; state.limit = STEP; writeFilter(); paintChips(); paint(); },
+  }, h('span', {}, name || 'Všechny obce'), h('span', { class: 'chip__n' }, String(name ? counts.get(name) || 0 : total)))));
   paintChips();
 
   let timer;
   const search = h('input', {
-    type: 'search', id: 'q', class: 'search', value: state.filter.q, placeholder: 'Hledat: ulice, parcela, téma…', autocomplete: 'off',
+    type: 'search', id: 'q', class: 'search', value: state.filter.q, placeholder: 'např. Pražská, 208/1, kanalizace', autocomplete: 'off',
     oninput: (e) => {
       clearTimeout(timer);
       timer = setTimeout(() => { state.filter.q = e.target.value; state.limit = STEP; writeFilter(); paint(); }, 160);
@@ -335,20 +353,30 @@ function renderHome() {
   });
 
   const stamp = Number.isNaN(updated.getTime()) ? ''
-    : ` · ${updated.toLocaleDateString('cs-CZ')} ${updated.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })}`;
+    : `aktualizováno ${updated.toLocaleDateString('cs-CZ')} ${updated.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })}`;
   mount('',
-    h('header', { class: 'top' }, h('div', { class: 'col top__inner' },
-      h('div', { class: 'top__row' },
+    h('div', { class: 'page' },
+      h('header', { class: 'masthead' },
         h('h1', {}, 'Co se kdy děje'),
-        h('span', { class: 'top__meta' }, `${d.region?.name || 'Dolnobřežansko'}${stamp}`)),
-      d.sample ? h('div', { class: 'sample' }, 'Ukázková data – nejde o skutečná oznámení.') : null,
-      weekBox,
-      h('div', { class: 'legend', 'aria-hidden': 'true' },
-        h('span', {}, h('span', { class: 'dot dot--warn' }), 'lhůta / omezení'),
-        h('span', {}, h('span', { class: 'dot dot--event' }), 'jednání / akce')),
-      h('div', { class: 'filters' }, chips, h('label', { class: 'vh', for: 'q' }, 'Hledat v oznámeních'), search),
-      status)),
-    h('div', { class: 'col' }, body));
+        h('span', { class: 'masthead__meta' }, [d.region?.name || 'Dolnobřežansko', stamp].filter(Boolean).join(' · ')),
+        d.sample ? h('div', { class: 'sample' }, 'Ukázková data – nejde o skutečná oznámení.') : null),
+      h('div', { class: 'layout' },
+        h('aside', { class: 'panel', 'aria-label': 'Výběr' },
+          h('div', { class: 'panel__block' },
+            h('h2', { class: 'panel__title' }, 'NEJBLIŽŠÍCH 7 DNÍ'),
+            weekBox,
+            h('div', { class: 'legend', 'aria-hidden': 'true' },
+              h('span', {}, h('span', { class: 'dot dot--warn' }), 'lhůta / omezení'),
+              h('span', {}, h('span', { class: 'dot dot--event' }), 'jednání / akce'))),
+          h('div', { class: 'panel__block' },
+            h('label', { class: 'panel__title', for: 'q' }, 'HLEDAT'),
+            search,
+            h('p', { class: 'hint' }, 'Hledá v názvu, shrnutí, místě, č. j. i v popisu příloh. Bez ohledu na diakritiku; více slov = musí sedět všechna.')),
+          h('div', { class: 'panel__block' },
+            h('h2', { class: 'panel__title' }, 'OBEC'),
+            chips),
+          status),
+        h('div', { class: 'main' }, body))));
   paint();
 }
 
