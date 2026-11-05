@@ -35,6 +35,7 @@ from .webpage import BROWSER_HEADERS
 log = logging.getLogger(__name__)
 
 REFRESH_HOURS = 6
+PARSER_VERSION = 2  # zvýšit při změně čtení akcí – uložené akce se pak načtou znovu hned, ne až po REFRESH_HOURS
 WINDOW_DAYS = 60  # akce na příštích N dní
 MAX_EVENTS = 300  # na obec
 
@@ -335,12 +336,13 @@ async def collect(client: httpx.AsyncClient, members: list[dict], state_dir: Pat
         if not cfg or not cfg.get("url"):
             continue
         entry = cached.get(m["name"]) or {}
-        fresh = entry.get("checked") and entry.get("cfg") == cfg and \
+        fresh = entry.get("checked") and entry.get("cfg") == cfg and entry.get("v") == PARSER_VERSION and \
             datetime.fromisoformat(entry["checked"]) > now - timedelta(hours=REFRESH_HOURS)
         if not fresh and cfg.get("fmt") != "link":
             try:
                 events = await fetch_events(client, cfg, today, fallback)
-                entry = {"cfg": cfg, "checked": now.isoformat(timespec="seconds"), "events": events, "ok": True}
+                entry = {"cfg": cfg, "checked": now.isoformat(timespec="seconds"), "events": events, "ok": True,
+                         "v": PARSER_VERSION}
                 log.info("Akce %s: %d", m["name"], len(events))
             except Exception as exc:  # web obce nejde – nechají se naposledy známé akce
                 log.warning("Akce %s: %r", m["name"], exc)
