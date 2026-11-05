@@ -90,6 +90,14 @@ jsou to jen odkazy na čísla na webu obce. Nastavení je v `data/region.json` u
 a při chybě zůstává poslední známý seznam. Obce, u kterých zpravodaj zatím nemáme (Psáry, Libeř,
 Jesenice, Zlatníky-Hodkovice, Březová-Oleško, Okrouhlo), mají v sekci jen zmínku.
 
+## Kalendář akcí
+
+Záložka „Kalendář akcí“ spojuje kalendáře z webů obcí do jednoho (příštích 60 dní, filtr podle obce
+a „dnes / tento týden / víkend“). Bez AI – název, datum, čas, místo a odkaz na akci na webu obce.
+Nastavení v `data/region.json` u obce pod klíčem `events` (`fmt`: `vismo` – JSON API kalendáře
+redakčního systému vismo, `rdc`, `article`, nebo `link` = jen odkaz); popis v `uredni_desky/events.py`.
+Kalendáře se procházejí nejvýš jednou za 6 hodin, při chybě zůstanou naposledy známé akce.
+
 ## Celostátní režim (vypnutý)
 
 Původní sběr všech desek z NKOD a webů obcí (`python -m uredni_desky harvest`, `discover`,
