@@ -59,6 +59,8 @@ jobs:
         env:
           # Volitelné: proxy v ČR pro servery, které blokují zahraniční IP (viz README).
           HARVEST_FALLBACK_PROXY: ${{ secrets.HARVEST_FALLBACK_PROXY }}
+          # Klíč k API edesky.cz (desky Vestce, Jesenice, Okrouhla a Březové-Oleška; jejich weby z GitHubu nejdou).
+          EDESKY_API_KEY: ${{ secrets.EDESKY_API_KEY }}
           # Volitelné: shrnutí od Claude. Bez přihlášení se popisy dělají jen pravidly.
           # Doporučeno: Workload Identity Federation – ID z Claude Console jako proměnné repozitáře
           # (Settings → Secrets and variables → Actions → Variables; nejsou tajná). Alternativa: secret ANTHROPIC_API_KEY.

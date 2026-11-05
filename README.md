@@ -108,6 +108,15 @@ uloží do `discovered.json` ve větvi `data`, harvester je přidá ke zdrojům 
 nepodporovaných systémů ukazuje, pro které systémy psát další adaptéry. Detail oznámení se
 u adaptérů stahuje jen u nových položek (mezipaměť ze stavu), aby sběr nezatěžoval weby obcí.
 
+### Desky přes edesky.cz (Vestec, Jesenice, Okrouhlo, Březová-Oleško)
+
+Weby těchto obcí z runneru GitHubu (USA) nejdou. Jejich desky proto harvester bere z API
+[edesky.cz](https://edesky.cz/api), které desky obcí samo stahuje z Česka a přílohy i jejich
+rozpoznaný text hostuje u sebe (adaptér `edesky.py`, zdroj `{"fmt": "edesky", "url": "https://edesky.cz/desky/<id>"}`).
+Potřebuje klíč z profilu na edesky.cz v secretu **`EDESKY_API_KEY`** (v logu se maskuje).
+API neuvádí „vyvěšeno do“ a místo data vyvěšení dává datum načtení na edesky.cz; bere se okno
+posledních 60 dní. Ostatní obce zůstávají na přímém čtení desky (víc údajů).
+
 ### Servery blokující zahraniční IP
 
 Runnery GitHub Actions běží v USA a část obecních webů je nepustí: Jesenice a Okrouhlo nepřijmou

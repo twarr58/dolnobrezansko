@@ -65,7 +65,7 @@ def sources_from_entries(raw: dict) -> list[BoardSource]:
                                        publisher=entry["publisher"], access_url=url,
                                        area=entry.get("area", ""), qid=entry.get("qid", "")))
     titles = {"rss": "Úřední deska (RSS kanál webu obce)", "vismo": "Úřední deska (web obce)",
-              "html": "Úřední deska (web obce)"}
+              "html": "Úřední deska (web obce)", "edesky": "Úřední deska (přes edesky.cz)"}
     for fmt, title in titles.items():
         for entry in raw.get(fmt, []):
             url = entry["url"].strip()

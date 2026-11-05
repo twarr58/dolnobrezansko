@@ -11,7 +11,7 @@ from urllib.parse import urlsplit
 
 import httpx
 
-from . import feed, galileo, imunis, tls, vismo, webpage
+from . import edesky, feed, galileo, imunis, tls, vismo, webpage
 from .nkod import BoardSource
 from .normalize import BoardFormatError, decode_board
 
@@ -22,7 +22,7 @@ PER_HOST = 2  # víc souběžných spojení na jeden server část hostingů odm
 # Weby jednoho poskytovatele běží na stejných serverech (Galileo: ~2 300 obcí) – souběh se omezí
 # na celého poskytovatele, jinak hosting po chvíli přestane přijímat spojení.
 RETRY_DELAY = 5.0
-PROVIDER_LIMITS = {"galileo": 6, "imunis": 4, "vismo": 6}
+PROVIDER_LIMITS = {"galileo": 6, "imunis": 4, "vismo": 6, "edesky": 2}
 
 # Druhy chyb – frontend k nim zobrazuje vysvětlení.
 KIND_TIMEOUT = "timeout"
@@ -130,7 +130,7 @@ async def _fetch_url(client: httpx.AsyncClient, url: str, retries: int) -> Fetch
     return FetchResult(False, None, str(failure), failure.status, ms(), failure.kind, url)
 
 
-ADAPTERS = {"imunis": imunis.fetch_board, "galileo": galileo.fetch_board,
+ADAPTERS = {"imunis": imunis.fetch_board, "galileo": galileo.fetch_board, "edesky": edesky.fetch_board,
             "rss": feed.fetch_board, "vismo": vismo.fetch_board,
             "html": webpage.fetch_board}
 

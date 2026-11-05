@@ -24,7 +24,7 @@ from urllib.parse import urlsplit
 
 import httpx
 
-from . import USER_AGENT, ai, cache, digest, documents, webpage
+from . import USER_AGENT, ai, cache, digest, documents, edesky, webpage
 from .build import load_state, run_build
 from .extra import sources_from_entries
 from .fetch import fetch_all, needs_proxy
@@ -228,6 +228,12 @@ async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, 
                     c, url, etag=cached.get("etag", "") if conditional else "",
                     last_modified=cached.get("lm", "") if conditional else ""))
             except (httpx.HTTPError, ValueError) as exc:
+                if url in edesky.TEXTS:  # soubor z edesky.cz nejde stáhnout – rozpoznaný text z API stačí
+                    info = documents.DocInfo(url=url, kind=documents.KIND_TEXT, checked=stamp)
+                    info.full_text = documents._clean(edesky.TEXTS[url])
+                    info.text, info.chars = info.full_text[:documents.EXCERPT], len(info.full_text)
+                    doc_cache[url] = info.to_cache()
+                    return {**info.to_cache(), "full_text": info.full_text}
                 log.info("Příloha %s: %s %s", url, type(exc).__name__, exc)
                 return cached or {"url": url, "error": f"{type(exc).__name__}: {exc}"[:200]}
         if dl.content is None:  # 304 – beze změny

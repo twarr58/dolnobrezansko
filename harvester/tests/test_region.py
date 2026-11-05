@@ -37,7 +37,7 @@ def test_resolve_sources_known_and_detected(tmp_path):
     assert by_name["Jesenice"]["board"] and by_name["Okrouhlo"]["board"]  # desky zadané v region.json
     assert by_name["Zlatníky-Hodkovice"]["board"] and by_name["Zlatníky-Hodkovice"]["status"] == "deska nalezena automaticky"
     assert by_name["Vestec"]["board"]  # deska Galileo zadaná v region.json
-    assert by_name["Březová-Oleško"]["board"] is None
+    assert by_name["Březová-Oleško"]["board"]  # přes edesky.cz
     zl = next(s for s in sources if s.publisher == "Obec Zlatníky-Hodkovice")
     assert zl.fmt == "imunis" and zl.access_url == "https://jesenice.imunis.cz/edeska/rss.asp"
     # ID desky Dolních Břežan se nemění – zůstává archiv z dřívějších sběrů
