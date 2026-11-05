@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Záložní proxy v ČR pro sběr úředních desek (HARVEST_FALLBACK_PROXY).
 #
-# Pro čerstvý Debian 12 na VPS s českou IP. Spustit jako root:
+# Pro čerstvý Debian 12 nebo 13 na VPS s českou IP. Spustit jako root:
 #   bash setup-squid-debian12.sh
 # Volitelně: PORT=3128 SSH_PORT=22 EXTRA_DOMAINS=".obec.cz .jina-obec.cz" bash setup-squid-debian12.sh
 #
@@ -21,11 +21,11 @@ DOMAINS=".vestec.cz .obecvestec.cz .mujesenice.cz .okrouhlo.cz .zlatniky-hodkovi
 .ohrobec.cz .liber.cz .zvole.info .psary.cz .dolnibrezany.cz .vranenadvltavou.cz .imunis.cz .alis.cz ${EXTRA_DOMAINS:-}"
 
 if [[ $EUID -ne 0 ]]; then echo "Spusť jako root (sudo bash $0)." >&2; exit 1; fi
-if ! grep -q 'VERSION_ID="12"' /etc/os-release; then echo "Upozornění: skript je psaný pro Debian 12." >&2; fi
+if ! grep -qE 'VERSION_ID="(12|13)"' /etc/os-release; then echo "Upozornění: skript je psaný pro Debian 12 a 13." >&2; fi
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
-apt-get install -y -qq squid apache2-utils nftables unattended-upgrades curl >/dev/null
+apt-get install -y -qq squid apache2-utils nftables unattended-upgrades curl openssl >/dev/null
 
 # --- heslo ---
 if [[ -n "${PROXY_PASSWORD:-}" ]]; then
