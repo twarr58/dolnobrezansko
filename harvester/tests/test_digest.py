@@ -184,3 +184,20 @@ def test_github_federation_writes_token_file(monkeypatch, tmp_path):
 
     asyncio.run(go())
     assert (tmp_path / "jwt").read_text() == "jwt-1"
+
+
+def test_summarizer_survives_failed_login(monkeypatch):
+    import asyncio
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test")
+    s = ai.Summarizer(limit=5)
+
+    class LoginError(Exception):
+        pass
+
+    async def boom(content):
+        raise LoginError("Token exchange failed (HTTP 401)")
+
+    monkeypatch.setattr(s, "_call", boom)
+    assert asyncio.run(s.summarize({"Název": "X"}, [])) is None
+    assert s.stopped and not s.available()
