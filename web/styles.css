@@ -77,6 +77,32 @@ svg { flex: 0 0 auto; }
 .legend { display: flex; gap: 6px 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 
+/* Hlavní přepínač sekcí: úřední desky / zpravodaje */
+.sitenav { display: flex; gap: 4px; border-bottom: 1px solid var(--rule); padding-top: 8px; overflow-x: auto; }
+.sitenav__tab { flex: none; display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; margin-bottom: -1px;
+  border-bottom: 2px solid transparent; color: var(--muted); font-weight: 500; text-decoration: none; white-space: nowrap; }
+.sitenav__tab:hover { color: var(--ink); }
+.sitenav__tab[aria-current="page"] { color: var(--ink); font-weight: 700; border-bottom-color: var(--ink); }
+.sitenav + .masthead { padding-top: 16px; }
+
+/* Zpravodaje: karta na obec – nejnovější číslo, starší čísla po letech, odkaz na archiv */
+.news__intro { margin: 16px 0 20px; color: var(--muted); max-width: 70ch; }
+.news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 16px; align-items: start; }
+.news { display: flex; flex-direction: column; gap: 10px; padding: 18px; border: 1px solid var(--rule); border-radius: 12px; min-width: 0; }
+.news__obec { margin: 0; font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: var(--muted); text-transform: uppercase; }
+.news__name { margin: 0; font-size: 20px; line-height: 1.25; }
+.news__latest { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); font-weight: 600; text-decoration: none; }
+.news__latest:hover { text-decoration: underline; }
+.news__latest svg { flex: none; }
+.news__label { display: block; font-size: 12px; font-weight: 500; color: var(--muted); }
+.news__empty { margin: 0; font-size: 14px; color: var(--muted); }
+.news__older summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--accent); }
+.news__year h3 { margin: 10px 0 4px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.news__year ul { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 0 14px; }
+.news__year li { min-height: 36px; display: flex; align-items: center; white-space: nowrap; }
+.news__archive { margin-top: auto; font-size: 14px; }
+.news__missing { margin: 24px 0 0; font-size: 14px; color: var(--muted); }
+
 /* Stránka: hlavička + panel vlevo + časová osa vpravo (na telefonu pod sebou) */
 .page { max-width: 1200px; margin: 0 auto; padding: 0 16px 32px; }
 .masthead { display: flex; align-items: baseline; justify-content: space-between; gap: 4px 16px; flex-wrap: wrap; padding: 20px 0 16px; border-bottom: 1px solid var(--rule); }

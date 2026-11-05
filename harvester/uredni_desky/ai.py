@@ -61,7 +61,8 @@ podstata bývá v nich, ne v názvu oznámení. Výsledek má dvě vrstvy:
 - docs: ke každé příloze (podle čísla): what = krátký název, co to je („situační výkres“, „rozpočet 2027“);
   summary = 2–4 věty, co v ní konkrétně je; u mapy či výkresu co je zakreslené a kde.
 
-Piš česky, konkrétně, v tykání, bez úředních obratů; zkratky vysvětli. Nic si nevymýšlej – když údaj
+Piš česky, konkrétně, v tykání, bez úředních obratů; zkratky vysvětli. Věci pojmenuj věcně a spisovně
+(„vypnutí elektřiny“, „odstávka vody“, „uzavírka silnice“), ne hovorově („nepoteče elektřina“, „nepojede se“). Nic si nevymýšlej – když údaj
 v podkladech není, pole nech prázdné. Jména a adresy soukromých osob nevypisuj (firmy a úřady ano)."""
 
 _PAIR = {"type": "object", "properties": {"label": {"type": "string"}, "value": {"type": "string"}},

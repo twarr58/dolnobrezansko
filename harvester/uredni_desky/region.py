@@ -24,7 +24,7 @@ from urllib.parse import urlsplit
 
 import httpx
 
-from . import USER_AGENT, ai, cache, digest, documents, edesky, webpage
+from . import USER_AGENT, ai, cache, digest, documents, edesky, newsletters, webpage
 from .build import load_state, run_build
 from .extra import sources_from_entries
 from .fetch import fetch_all, needs_proxy
@@ -460,10 +460,12 @@ async def run(out_dir: Path, state_dir: Path, ai_limit: int = 100, concurrency: 
             proxy_hosts = {urlsplit(s.access_url).hostname or "" for s in sources
                            if results.get(s.id) and results[s.id].via_proxy}
             doc_cache, summaries = await enrich(client, items, state_dir, ai_limit, now, fallback, proxy_hosts)
+            news = await newsletters.collect(client, region["members"], state_dir, now, fallback)
         finally:
             if fallback:
                 await fallback.aclose()
     data = build_output(region, members, boards, items, doc_cache, summaries, now)
+    data["newsletters"] = news
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "region.json").write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), "utf-8")
     log.info("region.json: %d oznámení, %d/%d obcí s deskou", len(data["items"]),
@@ -506,6 +508,11 @@ def sample(out_dir: Path) -> dict:
                                    "updated_at": now.isoformat(timespec="seconds") if r.get("updated") else None}
     data = build_output(region, members, boards, items, docs, summaries, now)
     data["sample"] = True
+    data["newsletters"] = [
+        {"obec": m["name"], "name": m["newsletter"]["name"], "archive": m["newsletter"]["url"], "ok": True,
+         "issues": [{"t": f"č. {k}/{y}", "url": f"https://example.org/zpravodaj/{n}/{y}-{k}.pdf", "y": y}
+                    for y in (today.year, today.year - 1, today.year - 2) for k in (4, 3, 2, 1)]}
+        if m.get("newsletter") else {"obec": m["name"]} for n, m in enumerate(region["members"])]
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "region.json").write_text(json.dumps(data, ensure_ascii=False, indent=1), "utf-8")
     return data

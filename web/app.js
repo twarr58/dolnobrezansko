@@ -175,6 +175,12 @@ function route() {
     window.scrollTo(0, 0);
     return;
   }
+  if (parts[0] === 'zpravodaje') {
+    onList = false;
+    renderNewsletters();
+    window.scrollTo(0, 0);
+    return;
+  }
   state.filter.obec = params.get('obec') || '';
   state.filter.tema = params.get('tema') || '';
   state.filter.q = params.get('q') || '';
@@ -389,6 +395,7 @@ function renderHome() {
     : `aktualizováno ${updated.toLocaleDateString('cs-CZ')} ${updated.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })}`;
   mount('',
     h('div', { class: 'page' },
+      siteNav('desky'),
       h('header', { class: 'masthead' },
         h('h1', {}, 'Co se kdy děje'),
         h('span', { class: 'masthead__meta' }, [d.region?.name || 'Dolnobřežansko', stamp].filter(Boolean).join(' · ')),
@@ -430,6 +437,68 @@ function villages(d) {
     h('p', {}, '✓ deska připojena · – zatím nečteme. ',
       d.ai_model ? 'Shrnutí píše AI (Claude) z textu a příloh a může se splést. ' : 'Shrnutí vznikají automaticky z textu oznámení a příloh. ',
       'Právně platí znění na úřední desce obce.'));
+}
+
+// ---------- navigace a zpravodaje ----------
+
+/** Hlavní přepínač nahoře: úřední desky (výchozí) a zpravodaje obcí. */
+function siteNav(active) {
+  const tab = (key, href, label) => h('a', { class: 'sitenav__tab', href, 'aria-current': active === key ? 'page' : null }, label);
+  return h('nav', { class: 'sitenav', 'aria-label': 'Sekce' },
+    tab('desky', '#/', 'Úřední desky'),
+    tab('zpravodaje', '#/zpravodaje', 'Zpravodaje'));
+}
+
+/** Krátký popisek staršího čísla do seznamu („č. 95“); celý název je v title odkazu. */
+function issueLabel(i) {
+  const m = /(?:č\.|číslo\.?)\s*(\d{1,4})/i.exec(i.t);
+  if (!m) return i.t;
+  const series = /rozkvět/i.test(i.t) ? 'Rozkvět ' : '';
+  return `${series}č. ${m[1]}`;
+}
+
+function renderNewsletters() {
+  const all = state.data.newsletters || [];
+  const withNews = all.filter((n) => n.name && safeUrl(n.archive));
+  const none = all.filter((n) => !n.name && n.none).map((n) => n.obec);
+  const missing = all.filter((n) => !n.name && !n.none).map((n) => n.obec);
+  const card = (n) => {
+    const issues = (n.issues || []).filter((i) => safeUrl(i.url));
+    const [latest, ...older] = issues;
+    const years = [];
+    for (const i of older) {
+      const y = i.y || (years.length ? years[years.length - 1].y : 'Bez roku'); // číslo bez roku k sousednímu ročníku
+      if (!years.length || years[years.length - 1].y !== y) years.push({ y, items: [] });
+      years[years.length - 1].items.push(i);
+    }
+    const ext = { href: safeUrl(n.archive), rel: 'noopener noreferrer', target: '_blank' };
+    return h('article', { class: 'news' },
+      h('p', { class: 'news__obec' }, n.obec),
+      h('h2', { class: 'news__name' }, n.name),
+      latest
+        ? h('a', { class: 'news__latest', href: safeUrl(latest.url), rel: 'noopener noreferrer', target: '_blank' },
+          icon(ICON_DOC, 20), h('span', {}, h('span', { class: 'news__label' }, 'Nejnovější číslo'), latest.t))
+        : h('p', { class: 'news__empty' }, 'Seznam čísel se teď nepodařilo načíst – čísla najdeš v archivu na webu obce.'),
+      years.length ? h('details', { class: 'news__older' },
+        h('summary', {}, `Starší čísla (${older.length})`),
+        years.map((g) => h('div', { class: 'news__year' },
+          years.length > 1 || g.y !== 'Bez roku' ? h('h3', {}, String(g.y)) : null,
+          h('ul', {}, g.items.map((i) => h('li', {},
+            h('a', { href: safeUrl(i.url), rel: 'noopener noreferrer', target: '_blank', title: i.t }, issueLabel(i)))))))) : null,
+      h('a', { class: 'news__archive', ...ext }, 'Archiv na webu obce ↗'));
+  };
+  mount('Zpravodaje',
+    h('div', { class: 'page' },
+      siteNav('zpravodaje'),
+      h('header', { class: 'masthead' },
+        h('h1', {}, 'Zpravodaje obcí'),
+        h('span', { class: 'masthead__meta' }, 'Odkazy na čísla přímo na webech obcí')),
+      h('p', { class: 'news__intro' }, 'Zpravodaje nezkracujeme – mají desítky stran a každého zajímá něco jiného. Otevři si číslo a listuj.'),
+      withNews.length
+        ? h('div', { class: 'news-grid' }, withNews.map(card))
+        : h('p', { class: 'muted' }, 'Zatím tu nejsou žádné zpravodaje.'),
+      none.length ? h('p', { class: 'news__missing' }, `Zpravodaj nevydávají: ${none.join(', ')}.`) : null,
+      missing.length ? h('p', { class: 'news__missing' }, `Zpravodaj zatím nemáme: ${missing.join(', ')}.`) : null));
 }
 
 // ---------- detail ----------
