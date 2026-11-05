@@ -126,6 +126,8 @@ function badges(it) {
   return [
     s.importance === 'vysoka' ? h('span', { class: 'badge badge--hot', title: s.importance_why || null }, 'důležité') : null,
     isIso(it.p) && daysTo(it.p) >= -NEW_DAYS && !it.r ? h('span', { class: 'badge' }, 'nové') : null,
+    (isIso(s.updated) && daysTo(s.updated) >= -7) || s.pending
+      ? h('span', { class: 'badge badge--hot', title: 'Úřad oznámení upravil (příloha nebo termín)' }, 'změna') : null,
   ];
 }
 
@@ -443,8 +445,11 @@ function renderDetail(id) {
         isIso(it.u) ? h('div', {}, `Visí do ${dateCz(it.u, { year: true })}`) : null,
         it.r ? h('div', {}, `Sejmuto ${dateCz(it.r.slice(0, 10), { year: true })}`) : null,
         original ? h('a', { href: original, rel: 'noopener noreferrer' }, `Původní znění na úřední desce (${it.o})`) : null,
+        s.pending ? h('p', { class: 'warn-note' }, 'Úřad oznámení upravil (příloha nebo termín). Nové shrnutí se připravuje, tohle je k předchozí verzi.') : null,
         h('p', {}, s.src === 'claude'
-          ? 'Shrnutí napsala AI (Claude) z textu a příloh. Může se splést – právně platí znění na úřední desce.'
+          ? [`Shrnutí napsala AI (Claude) z textu a příloh${isIso(s.summarized) ? ` ${dateCz(s.summarized, { year: true })}` : ''}`,
+            isIso(s.updated) ? `, aktualizováno po změně oznámení ${dateCz(s.updated, { year: true })}` : '',
+            '. Může se splést – právně platí znění na úřední desce.']
           : 'Shrnutí vzniklo automaticky z textu oznámení. Právně platí znění na úřední desce.'))));
 }
 

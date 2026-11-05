@@ -174,3 +174,4 @@ details.removed summary { cursor: pointer; font-family: var(--mono); font-size: 
 .official p { margin: 0; line-height: 1.5; }
 .official a { font-weight: 600; font-size: 15px; padding: 8px 0; }
 .entry__sub { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.warn-note { color: var(--warn-ink); font-weight: 600; }

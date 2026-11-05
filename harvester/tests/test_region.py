@@ -167,3 +167,97 @@ def test_enrich_redoes_old_summary_versions(tmp_path, monkeypatch):
     assert calls == ["Staré"]
     assert summaries["old"]["ai"] == {"tldr": "nové"} and summaries["old"]["v"] == ai.VERSION
     assert summaries["cur"]["ai"] == {"tldr": "hotové"}
+
+
+def _fake_ai(monkeypatch, calls):
+    from uredni_desky import ai
+
+    class Fake:
+        used = tokens_in = tokens_out = 0
+
+        def __init__(self, limit):
+            pass
+
+        def available(self):
+            return True
+
+        async def summarize(self, meta, docs):
+            calls.append([d.get("bytes") for d in docs])
+            return {"tldr": f"shrnutí {len(calls)}"}
+
+    async def no_federation():
+        return None
+
+    monkeypatch.setattr(ai, "enabled", lambda: True)
+    monkeypatch.setattr(ai, "Summarizer", Fake)
+    monkeypatch.setattr(ai, "prepare_github_federation", no_federation)
+
+
+def test_changed_attachment_on_same_url_triggers_new_summary(tmp_path, monkeypatch):
+    from datetime import timedelta
+
+    calls, hits = [], []
+    content = {"v": b"Puvodni text"}
+
+    def handler(req):
+        hits.append(req.headers.get("if-none-match"))
+        if req.headers.get("if-none-match") == content.get("etag"):
+            return httpx.Response(304)
+        return httpx.Response(200, content=content["v"], headers={"content-type": "text/plain", "etag": content["etag"]})
+
+    content["etag"] = '"a"'
+    _fake_ai(monkeypatch, calls)
+
+    def run(now):
+        items = [{"id": "i1", "board": "b1", "title": "Oznámení", "posted": "2026-11-01", "until": "2026-11-20",
+                  "docs": [{"name": "Text", "url": "https://x.cz/a.txt"}]}]
+
+        async def go():
+            async with _client(handler) as c:
+                return await region.enrich(c, items, tmp_path, ai_limit=5, now=now)
+        return asyncio.run(go())
+
+    _, s1 = run(NOW)
+    assert len(calls) == 1 and calls[0] == [b"Puvodni text"]  # pro Claude se nestahuje podruhé
+    assert len(hits) == 1 and s1["i1"]["sig"].startswith(region.SIG_PREFIX) and "updated_at" not in s1["i1"]
+
+    run(NOW + timedelta(hours=2))  # do 24 h se příloha neověřuje ani neshrnuje
+    assert len(hits) == 1 and len(calls) == 1
+
+    run(NOW + timedelta(hours=25))  # po 24 h podmíněný dotaz – 304, beze změny
+    assert hits[-1] == '"a"' and len(calls) == 1
+
+    content.update(v=b"Novy text s jinou lhutou", etag='"b"')  # úřad vyměnil PDF na stejné adrese
+    _, s4 = run(NOW + timedelta(hours=50))
+    assert len(calls) == 2 and s4["i1"]["ai"] == {"tldr": "shrnutí 2"}
+    assert s4["i1"]["updated_at"] and s4["i1"]["first_at"] == s1["i1"]["at"]
+
+
+def test_signature_changes_with_deadline_and_content():
+    it = {"title": "X", "posted": "2026-11-01", "until": "2026-11-20", "docs": [{"url": "https://x.cz/a.pdf"}]}
+    base = region._signature(it, {"https://x.cz/a.pdf": {"sha": "1"}})
+    assert base != region._signature({**it, "until": "2026-11-30"}, {"https://x.cz/a.pdf": {"sha": "1"}})
+    assert base != region._signature(it, {"https://x.cz/a.pdf": {"sha": "2"}})
+    assert base == region._signature(dict(it), {"https://x.cz/a.pdf": {"sha": "1"}})
+
+
+def test_old_signature_format_is_not_marked_updated(tmp_path, monkeypatch):
+    calls = []
+    _fake_ai(monkeypatch, calls)
+    items = [{"id": "i1", "board": "b1", "title": "Oznámení", "posted": "2026-11-01"}]
+    region._write_gz(tmp_path / "summaries.json.gz",
+                     {"i1": {"sig": "abc123", "ai": {"tldr": "staré"}, "v": 2, "at": "2026-11-01T10:00:00+00:00"}})
+
+    async def go():
+        async with _client(lambda req: httpx.Response(404)) as c:
+            return await region.enrich(c, items, tmp_path, ai_limit=5, now=NOW)
+
+    _, s = asyncio.run(go())
+    assert len(calls) == 1 and "updated_at" not in s["i1"] and s["i1"]["first_at"] == "2026-11-01T10:00:00+00:00"
+
+
+def test_output_marks_pending_when_notice_changed_without_new_summary():
+    it = {"id": "i1", "board": "b1", "title": "X", "posted": "2026-11-01", "_sig": "s2:new"}
+    s = region.item_description(it, [], {"sig": "s2:old", "ai": {"tldr": "staré"}, "at": "2026-11-02T09:00:00+00:00",
+                                         "updated_at": "2026-11-03T09:00:00+00:00"})
+    assert s["pending"] is True and s["summarized"] == "2026-11-02" and s["updated"] == "2026-11-03"

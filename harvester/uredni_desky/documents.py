@@ -6,6 +6,7 @@ Skeny se čtou přes OCR (tesseract + pdftoppm), pokud jsou nástroje k dispozic
 
 from __future__ import annotations
 
+import hashlib
 import io
 import logging
 import os
@@ -27,7 +28,7 @@ logging.getLogger("pypdf").setLevel(logging.ERROR)  # stovky varování o fontec
 _OCR_ENV = {**os.environ, "OMP_THREAD_LIMIT": "1"}
 
 MAX_BYTES = 30 * 1024 * 1024
-TEXT_PAGES = 40  # z delších PDF se text čte jen z prvních stran
+TEXT_PAGES = 400  # text z PDF (dlouhé dokumenty jdou Claude jako text – musí být celé)
 OCR_PAGES = 3
 EXCERPT = 8000  # kolik textu se ukládá do mezipaměti (pro pravidla a hledání)
 
@@ -47,6 +48,10 @@ class DocInfo:
     chars: int = 0
     ocr: bool = False
     error: str = ""
+    sha: str = ""  # otisk obsahu – pozná výměnu souboru na stejné adrese
+    etag: str = ""
+    lm: str = ""  # Last-Modified
+    checked: str = ""  # kdy se naposledy ověřilo, že se soubor nezměnil
     text: str = ""  # výňatek (EXCERPT znaků)
     full_text: str = field(default="", repr=False)  # jen během běhu, neukládá se
 
@@ -187,15 +192,36 @@ def analyze(content: bytes, url: str, name: str = "", content_type: str = "") ->
     return info
 
 
-async def download(client: httpx.AsyncClient, url: str) -> tuple[bytes, str]:
-    async with client.stream("GET", url, timeout=60) as resp:
+@dataclass
+class Download:
+    content: bytes | None  # None = nezměněno (HTTP 304)
+    ctype: str = ""
+    etag: str = ""
+    lm: str = ""
+
+
+async def download(client: httpx.AsyncClient, url: str, etag: str = "", last_modified: str = "") -> Download:
+    """Stáhne přílohu; s etag/last_modified se ptá podmíněně a nezměněný soubor nestahuje (304)."""
+    headers = {}
+    if etag:
+        headers["If-None-Match"] = etag
+    if last_modified:
+        headers["If-Modified-Since"] = last_modified
+    async with client.stream("GET", url, timeout=60, headers=headers) as resp:
+        if resp.status_code == 304:
+            return Download(None)
         resp.raise_for_status()
         buf = bytearray()
         async for chunk in resp.aiter_bytes():
             buf.extend(chunk)
             if len(buf) > MAX_BYTES:
                 raise ValueError("příloha je větší než 30 MB")
-        return bytes(buf), resp.headers.get("content-type", "")
+        return Download(bytes(buf), resp.headers.get("content-type", ""), resp.headers.get("etag", ""),
+                        resp.headers.get("last-modified", ""))
+
+
+def fingerprint(content: bytes) -> str:
+    return hashlib.sha256(content).hexdigest()[:16]
 
 
 # ---------- stránka oznámení: přílohy a text ----------
