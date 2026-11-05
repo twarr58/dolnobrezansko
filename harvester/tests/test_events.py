@@ -107,3 +107,20 @@ def test_linklist_psary_and_vestec():
       <article class="gallery-item"><a href="https://vestec.cz/events/betlemske-svetlo-6/">Betlémské světlo 23.12.2026</a></article>"""
     got = events.parse_linklist(vestec, "https://vestec.cz/udalosti/", r"vestec\.cz/events/")
     assert [(e["t"], e["d"]) for e in got] == [("Farmářské trhy", "2026-11-21"), ("Betlémské světlo", "2026-12-23")]
+
+
+def test_linklist_jesenice_place_after_date():
+    html = """<h1>Kalendář akcí</h1>
+      <a href="/strasidelna%2Dstezka/a-1684">Strašidelná stezka</a>
+      <p>6.11.2026, 17:30 strašidelná stezka od Zdiměřické louky</p><p>Zveme všechny malé i velké na strašidelný podvečer!</p>
+      <p>Typ akce:</p><a href="/ap/hledani=1&amp;typ_akce=1035">Dětské akce</a>
+      <a href="/komunitni%2Dvysadba/a-1697">Komunitní výsadba</a><p>7.11.2026 9:00, Jesenice - Hodkovice</p>
+      <a href="/kafe%2Dse%2Dstarostou/a-1702">Kafe se starostou</a><p>23.11.2026 16:00 - 23.11.2026 18:00, Obřadní síň</p>
+      <a href="/adventni%2Dkoncert/a-1688">Adventní koncert ZUŠ</a><p>3.12.2026</p>"""
+    got = events.parse_linklist(html, "https://www.mujesenice.cz/vismo/kalendar-akci.asp", r"/a-\d+$")
+    assert [(e["t"], e["d"], e.get("time"), e.get("place")) for e in got] == [
+        ("Strašidelná stezka", "2026-11-06", "17:30", "strašidelná stezka od Zdiměřické louky"),
+        ("Komunitní výsadba", "2026-11-07", "09:00", "Jesenice - Hodkovice"),
+        ("Kafe se starostou", "2026-11-23", "16:00", "Obřadní síň"),
+        ("Adventní koncert ZUŠ", "2026-12-03", None, None),
+    ]

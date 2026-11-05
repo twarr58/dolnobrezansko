@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Ladění zdrojů: stáhne stránky přes proxy na VPS (hlavičky prohlížeče) a vypíše zhuštěnou strukturu od prvního <h1>:
 odkazy (A href | text), texty (T …), třídy položek seznamu a data-* atributy s rokem. Spustit na VPS jako root:
-  python3 probe-pages.py URL [URL …]
+  python3 probe-pages.py URL [URL …]        (delší výpis: LINES=300 python3 probe-pages.py …)
 """
 import os, re, sys, urllib.request
 from html.parser import HTMLParser
@@ -57,5 +57,6 @@ for url in sys.argv[1:]:
     p = P()
     p.feed(html)
     start = p.h1 or 0
-    for line in p.out[start:start + 70]:
+    lines = int(os.environ.get("LINES", "70"))  # LINES=300 python3 probe-pages.py … pro delší stránky
+    for line in p.out[start:start + lines]:
         print(line)
