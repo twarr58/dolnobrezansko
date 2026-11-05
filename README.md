@@ -81,6 +81,15 @@ Secrety GitHub nedává workflow spuštěným z pull requestů z forků.
 API kredit: předplatné Max obsahuje měsíční kredit na API (organizaci v Claude Console je třeba
 propojit s plánem). Útratu lze omezit limitem v Console; počet shrnutí za běh `AI_LIMIT`.
 
+## Zpravodaje obcí
+
+Sekce „Zpravodaje“ na webu (vedle výchozích úředních desek) ukazuje pro každou obec nejnovější číslo
+zpravodaje a archiv po letech. Bez AI – zpravodaj má desítky stran a každého zajímá něco jiného, takže
+jsou to jen odkazy na čísla na webu obce. Nastavení je v `data/region.json` u obce pod klíčem
+`newsletter` (popis polí v `uredni_desky/newsletters.py`); archiv se prochází nejvýš jednou za 12 hodin
+a při chybě zůstává poslední známý seznam. Obce, u kterých zpravodaj zatím nemáme (Psáry, Libeř,
+Jesenice, Zlatníky-Hodkovice, Březová-Oleško, Okrouhlo), mají v sekci jen zmínku.
+
 ## Celostátní režim (vypnutý)
 
 Původní sběr všech desek z NKOD a webů obcí (`python -m uredni_desky harvest`, `discover`,
