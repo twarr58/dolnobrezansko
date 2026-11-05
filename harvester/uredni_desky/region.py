@@ -24,7 +24,7 @@ from urllib.parse import urlsplit
 
 import httpx
 
-from . import USER_AGENT, ai, cache, digest, documents, edesky, newsletters, webpage
+from . import USER_AGENT, ai, cache, digest, documents, edesky, events, newsletters, webpage
 from .build import load_state, run_build
 from .extra import sources_from_entries
 from .fetch import fetch_all, needs_proxy
@@ -462,11 +462,13 @@ async def run(out_dir: Path, state_dir: Path, ai_limit: int = 100, concurrency: 
                            if results.get(s.id) and results[s.id].via_proxy}
             doc_cache, summaries = await enrich(client, items, state_dir, ai_limit, now, fallback, proxy_hosts)
             news = await newsletters.collect(client, region["members"], state_dir, now, fallback)
+            event_data = await events.collect(client, region["members"], state_dir, now, fallback)
         finally:
             if fallback:
                 await fallback.aclose()
     data = build_output(region, members, boards, items, doc_cache, summaries, now)
     data["newsletters"] = news
+    data["events"] = event_data
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "region.json").write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), "utf-8")
     log.info("region.json: %d oznámení, %d/%d obcí s deskou", len(data["items"]),
@@ -514,6 +516,16 @@ def sample(out_dir: Path) -> dict:
          "issues": [{"t": f"č. {k}/{y}", "url": f"https://example.org/zpravodaj/{n}/{y}-{k}.pdf", "y": y}
                     for y in (today.year, today.year - 1, today.year - 2) for k in (4, 3, 2, 1)]}
         if m.get("newsletter") else {"obec": m["name"]} for n, m in enumerate(region["members"])]
+    sample_events = ["Svoz bioodpadu", "Promítání pro seniory", "Zasedání zastupitelstva", "Lampionový průvod",
+                     "Taneční zábava", "Vernisáž výstavy", "Sběr elektroodpadu", "Dětský den"]
+    readable = [m for m in region["members"] if (m.get("events") or {}).get("fmt") not in (None, "link")]
+    data["events"] = {
+        "sources": [{"obec": m["name"], "url": m["events"]["url"], "read": m["events"]["fmt"] != "link", "ok": True}
+                    for m in region["members"] if m.get("events")],
+        "items": sorted(({"o": m["name"], "t": sample_events[(k + n) % len(sample_events)],
+                          "d": day(k * 2 + n % 3).isoformat(), "time": f"{16 + n % 4}:00",
+                          "url": "https://example.org/akce"} for n, m in enumerate(readable) for k in range(6)),
+                        key=lambda e: (e["d"], e["time"]))}
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "region.json").write_text(json.dumps(data, ensure_ascii=False, indent=1), "utf-8")
     return data

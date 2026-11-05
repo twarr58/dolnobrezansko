@@ -175,6 +175,11 @@ function route() {
     window.scrollTo(0, 0);
     return;
   }
+  if (parts[0] === 'akce') {
+    onList = false;
+    renderEvents(params);
+    return;
+  }
   if (parts[0] === 'zpravodaje') {
     onList = false;
     renderNewsletters();
@@ -516,11 +521,12 @@ function villages(d) {
 
 // ---------- navigace a zpravodaje ----------
 
-/** Hlavní přepínač nahoře: úřední desky (výchozí) a zpravodaje obcí. */
+/** Hlavní přepínač nahoře: úřední desky (výchozí), kalendář akcí a zpravodaje obcí. */
 function siteNav(active) {
   const tab = (key, href, label) => h('a', { class: 'sitenav__tab', href, 'aria-current': active === key ? 'page' : null }, label);
   return h('nav', { class: 'sitenav', 'aria-label': 'Sekce' },
     tab('desky', '#/', 'Úřední desky'),
+    tab('akce', '#/akce', 'Kalendář akcí'),
     tab('zpravodaje', '#/zpravodaje', 'Zpravodaje'));
 }
 
@@ -575,6 +581,87 @@ function renderNewsletters() {
         : h('p', { class: 'muted' }, 'Zatím tu nejsou žádné zpravodaje.'),
       none.length ? h('p', { class: 'news__missing' }, `Zpravodaj nevydávají: ${none.join(', ')}.`) : null,
       missing.length ? h('p', { class: 'news__missing' }, `Zpravodaj zatím nemáme: ${missing.join(', ')}.`) : null));
+}
+
+// ---------- kalendář akcí ----------
+
+const KDY = [['', 'Vše'], ['dnes', 'Dnes'], ['tyden', 'Tento týden'], ['vikend', 'Víkend']];
+
+/** Rozsah dní pro volbu „kdy“: [od, do] včetně. */
+function kdyRange(kdy) {
+  const wd = new Date(utc(TODAY)).getUTCDay(); // 0 = neděle
+  if (kdy === 'dnes') return [TODAY, TODAY];
+  if (kdy === 'tyden') return [TODAY, addDays(TODAY, (7 - wd) % 7)];
+  if (kdy === 'vikend') {
+    const sat = wd === 0 ? addDays(TODAY, -1) : addDays(TODAY, (6 - wd + 7) % 7);
+    return [sat < TODAY ? TODAY : sat, addDays(sat, 1)];
+  }
+  return [TODAY, '9999-12-31'];
+}
+
+function renderEvents(params) {
+  const ev = state.data.events || { sources: [], items: [] };
+  const f = { obec: params.get('obec') || '', kdy: params.get('kdy') || '' };
+  const all = (ev.items || []).filter((e) => isIso(e.d) && (e.end || e.d) >= TODAY);
+  const counts = new Map();
+  for (const e of all) counts.set(e.o, (counts.get(e.o) || 0) + 1);
+  const go = (patch) => {
+    const n = { ...f, ...patch };
+    const p = new URLSearchParams();
+    if (n.obec) p.set('obec', n.obec);
+    if (n.kdy) p.set('kdy', n.kdy);
+    location.hash = p.toString() ? `#/akce?${p}` : '#/akce';
+  };
+  const [from, to] = kdyRange(f.kdy);
+  const list = all.filter((e) => (!f.obec || e.o === f.obec) && (e.end || e.d) >= from && (e.d < from ? from : e.d) <= to);
+  const days = new Map();
+  for (const e of list) {
+    const day = e.d < TODAY ? TODAY : e.d; // akce, která už běží, patří k dnešku
+    if (!days.has(day)) days.set(day, []);
+    days.get(day).push(e);
+  }
+  const eventNode = (e) => h('a', { class: 'entry entry--event ev', href: safeUrl(e.url) || '#', rel: 'noopener noreferrer', target: '_blank' },
+    h('span', { class: 'entry__meta' },
+      [e.time, e.end && e.end !== e.d ? `${e.d < TODAY ? 'probíhá' : 'až'} do ${dm(e.end)}` : null, e.o].filter(Boolean).join(' · ')),
+    h('h3', { class: 'entry__title' }, e.t),
+    e.place || e.tags?.length ? h('span', { class: 'entry__sub' }, [e.place, ...(e.tags || [])].filter(Boolean).join(' · ')) : null);
+  const dayNodes = [...days.keys()].sort().map((iso) => {
+    const n = daysTo(iso);
+    return h('section', { class: 'daygroup', 'aria-label': `${weekdayLong(iso)} ${dateCz(iso)}` },
+      h('div', { class: 'daygroup__date' },
+        h('span', { class: 'daygroup__wd' }, weekday(iso)),
+        h('span', { class: 'daygroup__d' }, dm(iso)),
+        h('span', { class: `daygroup__rel${n <= 2 ? ' daygroup__rel--soon' : ''}` }, relDay(iso))),
+      h('div', { class: 'daygroup__items' }, days.get(iso).map(eventNode)));
+  });
+  const villagesWith = [...counts.keys()].sort((a, b) => counts.get(b) - counts.get(a) || a.localeCompare(b, 'cs'));
+  const sources = ev.sources || [];
+  const linkOnly = sources.filter((s) => !s.read || !s.ok);
+  const knownNames = new Set(sources.map((s) => s.obec));
+  const noCal = (state.data.members || []).map((m) => m.name).filter((n) => !knownNames.has(n));
+  mount('Kalendář akcí',
+    h('div', { class: 'page' },
+      siteNav('akce'),
+      h('header', { class: 'masthead' },
+        h('h1', {}, 'Kalendář akcí'),
+        h('span', { class: 'masthead__meta' }, 'Z kalendářů na webech obcí · příštích 60 dní'),
+        state.data.sample ? h('div', { class: 'sample' }, 'Ukázková data – nejde o skutečné akce.') : null),
+      h('section', { class: 'filters', 'aria-label': 'Výběr' },
+        h('div', { class: 'topics', role: 'group', 'aria-label': 'Kdy' }, KDY.map(([k, label]) => h('button', {
+          type: 'button', class: 'topic', 'aria-pressed': String(f.kdy === k), onclick: () => go({ kdy: k }),
+        }, label))),
+        h('div', { class: 'topics topics--places', role: 'group', 'aria-label': 'Obec' }, ['', ...villagesWith].map((name) => h('button', {
+          type: 'button', class: 'topic', 'aria-pressed': String(f.obec === name), onclick: () => go({ obec: f.obec === name ? '' : name }),
+        }, name || 'Všechny obce', name ? h('span', { class: 'topic__n' }, String(counts.get(name))) : null)))),
+      h('div', { class: 'summary' }, h('span', {}, h('strong', {}, String(list.length)), ` ${plural(list.length, 'akce', 'akce', 'akcí')}`)),
+      h('div', { class: 'main' },
+        h('div', { class: 'timeline' }, dayNodes.length ? dayNodes : h('p', { class: 'empty' }, 'V tomto výběru žádné akce.')),
+        h('section', { class: 'villages', 'aria-labelledby': 'h-cal' },
+          h('h2', { id: 'h-cal' }, 'KALENDÁŘE NA WEBECH OBCÍ'),
+          h('ul', {}, sources.map((s) => h('li', {}, h('a', { href: safeUrl(s.url), rel: 'noopener noreferrer', target: '_blank' }, s.obec)))),
+          linkOnly.length ? h('p', {}, `Akce z webu zatím nenačítáme: ${linkOnly.map((s) => s.obec).join(', ')} – otevři jejich kalendář.`) : null,
+          noCal.length ? h('p', {}, `Kalendář jsme nenašli: ${noCal.join(', ')}.`) : null,
+          h('p', {}, 'Akce přebíráme tak, jak je obce zveřejňují; podrobnosti a změny najdeš na odkazu u akce.')))));
 }
 
 // ---------- detail ----------
