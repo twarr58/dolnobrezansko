@@ -29,6 +29,7 @@ from urllib.parse import unquote, urljoin, urlsplit
 
 import httpx
 import lxml.html
+from lxml import etree
 
 from .fetch import needs_proxy
 from .webpage import BROWSER_HEADERS
@@ -36,6 +37,7 @@ from .webpage import BROWSER_HEADERS
 log = logging.getLogger(__name__)
 
 REFRESH_HOURS = 12  # zpravodaj vychází jednou za měsíc až čtvrtletí – archiv stačí projít párkrát denně
+PARSER_VERSION = 2  # zvýšit při změně čtení – uložené seznamy čísel se pak načtou znovu hned
 MAX_ISSUES = 400
 _GENERIC = re.compile(r"^(stáhnout|prohlédnout|zobrazit|otevřít|pdf|ke stažení|download|více|detail)?$", re.I)
 _SIZE = re.compile(r"\s*(?:\(\s*)?(?:pdf\s*)?\d+(?:[.,]\d+)?\s*[kMG]B\s*\)?\s*$", re.I)
@@ -81,11 +83,19 @@ def parse_archive(html: bytes | str, base_url: str, cfg: dict) -> list[dict]:
     num_re = re.compile(cfg["num_re"], re.I) if cfg.get("num_re") else None
     found: dict[str, dict] = {}
     heading_year = None
-    for a in doc.iter():
+    is_year = re.compile(r"(19|20)\d\d")
+    # Procházení v pořadí dokumentu: text prvku na začátku, text za prvkem (tail) na konci. Rok bývá i jako
+    # volný text mezi značkami („<br />2026<br />“, „<hr />2017<br />“), nejen v samostatném nadpisu.
+    for action, a in etree.iterwalk(doc, events=("start", "end")):
         if not isinstance(a.tag, str):
             continue
+        if action == "end":
+            tail = (a.tail or "").strip()
+            if cfg.get("year_headings") and is_year.fullmatch(tail):
+                heading_year = int(tail)
+            continue
         own = (a.text or "").strip()
-        if cfg.get("year_headings") and a.tag != "a" and re.fullmatch(r"(19|20)\d\d", own):
+        if cfg.get("year_headings") and a.tag != "a" and is_year.fullmatch(own):
             heading_year = int(own)  # archiv po letech: „2026“ nad seznamem měsíců
             continue
         if a.tag != "a":
@@ -103,8 +113,8 @@ def parse_archive(html: bytes | str, base_url: str, cfg: dict) -> list[dict]:
         title = "" if _GENERIC.match(text) else text
         from_text = bool(title)
         year = _year(title)
-        if title and not year and heading_year:
-            year = heading_year
+        if title and not year and (heading_year or _year(unquote(urlsplit(url).path))):
+            year = heading_year or _year(unquote(urlsplit(url).path))  # nadpis roku, jinak rok v adrese
             title = f"{title} {year}"
         num = None
         if num_re and (m := num_re.search(unquote(url).rsplit("/", 1)[-1] + " " + text)):
@@ -243,7 +253,7 @@ async def collect(client: httpx.AsyncClient, members: list[dict], state_dir: Pat
             out.append({"obec": m["name"], "none": True} if cfg is False else {"obec": m["name"]})
             continue
         entry = cached.get(m["name"]) or {}
-        fresh = entry.get("checked") and entry.get("cfg") == cfg and \
+        fresh = entry.get("checked") and entry.get("cfg") == cfg and entry.get("v") == PARSER_VERSION and \
             datetime.fromisoformat(entry["checked"]) > now - timedelta(hours=REFRESH_HOURS)
         if not fresh:
             try:
@@ -252,11 +262,11 @@ async def collect(client: httpx.AsyncClient, members: list[dict], state_dir: Pat
                 if cfg.get("detail"):
                     issues = await resolve_details(client, issues, cfg["detail"], resolved, fallback)
                 entry = {"cfg": cfg, "checked": now.isoformat(timespec="seconds"), "issues": issues, "ok": True,
-                         "resolved": resolved}
+                         "resolved": resolved, "v": PARSER_VERSION}
                 log.info("Zpravodaj %s (%s): %d čísel", m["name"], cfg["name"], len(issues))
             except Exception as exc:  # web obce nejde – nechá se poslední známý seznam čísel
                 log.warning("Zpravodaj %s: %r", m["name"], exc)
-                entry = {**entry, "cfg": cfg, "checked": now.isoformat(timespec="seconds"), "ok": False}
+                entry = {**entry, "cfg": cfg, "checked": now.isoformat(timespec="seconds"), "ok": False, "v": PARSER_VERSION}
             cached[m["name"]] = entry
         out.append({k: v for k, v in {
             "obec": m["name"], "name": cfg["name"], "archive": cfg["url"],
