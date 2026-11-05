@@ -70,11 +70,13 @@ def test_psary_and_jesenice_match_only_issue_files():
 
     region = _json.loads((Path(__file__).resolve().parent.parent / "uredni_desky" / "data" / "region.json").read_text())
     cfg = {m["name"]: m.get("newsletter") for m in region["members"]}
-    psary = """<a href="/psarsky-zpravodaj/">Psárský zpravodaj</a>
-      <a href="/wp-content/uploads/2026/10/psarskyzpravodajrijen2026web.pdf">Psárský zpravodaj říjen 2026</a>
-      <a href="/wp-content/uploads/2026/01/cenik-inzerce.pdf">Ceník inzerce</a>"""
+    psary = """<a href="https://psary.cz/blizke-udalosti/">Kalendář akcí</a>
+      <a href="https://psary.cz/psarsky-zpravodaj/">Psárský zpravodaj</a>
+      <a href="https://psary.cz/psarsky-zpravodaj/o-psarskem-zpravodaji/">O Psárském zpravodaji</a>
+      <a href="https://psary.cz/psarsky-zpravodaj/cerven-2011/">Červen 2011</a>
+      <a href="https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2023/">Psárský zpravodaj 3/2023</a>"""
     got = newsletters.parse_archive(psary, "https://psary.cz/psarsky-zpravodaj/", cfg["Psáry"])
-    assert [i["t"] for i in got] == ["Psárský zpravodaj říjen 2026"]
+    assert [i["t"] for i in got] == ["Psárský zpravodaj 3/2023", "Červen 2011"]
     jes = """<a href="/jesenicky-kuryr/ms-4026/p1=4026">Jesenický kurýr</a>
       <a href="/assets/File.ashx?id_org=1&id_dokumenty=9">Jesenický kurýr 10/2026</a>"""
     got = newsletters.parse_archive(jes, "https://www.mujesenice.cz/jesenicky-kuryr/ms-4026/p1=4026", cfg["Jesenice"])

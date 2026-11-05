@@ -125,6 +125,7 @@ def test_summarizer_request_and_response(monkeypatch):
     import httpx2
 
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test")
+    monkeypatch.setattr(ai, "MODEL", "claude-sonnet-5-5")  # Sonnet: se záložním modelem při odmítnutí
     seen = {}
     answer = {"tldr": "Soused staví dům.", "bullets": [], "action": "", "deadline": "", "event": "", "event_time": "",
               "where": "", "category": "stavba", "docs": []}
@@ -229,3 +230,28 @@ def test_rule_category_wins_for_contracts_over_old_ai_summary():
     assert s["cat"] == "smlouvy" and s["label"] == "Smlouvy a dotace"
     s2 = region.item_description({**it, "title": "Oznámení obce"}, [], {"sig": "x", "ai": {"tldr": "x", "category": "doprava"}})
     assert s2["cat"] == "doprava"  # jinak rozhoduje Claude
+
+
+def test_haiku_request_has_no_server_side_fallback(monkeypatch):
+    import asyncio
+    import json as _json
+
+    import anthropic
+    import httpx2
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test")
+    monkeypatch.setattr(ai, "MODEL", "claude-haiku-5-5")
+    seen = {}
+
+    def handler(req):
+        seen["body"] = _json.loads(req.content)
+        return httpx2.Response(200, json={
+            "id": "msg_1", "type": "message", "role": "assistant", "model": "claude-haiku-5-5",
+            "content": [{"type": "text", "text": _json.dumps({"tldr": "x"})}],
+            "stop_reason": "end_turn", "stop_sequence": None, "usage": {"input_tokens": 1, "output_tokens": 1}})
+
+    s = ai.Summarizer(limit=1)
+    s.client = anthropic.AsyncAnthropic(api_key="test", http_client=httpx2.AsyncClient(
+        transport=httpx2.MockTransport(handler)))
+    asyncio.run(s.summarize({"Název": "X"}, []))
+    assert seen["body"]["model"] == "claude-haiku-5-5" and "fallbacks" not in seen["body"]

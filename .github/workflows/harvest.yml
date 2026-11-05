@@ -78,7 +78,7 @@ jobs:
           ANTHROPIC_SERVICE_ACCOUNT_ID: ${{ vars.ANTHROPIC_SERVICE_ACCOUNT_ID }}
           ANTHROPIC_WORKSPACE_ID: ${{ vars.ANTHROPIC_WORKSPACE_ID }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          AI_MODEL: ${{ vars.AI_MODEL || 'claude-sonnet-5-5' }}
+          AI_MODEL: ${{ vars.AI_MODEL || 'claude-haiku-5-5' }}
           AI_LIMIT: ${{ vars.AI_LIMIT || '100' }}
         run: python -m uredni_desky region --out site/data --state state
 
@@ -92,7 +92,7 @@ jobs:
           # Větev drží jen poslední stav (jeden commit bez historie), aby repozitář nebobtnal.
           git worktree add --orphan -b data-next out
           cp state/items.json.gz state/boards.json out/
-          for f in docs.json.gz summaries.json.gz region_sources.json discovered.json obce.json; do
+          for f in docs.json.gz summaries.json.gz region_sources.json discovered.json obce.json newsletters.json events.json; do
             [ -f "state/$f" ] && cp "state/$f" out/ || true
           done
           cd out

@@ -8,6 +8,8 @@ Nastavení u obce v data/region.json pod klíčem „events“:
                  /api/services/app/ObjectOverview/GetEventsByDay
          rdc     seznam <li class="rdc-event" data-date="MM/DD/YYYY"> (Ohrobec)
          article seznam <div class="article"> s datem „pátek, 06. listopad 2026“ (Vrané nad Vltavou)
+         linklist seznam odkazů na akce (adresa vyhoví „match“), datum a čas v textu odkazu nebo hned za ním
+                 („17:00 - 07.11.2026“, „Farmářské trhy 21.11.2026“) – Psáry, Vestec
          link    akce nečteme (web nejde nebo nemá čitelný kalendář) – jen odkaz na kalendář
 """
 
@@ -149,6 +151,55 @@ def parse_article(html: str, base_url: str) -> list[dict]:
     return out
 
 
+# ---------- linklist (Psáry, Vestec) ----------
+
+_NUM_DATE = re.compile(r"(?<!\d)(\d{1,2})\.\s?(\d{1,2})\.\s?(20\d\d)(?!\d)")
+
+
+def parse_linklist(html: str, base_url: str, match: str) -> list[dict]:
+    """Odkazy na akce v pořadí stránky; datum, čas a místo z textu odkazu a z textů hned za ním."""
+    from lxml import etree
+
+    doc = lxml.html.fromstring(html)
+    for bad in doc.xpath("//script|//style|//nav|//footer"):
+        bad.drop_tree()
+    pat = re.compile(match, re.I)
+    rows: list[dict] = []
+    current = None
+    inside = None
+    for action, el in etree.iterwalk(doc, events=("start", "end")):
+        if action == "start":
+            if inside is None and el.tag == "a" and pat.search(el.get("href") or ""):
+                current = {"a": el, "texts": []}
+                rows.append(current)
+                inside = el
+            elif inside is None and el.tag == "a":
+                inside = el  # jiný odkaz (menu, sdílení): jeho text k akci nepatří
+            elif inside is None and current is not None and el.text and el.text.strip():
+                current["texts"].append(_clean(el.text))
+        else:
+            if el is inside:
+                inside = None
+            if inside is None and current is not None and el.tail and el.tail.strip():
+                current["texts"].append(_clean(el.tail))
+    out: dict[str, dict] = {}
+    for r in rows:
+        a = r["a"]
+        url = urljoin(base_url, a.get("href") or "")
+        title = _clean(a.text_content())
+        texts = r["texts"][:4]
+        m = _NUM_DATE.search(title) or next((x for x in (_NUM_DATE.search(t) for t in texts) if x), None)
+        if not title or not m or url in out:
+            continue
+        d = date(int(m.group(3)), int(m.group(2)), int(m.group(1))).isoformat()
+        title = _clean(_NUM_DATE.sub("", title)).strip(" -–|")
+        t = next((x for x in (_TIME.search(t) for t in [a.text_content(), *texts]) if x), None)
+        place = next((x for x in texts if not _NUM_DATE.search(x) and not _TIME.search(x) and len(x) < 80), None)
+        out[url] = {k: v for k, v in {"t": title, "d": d, "time": f"{int(t.group(1)):02d}:{t.group(2)}" if t else None,
+                                      "place": place, "url": url}.items() if v}
+    return list(out.values())
+
+
 # ---------- sběr ----------
 
 async def fetch_events(client: httpx.AsyncClient, cfg: dict, today: date,
@@ -163,6 +214,9 @@ async def fetch_events(client: httpx.AsyncClient, cfg: dict, today: date,
             "From": f"{today.isoformat()}T00:00:00", "To": f"{end.isoformat()}T23:59:59",
             "ObjectId": obj, "ElementTypeOfObjectTypeBlockId": block})
         events = parse_vismo(resp.json(), str(page.url))
+    elif fmt == "linklist":
+        page = await _get(client, cfg["url"], fallback, browser=cfg.get("browser"))
+        events = parse_linklist(page.text, str(page.url), cfg["match"])
     elif fmt in ("rdc", "article"):
         page = await _get(client, cfg["url"], fallback, browser=cfg.get("browser"))
         events = (parse_rdc if fmt == "rdc" else parse_article)(page.text, str(page.url))
