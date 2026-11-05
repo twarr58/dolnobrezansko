@@ -227,8 +227,8 @@ async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, 
             else documents.KIND_TEXT
         info = documents.DocInfo(url=url, ext=ext, kind=kind, chars=len(full), text=full[:documents.EXCERPT],
                                  sha=documents.fingerprint(full.encode("utf-8")), checked=stamp)
-        doc_cache[url] = info.to_cache()
-        return {**info.to_cache(), "full_text": full}
+        doc_cache[url] = {**info.to_cache(), "src": "edesky"}
+        return {**doc_cache[url], "full_text": full}
 
     async def get_doc(doc: dict, need_bytes: bool) -> dict:
         """Příloha z mezipaměti; jednou za REVALIDATE_HOURS se podmíněně ověří (ETag / Last-Modified)."""
@@ -240,7 +240,8 @@ async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, 
         ref = edesky.ATTACHMENTS.get(url)
         if ref is not None and fallback is None:
             # příloha z edesky.cz: originál je na webu obce, který z runneru nejde – stačí rozpoznaný text
-            if cached and cached.get("checked", "") > recheck_before and cached.get("chars"):
+            # jen text z edesky.cz – starší záznam se staženou stránkou edesky.cz (HTML s menu) se nahradí hned
+            if cached and cached.get("src") == "edesky" and cached.get("checked", "") > recheck_before and cached.get("chars"):
                 return cached
             return await edesky_text_doc(url, ref, doc.get("name") or "", cached)
         if cached and not need_bytes and cached.get("checked", "") > recheck_before:
