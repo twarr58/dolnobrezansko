@@ -11,6 +11,7 @@ Nastavení u obce v data/region.json pod klíčem „events“:
          linklist seznam odkazů na akce (adresa vyhoví „match“), datum a čas v textu odkazu nebo hned za ním
                  („17:00 - 07.11.2026“, „Farmářské trhy 21.11.2026“) – Psáry, Vestec
                  volitelně range_url s {od} a {do} (d.m.yyyy) pro výpis za celé okno – Jesenice
+         munipolis karty akcí webů MUNIPOLIS (data-test="timeline-item": název, datum a čas, místo) – Zlatníky
          link    akce nečteme (web nejde nebo nemá čitelný kalendář) – jen odkaz na kalendář
 """
 
@@ -208,6 +209,32 @@ def parse_linklist(html: str, base_url: str, match: str) -> list[dict]:
     return list(out.values())
 
 
+# ---------- munipolis (Zlatníky-Hodkovice) ----------
+
+def parse_munipolis(html: str, base_url: str) -> list[dict]:
+    """Karty akcí na webu MUNIPOLIS; akce nemají vlastní stránku – odkaz vede na kalendář."""
+    doc = lxml.html.fromstring(html)
+    out = []
+    for it in doc.xpath('//*[@data-test="timeline-item"]'):
+        def field(name: str) -> str:
+            el = it.xpath(f'.//*[@data-test="{name}"]')
+            return _clean(el[0].text_content()) if el else ""
+
+        title, when, place = field("timeline-item-title"), field("event-info-date"), field("event-info-place")
+        dates = _NUM_DATE.findall(when)
+        if not title or not dates:
+            continue
+        d = date(int(dates[0][2]), int(dates[0][1]), int(dates[0][0])).isoformat()
+        end = date(int(dates[-1][2]), int(dates[-1][1]), int(dates[-1][0])).isoformat()
+        t = _CLOCK.search(_NUM_DATE.sub(" ", when.split(" - ")[0]))
+        out.append({k: v for k, v in {
+            "t": title, "d": d, "end": end if end != d else None,
+            "time": f"{int(t.group(1)):02d}:{t.group(2)}" if t else None,
+            "place": place[:80] or None, "url": base_url,
+        }.items() if v})
+    return out
+
+
 # ---------- sběr ----------
 
 async def fetch_events(client: httpx.AsyncClient, cfg: dict, today: date,
@@ -228,6 +255,9 @@ async def fetch_events(client: httpx.AsyncClient, cfg: dict, today: date,
         url = cfg["range_url"].format(od=dm(today), do=dm(end)) if cfg.get("range_url") else cfg["url"]
         page = await _get(client, url, fallback, browser=cfg.get("browser"))
         events = parse_linklist(page.text, str(page.url), cfg["match"])
+    elif fmt == "munipolis":
+        page = await _get(client, cfg["url"], fallback, browser=cfg.get("browser"))
+        events = parse_munipolis(page.text, cfg["url"])
     elif fmt in ("rdc", "article"):
         page = await _get(client, cfg["url"], fallback, browser=cfg.get("browser"))
         events = (parse_rdc if fmt == "rdc" else parse_article)(page.text, str(page.url))

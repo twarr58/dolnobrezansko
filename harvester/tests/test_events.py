@@ -124,3 +124,18 @@ def test_linklist_jesenice_place_after_date():
         ("Kafe se starostou", "2026-11-23", "16:00", "Obřadní síň"),
         ("Adventní koncert ZUŠ", "2026-12-03", None, None),
     ]
+
+
+def test_munipolis_cards():
+    html = """<div data-test="timeline-item"><h2 data-test="timeline-item-title">Strašidelná BU-BU stezka ve Zlatníkách!</h2>
+      <div data-test="event-info-published">Zveřejněno od: 4. 11. 2026 13:16</div>
+      <div data-test="event-info-date">7. 11. 2026 17:30 - 7. 11. 2026 20:30</div>
+      <div data-test="event-info-place">Zlatníky V remízku</div></div>
+      <div data-test="timeline-item"><h2 data-test="timeline-item-title">Zájezd</h2>
+      <div data-test="event-info-date">14. 11. 2026 09:30 - 15. 11. 2026 20:00</div></div>"""
+    got = events.parse_munipolis(html, "https://zlatniky-hodkovice.cz/event-calendar")
+    assert got == [
+        {"t": "Strašidelná BU-BU stezka ve Zlatníkách!", "d": "2026-11-07", "time": "17:30", "place": "Zlatníky V remízku",
+         "url": "https://zlatniky-hodkovice.cz/event-calendar"},
+        {"t": "Zájezd", "d": "2026-11-14", "end": "2026-11-15", "time": "09:30", "url": "https://zlatniky-hodkovice.cz/event-calendar"},
+    ]
