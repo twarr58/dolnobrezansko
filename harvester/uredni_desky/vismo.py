@@ -2,7 +2,7 @@
 
 Seznam na <web>/uredni-deska obsahuje položky třídy site_board…: odkaz s názvem,
 „Rubrika“ (site_board__folder__link), „Vyvěšeno od/do“ v <time datetime="YYYY-MM-DD">.
-Přílohy jsou až na stránce detailu – ty adaptér zatím nestahuje.
+Přílohy jsou až na stránce detailu – stahuje je až region.py (přílohy ze stránky oznámení).
 """
 
 from __future__ import annotations
@@ -32,7 +32,8 @@ class _Parser(HTMLParser):
         if tag == "a" and self._depth_board and a.get("href"):
             if "site_board__folder__link" in cls:
                 self._folder = True
-            elif "Account/Login" not in a["href"]:
+            elif "Account/Login" not in a["href"] and "/vyhledavani/" not in a["href"] and "tags=" not in a["href"]:
+                # odkazy na štítky („Aktuality“, „Zastupitelstvo“) nejsou položky desky
                 self._link, self._buf = a["href"], []
         elif tag == "span" and "site_board__date" in cls:
             self._date = "from" if "-from" in cls else "to" if "-to" in cls else None

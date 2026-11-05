@@ -1,47 +1,16 @@
-// Úřední deska Dolnobřežansko – statický frontend bez buildu.
+// Úřední deska Dolnobřežansko – statický frontend bez buildu, varianta „Kalendář“.
 // Data: data/region.json (generuje `python -m uredni_desky region`).
 
 const DATA = './data/region.json';
-const NOW_DAYS = 7; // „Teď řešit“: lhůta nebo akce do 7 dní
-const NEW_DAYS = 7;
+const HORIZON = 14; // dní dopředu na časové ose; pozdější termíny jdou do „Později“
+const NEW_DAYS = 3; // štítek „nové“
 const STEP = 20;
+const DAY_MS = 86400000;
+const WEEKDAYS = ['ne', 'po', 'út', 'st', 'čt', 'pá', 'so'];
+const WEEKDAYS_LONG = ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'];
+const RESTRICTIONS = new Set(['doprava', 'energie', 'voda']); // akce, která omezuje (uzavírka, odstávka)
 
-const TONE = {
-  stavba: 'green', uzemni: 'green', zastupitelstvo: 'purple', rozpocet: 'purple', vyhlasky: 'purple', volby: 'purple',
-  doprava: 'yellow', energie: 'yellow', voda: 'blue', majetek: 'blue', dane: 'blue', priroda: 'green',
-  drazby: 'red', pisemnost: 'gray', ostatni: 'gray',
-};
-
-// Ikony (stroke SVG, 24×24) podle tématu.
-const ICON = {
-  stavba: 'M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6',
-  uzemni: 'M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15',
-  zastupitelstvo: 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM17 11.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM3 20c0-3 3-5 6-5s6 2 6 5M15 15c3 0 6 1.5 6 4',
-  doprava: 'M4 20L9 4M20 20L15 4M12 6v2M12 11v2M12 16v2',
-  majetek: 'M4 20V9l8-5 8 5v11zM9 20v-5h6v5',
-  rozpocet: 'M4 19h16M6 16V9M10 16V6M14 16v-4M18 16V8',
-  vyhlasky: 'M6 2h9l5 5v15H6zM14 2v6h6M9 13h8M9 17h6',
-  volby: 'M4 12l4 4 8-9M3 21h18',
-  voda: 'M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z',
-  priroda: 'M12 22V12M12 12c-4 0-7-3-7-7 4 0 7 3 7 7zM12 12c4 0 7-3 7-7-4 0-7 3-7 7z',
-  energie: 'M13 2L4 14h7l-1 8 9-12h-7z',
-  drazby: 'M14 4l6 6M11 7l6 6M4 20l8-8M15 3l6 6-3 3-6-6z',
-  dane: 'M5 4h14v16H5zM9 8h6M9 12h6M9 16h3',
-  pisemnost: 'M3 6h18v12H3zM3 6l9 7 9-7',
-  ostatni: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 11v6M12 7.5v.5',
-};
-const DOC_ICON = {
-  text: 'M6 2h9l5 5v15H6zM14 2v6h6M9 13h8M9 17h6',
-  mapa: 'M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15',
-  sken: 'M3 4h18v16H3zM7 9h10M7 13h6',
-  obrazek: 'M3 4h18v16H3zM3 16l5-5 4 4 3-3 6 6',
-  jine: 'M6 2h9l5 5v15H6zM14 2v6h6',
-};
-const CLOCK = 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2';
-const CAL = 'M3 5h18v16H3zM3 10h18M8 3v4M16 3v4';
-const BACK = 'M15 5l-7 7 7 7';
-
-const state = { data: null, filter: { obec: '', q: '' }, limit: STEP };
+const state = { data: null, filter: { obec: '', q: '' }, limit: STEP, listScroll: null };
 
 // ---------- pomocné funkce ----------
 
@@ -55,88 +24,120 @@ function h(tag, attrs, ...children) {
     else el.setAttribute(k, v === true ? '' : v);
   }
   for (const c of children.flat(Infinity)) {
-    if (c == null || c === false) continue;
+    if (c == null || c === false || c === '') continue;
     el.append(c instanceof Node ? c : String(c));
   }
   return el;
 }
 
-function icon(path, size = 14, stroke = 'currentColor') {
+function icon(path, size = 18) {
   const ns = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(ns, 'svg');
-  for (const [k, v] of Object.entries({ width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke, 'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true' })) svg.setAttribute(k, v);
+  const attrs = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true' };
+  for (const [k, v] of Object.entries(attrs)) svg.setAttribute(k, v);
   const p = document.createElementNS(ns, 'path');
   p.setAttribute('d', path);
   svg.append(p);
   return svg;
 }
 
+const ICON_BACK = 'M15 5l-7 7 7 7';
+const ICON_DOC = 'M6 2h9l5 5v15H6zM14 2v6h6M9 13h8M9 17h6';
+const ICON_MAP = 'M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15';
+const ICON_SCAN = 'M3 4h18v16H3zM7 9h10M7 13h6';
+const ICON_IMG = 'M3 4h18v16H3zM3 16l5-5 4 4 3-3 6 6';
+
 const safeUrl = (u) => (typeof u === 'string' && /^https?:\/\//i.test(u) ? u : null);
 const fold = (s) => (s || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
-const todayIso = () => new Date().toLocaleDateString('sv-SE');
-const daysTo = (iso) => Math.round((Date.parse(iso) - Date.parse(todayIso())) / 86400000);
 const plural = (n, one, few, many) => (n === 1 ? one : n >= 2 && n <= 4 ? few : many);
-const WEEKDAY = ['ne', 'po', 'út', 'st', 'čt', 'pá', 'so'];
+const isIso = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
 
-function dateCz(iso, { year = false, weekday = false } = {}) {
-  if (!iso) return '';
-  const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
-  const wd = weekday ? `${WEEKDAY[new Date(y, m - 1, d).getDay()]} ` : '';
-  return `${wd}${d}. ${m}.${year || y !== new Date().getFullYear() ? ` ${y}` : ''}`;
+// Data se počítají jako kalendářní dny v UTC – přechod na letní čas neposune den.
+function localTodayIso() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+let TODAY = localTodayIso();
+const utc = (iso) => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10));
+const addDays = (iso, n) => new Date(utc(iso) + n * DAY_MS).toISOString().slice(0, 10);
+const daysTo = (iso) => Math.round((utc(iso) - utc(TODAY)) / DAY_MS);
+const weekday = (iso) => WEEKDAYS[new Date(utc(iso)).getUTCDay()];
+const weekdayLong = (iso) => WEEKDAYS_LONG[new Date(utc(iso)).getUTCDay()];
+const dm = (iso) => `${+iso.slice(8, 10)}.${+iso.slice(5, 7)}`;
+
+function dateCz(iso, { year = false, wd = false } = {}) {
+  if (!isIso(iso)) return '';
+  const y = +iso.slice(0, 4);
+  const showYear = year || y !== +TODAY.slice(0, 4);
+  return `${wd ? `${weekday(iso)} ` : ''}${+iso.slice(8, 10)}. ${+iso.slice(5, 7)}.${showYear ? ` ${y}` : ''}`;
 }
 
-function inDays(iso) {
+function relDay(iso) {
   const n = daysTo(iso);
   if (n === 0) return 'dnes';
   if (n === 1) return 'zítra';
-  if (n > 1) return `za ${n} ${plural(n, 'den', 'dny', 'dní')}`;
-  return null;
+  if (n === 2) return 'pozítří';
+  if (n > 2) return `za ${n} ${plural(n, 'den', 'dny', 'dní')}`;
+  if (n === -1) return 'včera';
+  return `před ${-n} dny`;
 }
 
-/** Nejbližší termín, kvůli kterému je oznámení „teď řešit“: {kind, date, text}. */
-function urgency(it) {
+const label = (it) => (it.s?.label || 'Ostatní').toLowerCase();
+
+/**
+ * Nejbližší budoucí termín oznámení: {date, kind, type, until?}.
+ * kind = barva (warn: lhůta/omezení, event: jednání/akce, start: probíhá), type = co to je.
+ */
+function when(it) {
   const s = it.s || {};
   if (it.r) return null;
-  const cands = [];
-  if (s.deadline && daysTo(s.deadline) >= 0) cands.push({ kind: 'deadline', date: s.deadline });
-  if (s.event && daysTo(s.event) >= 0) cands.push({ kind: 'event', date: s.event });
-  else if (s.event_end && daysTo(s.event) < 0 && daysTo(s.event_end) >= 0) cands.push({ kind: 'running', date: s.event_end });
-  cands.sort((a, b) => a.date.localeCompare(b.date));
-  const c = cands[0];
-  if (!c || daysTo(c.date) > NOW_DAYS) return null;
-  return c;
-}
-
-function dueText(it, u) {
-  const s = it.s;
-  if (u.kind === 'deadline') {
-    const what = /námitk/i.test(s.action || '') ? 'Námitky' : /připomín/i.test(s.action || '') ? 'Připomínky' : /nabídk/i.test(s.action || '') ? 'Nabídky' : 'Lhůta';
-    return [CLOCK, `${what} do ${dateCz(u.date, { weekday: true })} · ${inDays(u.date)}`];
+  const c = [];
+  if (isIso(s.deadline) && daysTo(s.deadline) >= 0) c.push({ date: s.deadline, kind: 'warn', type: 'deadline' });
+  if (isIso(s.event)) {
+    const restrict = RESTRICTIONS.has(s.cat);
+    if (daysTo(s.event) >= 0) {
+      c.push({ date: s.event, kind: restrict ? 'warn' : 'event', type: 'event', until: isIso(s.event_end) ? s.event_end : null });
+    } else if (isIso(s.event_end) && daysTo(s.event_end) >= 0) {
+      c.push({ date: TODAY, kind: 'start', type: 'running', until: s.event_end });
+    }
   }
-  if (u.kind === 'running') return [CAL, `Platí ještě do ${dateCz(u.date, { weekday: true })}`];
-  const end = s.event_end ? ` – ${dateCz(s.event_end)}` : '';
-  return [CAL, `${dateCz(u.date, { weekday: true })}${s.time ? ` v ${s.time}` : ''}${end} · ${inDays(u.date)}`];
+  c.sort((a, b) => a.date.localeCompare(b.date) || (a.type === 'deadline' ? -1 : 1));
+  return c[0] || null;
 }
 
-const DOC_KIND = { text: 'Text', mapa: 'Mapa', sken: 'Sken', obrazek: 'Obrázek', jine: 'Soubor' };
-
-function docChip(d) {
-  const kind = DOC_KIND[d.k] || (d.x ? d.x.toUpperCase() : 'Příloha');
-  const pages = d.pg ? ` · ${d.pg} str.` : '';
-  return `${kind}${pages}`;
+function deadlineWord(s) {
+  const a = fold(s.action);
+  if (a.includes('namit')) return 'námitky';
+  if (a.includes('pripomin')) return 'připomínky';
+  if (a.includes('nabid')) return 'nabídky';
+  if (a.includes('zadost')) return 'žádosti';
+  return 'lhůta';
 }
 
-function tag(it) {
+function entryMeta(it, w) {
   const s = it.s || {};
-  return h('span', { class: `tag tag--${TONE[s.cat] || 'gray'}` }, icon(ICON[s.cat] || ICON.ostatni), s.label || 'Ostatní');
+  if (w.type === 'deadline') return `poslední den: ${deadlineWord(s)} · ${it.o}`;
+  if (w.type === 'running') return `probíhá do ${dm(w.until)} · ${it.o}`;
+  return [s.time, it.o, w.until && w.until !== w.date ? `až ${dm(w.until)}` : null].filter(Boolean).join(' · ');
 }
+
+function badges(it) {
+  const s = it.s || {};
+  return [
+    s.importance === 'vysoka' ? h('span', { class: 'badge badge--hot', title: s.importance_why || null }, 'důležité') : null,
+    isIso(it.p) && daysTo(it.p) >= -NEW_DAYS && !it.r ? h('span', { class: 'badge' }, 'nové') : null,
+  ];
+}
+
+const detailHref = (it) => `#/o/${encodeURIComponent(it.id)}`;
 
 // ---------- směrování ----------
 
 function parseHash() {
   const raw = location.hash.replace(/^#\/?/, '');
   const [path, query = ''] = raw.split('?');
-  return { parts: path.split('/').filter(Boolean).map(decodeURIComponent), params: new URLSearchParams(query) };
+  const parts = path.split('/').filter(Boolean).map((p) => { try { return decodeURIComponent(p); } catch { return p; } });
+  return { parts, params: new URLSearchParams(query) };
 }
 
 function mount(title, ...nodes) {
@@ -144,43 +145,27 @@ function mount(title, ...nodes) {
   document.getElementById('app').replaceChildren(...nodes.flat(Infinity).filter(Boolean));
 }
 
+let onList = false;   // je teď zobrazený seznam?
+let fromList = false; // přišel uživatel na detail ze seznamu (pak „Zpět“ = history.back())
+
 function route() {
+  TODAY = localTodayIso();
   const { parts, params } = parseHash();
-  if (parts[0] === 'o' && parts[1]) return renderDetail(parts[1]);
+  if (parts[0] === 'o' && parts[1]) {
+    fromList = onList;
+    if (onList) state.listScroll = window.scrollY;
+    onList = false;
+    renderDetail(parts[1]);
+    window.scrollTo(0, 0);
+    return;
+  }
   state.filter.obec = params.get('obec') || '';
   state.filter.q = params.get('q') || '';
-  return renderHome();
-}
-
-// ---------- přehled ----------
-
-function card(it, urgent) {
-  const s = it.s || {};
-  const u = urgent ? urgency(it) : null;
-  const files = (it.docs || []).slice(0, 3);
-  const line = !urgent && [
-    s.event && daysTo(s.event) >= -1 ? `${dateCz(s.event, { weekday: true })}${s.time ? ` v ${s.time}` : ''}${s.event_end ? ` – ${dateCz(s.event_end)}` : ''}` : null,
-    s.deadline && daysTo(s.deadline) >= 0 ? `lhůta do ${dateCz(s.deadline)}` : null,
-    s.where,
-    (it.docs || []).some((d) => d.k === 'mapa') ? 'mapa v příloze' : null,
-  ].filter(Boolean).join(' · ');
-  return h('a', { class: `card${urgent ? ' card--urgent' : ''}`, href: `#/o/${encodeURIComponent(it.id)}` },
-    h('div', { class: 'card__meta' }, tag(it), h('span', {}, `${it.o} · vyvěšeno ${dateCz(it.p)}`)),
-    h('h3', {}, s.tldr || it.t),
-    u ? h('div', { class: 'due' }, icon(dueText(it, u)[0], 18), dueText(it, u)[1]) : null,
-    line ? h('div', { class: 'card__line' }, line) : null,
-    urgent && files.length ? h('div', { class: 'files' }, files.map((d) => h('span', {}, docChip(d)))) : null);
-}
-
-function filtered() {
-  const { obec, q } = state.filter;
-  const terms = fold(q).split(/\s+/).filter(Boolean);
-  return state.data.items.filter((it) => {
-    if (obec && it.o !== obec) return false;
-    if (!terms.length) return true;
-    const hay = it._q || (it._q = fold(`${it.t} ${it.s?.tldr || ''} ${it.s?.where || ''} ${it.cj || ''} ${it.o} ${it.s?.label || ''}`));
-    return terms.every((t) => hay.includes(t));
-  });
+  onList = true;
+  renderHome();
+  const y = state.listScroll;
+  state.listScroll = null;
+  if (y != null) requestAnimationFrame(() => window.scrollTo(0, y));
 }
 
 function writeFilter() {
@@ -191,6 +176,56 @@ function writeFilter() {
   history.replaceState(null, '', qs ? `#/?${qs}` : '#/');
 }
 
+// ---------- přehled ----------
+
+function filtered() {
+  const { obec, q } = state.filter;
+  const terms = fold(q).split(/\s+/).filter(Boolean);
+  return state.data.items.filter((it) => {
+    if (obec && it.o !== obec) return false;
+    if (!terms.length) return true;
+    if (!it._q) it._q = fold(`${it.t} ${it.s?.tldr || ''} ${it.s?.where || ''} ${it.s?.action || ''} ${it.cj || ''} ${it.o} ${it.s?.label || ''}`);
+    return terms.every((t) => it._q.includes(t));
+  });
+}
+
+function entry(it, w) {
+  const s = it.s || {};
+  return h('a', { class: `entry entry--${w.kind}`, href: detailHref(it) },
+    h('span', { class: `entry__meta${w.type === 'deadline' ? ' entry__meta--warn' : ''}` }, entryMeta(it, w), ` · ${label(it)}`, badges(it)),
+    h('h3', { class: 'entry__title' }, s.tldr || it.t),
+    s.action ? h('span', { class: 'entry__sub' }, s.action) : null);
+}
+
+function row(it, dateIso, dateNote, datePrefix) {
+  const s = it.s || {};
+  return h('li', {}, h('a', { class: 'row', href: detailHref(it) },
+    h('span', { class: 'row__date' }, datePrefix ? h('span', { class: 'row__pre' }, datePrefix) : null, isIso(dateIso) ? dm(dateIso) : '–'),
+    h('span', { class: 'row__body' },
+      h('span', { class: 'row__title' }, s.tldr || it.t),
+      h('span', { class: 'row__meta' }, [dateNote, it.o, label(it)].filter(Boolean).join(' · '), badges(it)))));
+}
+
+function weekStrip(groups, onPick) {
+  return h('div', { class: 'week', role: 'list', 'aria-label': 'Příštích 7 dní' },
+    Array.from({ length: 7 }, (_, i) => {
+      const iso = addDays(TODAY, i);
+      const items = groups.get(iso) || [];
+      const kinds = new Set(items.map((x) => x.w.kind));
+      const cls = ['day-btn', i === 0 ? 'day-btn--today' : '', items.length ? 'day-btn--has' : '',
+        kinds.has('warn') ? 'day-btn--warn' : kinds.has('event') ? 'day-btn--event' : ''].filter(Boolean).join(' ');
+      const name = `${i === 0 ? 'dnes, ' : ''}${weekdayLong(iso)} ${dateCz(iso)}`;
+      return h('div', { role: 'listitem' }, h('button', {
+        type: 'button', class: cls, disabled: !items.length,
+        'aria-label': items.length ? `${name}: ${items.length} ${plural(items.length, 'termín', 'termíny', 'termínů')}` : `${name}: nic`,
+        onclick: () => onPick(iso),
+      },
+      h('span', { class: 'day-btn__wd' }, weekday(iso)),
+      h('span', { class: 'day-btn__d' }, String(+iso.slice(8, 10))),
+      h('span', { class: 'dots', 'aria-hidden': 'true' }, ['warn', 'event', 'start'].filter((k) => kinds.has(k)).map((k) => h('span', { class: `dot dot--${k}` })))));
+    }));
+}
+
 function renderHome() {
   const d = state.data;
   const updated = new Date(d.generated_at);
@@ -198,140 +233,215 @@ function renderHome() {
   const counts = new Map();
   for (const it of d.items) if (!it.r) counts.set(it.o, (counts.get(it.o) || 0) + 1);
 
-  const list = h('div', { class: 'content col' });
+  const weekBox = h('div');
+  const body = h('div', { class: 'timeline' });
+  const status = h('p', { class: 'status', 'aria-live': 'polite' });
+
   const paint = () => {
     const items = filtered();
-    const active = items.filter((it) => !it.r);
-    const now = active.filter((it) => urgency(it))
-      .sort((a, b) => urgency(a).date.localeCompare(urgency(b).date));
-    const nowIds = new Set(now.map((it) => it.id));
-    const since = new Date(Date.parse(todayIso()) - NEW_DAYS * 86400000).toISOString().slice(0, 10);
-    const fresh = active.filter((it) => !nowIds.has(it.id) && (it.p || '') >= since);
-    const freshIds = new Set(fresh.map((it) => it.id));
-    const older = active.filter((it) => !nowIds.has(it.id) && !freshIds.has(it.id));
-    const removed = items.filter((it) => it.r);
+    const horizonEnd = addDays(TODAY, HORIZON);
+    const groups = new Map();
+    const later = [];
+    const undated = [];
+    const running = [];
+    for (const it of items) {
+      if (it.r) continue;
+      const w = when(it);
+      if (!w) undated.push(it);
+      else if (w.type === 'running') running.push({ it, w }); // už platí (uzavírka): zvlášť, ne každý den „dnes“
+      else if (w.date <= horizonEnd) {
+        if (!groups.has(w.date)) groups.set(w.date, []);
+        groups.get(w.date).push({ it, w });
+      } else later.push({ it, w });
+    }
+    const order = { warn: 0, event: 1, start: 2 };
+    for (const list of groups.values()) {
+      list.sort((a, b) => order[a.w.kind] - order[b.w.kind] || (a.it.s?.time || '').localeCompare(b.it.s?.time || ''));
+    }
+    later.sort((a, b) => a.w.date.localeCompare(b.w.date));
+    running.sort((a, b) => a.w.until.localeCompare(b.w.until));
+    undated.sort((a, b) => (b.p || '').localeCompare(a.p || '') || (b.fs || '').localeCompare(a.fs || ''));
+    const removed = items.filter((it) => it.r).sort((a, b) => (b.r || '').localeCompare(a.r || ''));
 
-    const more = h('button', { type: 'button', class: 'btn' });
-    const olderBox = h('div', { class: 'section' });
-    const paintOlder = () => {
-      olderBox.replaceChildren(...older.slice(0, state.limit).map((it) => card(it, false)));
-      more.hidden = older.length <= state.limit;
-      more.textContent = `Ukázat další (${older.length - state.limit})`;
+    weekBox.replaceChildren(weekStrip(groups, (iso) => document.getElementById(`den-${iso}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })));
+    const nDated = [...groups.values()].reduce((n, l) => n + l.length, 0);
+    status.textContent = items.length
+      ? [`${nDated} ${plural(nDated, 'termín', 'termíny', 'termínů')} v příštích ${HORIZON} dnech`,
+        running.length ? `${running.length} právě platí` : null,
+        `${undated.length} bez termínu`].filter(Boolean).join(' · ')
+      : '';
+
+    const dayNodes = [...groups.keys()].sort().map((iso) => {
+      const n = daysTo(iso);
+      return h('section', { class: 'daygroup', id: `den-${iso}`, 'aria-label': `${weekdayLong(iso)} ${dateCz(iso)}` },
+        h('div', { class: 'daygroup__date' },
+          h('span', { class: 'daygroup__wd' }, weekday(iso)),
+          h('span', { class: 'daygroup__d' }, dm(iso)),
+          h('span', { class: `daygroup__rel${n <= 2 ? ' daygroup__rel--soon' : ''}` }, relDay(iso))),
+        h('div', { class: 'daygroup__items' }, groups.get(iso).map(({ it, w }) => entry(it, w))));
+    });
+
+    const undatedList = h('ul', { class: 'rows' });
+    const more = h('button', { type: 'button', class: 'more' });
+    const paintUndated = () => {
+      undatedList.replaceChildren(...undated.slice(0, state.limit).map((it) => row(it, it.p, 'vyvěšeno')));
+      more.hidden = undated.length <= state.limit;
+      more.textContent = `Ukázat další (${undated.length - state.limit})`;
     };
-    more.addEventListener('click', () => { state.limit += STEP; paintOlder(); });
-    paintOlder();
+    more.addEventListener('click', () => { state.limit += STEP; paintUndated(); });
+    paintUndated();
 
-    list.replaceChildren(...[
-      h('section', { class: 'section', 'aria-labelledby': 'h-now' },
-        h('div', { class: 'section__head' }, h('h2', { id: 'h-now' }, 'Teď řešit'), h('span', {}, `lhůta nebo termín do ${NOW_DAYS} dní`)),
-        now.length ? now.map((it) => card(it, true)) : h('p', { class: 'empty' }, 'Nic naléhavého. Klid.')),
-      h('section', { class: 'section', 'aria-labelledby': 'h-new' },
-        h('div', { class: 'section__head' }, h('h2', { id: 'h-new' }, 'Nové tento týden'), h('span', {}, `${fresh.length} ${plural(fresh.length, 'oznámení', 'oznámení', 'oznámení')}`)),
-        fresh.length ? fresh.map((it) => card(it, false)) : h('p', { class: 'empty' }, 'Za posledních 7 dní nic nového.')),
-      older.length ? h('section', { class: 'section', 'aria-labelledby': 'h-old' },
-        h('div', { class: 'section__head' }, h('h2', { id: 'h-old' }, 'Dál visí na deskách'), h('span', {}, `${older.length}`)),
-        olderBox, more) : null,
-      removed.length ? h('details', { class: 'section' },
-        h('summary', {}, `Sejmuté za posledních 30 dní (${removed.length})`),
-        removed.map((it) => card(it, false))) : null,
-      villages(d)].filter(Boolean));
+    const filteredOut = state.filter.q || state.filter.obec;
+    const nothing = !items.length
+      ? h('p', { class: 'empty' }, filteredOut ? 'Nic nenalezeno. Zkus jiné slovo nebo všechny obce.' : 'Na deskách teď nic nevisí.')
+      : !dayNodes.length ? h('p', { class: 'empty' }, `V příštích ${HORIZON} dnech žádné lhůty ani termíny.`) : null;
+
+    body.replaceChildren(...[
+      running.length ? h('h2', { class: 'section-title section-title--first' }, 'PRÁVĚ PLATÍ') : null,
+      running.length ? h('ul', { class: 'rows' }, running.map(({ it, w }) => row(it, w.until, `platí do ${dateCz(w.until)}`, 'do'))) : null,
+      running.length && dayNodes.length ? h('h2', { class: 'section-title' }, `PŘÍŠTÍCH ${HORIZON} DNÍ`) : null,
+      ...dayNodes,
+      nothing,
+      later.length ? h('h2', { class: 'section-title' }, 'POZDĚJI') : null,
+      later.length ? h('ul', { class: 'rows' }, later.map(({ it, w }) => row(it, w.date, w.type === 'deadline' ? `${deadlineWord(it.s || {})} do ${dateCz(w.date)}` : null))) : null,
+      undated.length ? h('h2', { class: 'section-title' }, 'BEZ TERMÍNU · NEJNOVĚJŠÍ NAHOŘE') : null,
+      undated.length ? undatedList : null,
+      undated.length ? more : null,
+      removed.length ? h('details', { class: 'removed' },
+        h('summary', {}, `SEJMUTO ZA POSLEDNÍCH 30 DNÍ (${removed.length})`),
+        h('ul', { class: 'rows' }, removed.map((it) => row(it, (it.r || '').slice(0, 10), 'sejmuto')))) : null,
+      villages(d),
+    ].filter(Boolean));
   };
 
-  const chips = h('nav', { class: 'chips', 'aria-label': 'Obce' });
-  const paintChips = () => chips.replaceChildren(...['', ...connected.map((m) => m.name)]
-    .sort((a, b) => (a === '' ? -1 : b === '' ? 1 : (counts.get(b) || 0) - (counts.get(a) || 0)))
-    .map((name) => h('button', {
-      type: 'button', class: 'chip', 'aria-pressed': String(state.filter.obec === name),
-      onclick: () => { state.filter.obec = name; state.limit = STEP; writeFilter(); paintChips(); paint(); },
-    }, name || 'Vše', name && counts.get(name) ? h('span', { class: 'vh' }, ` (${counts.get(name)})`) : null)));
+  const chips = h('div', { class: 'chips', role: 'group', 'aria-label': 'Obec' });
+  const names = ['', ...connected.map((m) => m.name)
+    .sort((a, b) => (counts.get(b) || 0) - (counts.get(a) || 0) || a.localeCompare(b, 'cs'))];
+  const paintChips = () => chips.replaceChildren(...names.map((name) => h('button', {
+    type: 'button', class: 'chip', 'aria-pressed': String(state.filter.obec === name),
+    onclick: () => { state.filter.obec = name; state.limit = STEP; writeFilter(); paintChips(); paint(); },
+  }, name || 'Všechny obce')));
   paintChips();
 
   let timer;
   const search = h('input', {
-    type: 'search', id: 'q', value: state.filter.q, placeholder: 'Hledat (ulice, parcela, téma…)',
-    oninput: (e) => { clearTimeout(timer); timer = setTimeout(() => { state.filter.q = e.target.value; state.limit = STEP; writeFilter(); paint(); }, 150); },
+    type: 'search', id: 'q', class: 'search', value: state.filter.q, placeholder: 'Hledat: ulice, parcela, téma…', autocomplete: 'off',
+    oninput: (e) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => { state.filter.q = e.target.value; state.limit = STEP; writeFilter(); paint(); }, 160);
+    },
   });
 
+  const stamp = Number.isNaN(updated.getTime()) ? ''
+    : ` · ${updated.toLocaleDateString('cs-CZ')} ${updated.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })}`;
   mount('',
-    h('header', { class: 'top' }, h('div', { class: 'top__inner col' },
-      h('div', { class: 'top__kicker' }, `${d.region.name} · ${d.members.length} obcí`),
-      h('h1', {}, 'Co se vyvěsilo'),
-      h('div', { class: 'top__meta' }, `Aktualizováno ${updated.toLocaleDateString('cs-CZ')} v ${updated.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })}`),
-      d.sample ? h('div', { class: 'sample' }, 'Ukázková data – nejde o skutečná oznámení.') : null)),
-    h('div', { class: 'bar' }, h('div', { class: 'col' }, chips,
-      h('div', { class: 'find' }, h('label', { class: 'vh', for: 'q' }, 'Hledat v oznámeních'), search))),
-    list);
+    h('header', { class: 'top' }, h('div', { class: 'col top__inner' },
+      h('div', { class: 'top__row' },
+        h('h1', {}, 'Co se kdy děje'),
+        h('span', { class: 'top__meta' }, `${d.region?.name || 'Dolnobřežansko'}${stamp}`)),
+      d.sample ? h('div', { class: 'sample' }, 'Ukázková data – nejde o skutečná oznámení.') : null,
+      weekBox,
+      h('div', { class: 'legend', 'aria-hidden': 'true' },
+        h('span', {}, h('span', { class: 'dot dot--warn' }), 'lhůta / omezení'),
+        h('span', {}, h('span', { class: 'dot dot--event' }), 'jednání / akce')),
+      h('div', { class: 'filters' }, chips, h('label', { class: 'vh', for: 'q' }, 'Hledat v oznámeních'), search),
+      status)),
+    h('div', { class: 'col' }, body));
   paint();
 }
 
 function villages(d) {
   return h('section', { class: 'villages', 'aria-labelledby': 'h-vil' },
-    h('h2', { id: 'h-vil' }, 'Které desky čteme'),
+    h('h2', { id: 'h-vil' }, 'KTERÉ DESKY ČTEME'),
     h('ul', {}, d.members.map((m) => {
       const url = safeUrl(m.board_url) || safeUrl(m.web);
-      const status = m.connected
-        ? (m.ok ? h('span', { class: 'ok' }, 'připojeno') : h('span', { class: 'miss' }, 'poslední stažení selhalo'))
-        : h('span', { class: 'miss' }, m.status || 'deska zatím nenalezena');
-      return h('li', {}, url ? h('a', { href: url, rel: 'noopener noreferrer' }, m.name) : h('span', {}, m.name), status);
+      const mark = m.connected
+        ? (m.ok ? h('span', { class: 'ok' }, '✓') : h('span', { class: 'miss', title: 'Poslední stažení selhalo' }, '!'))
+        : h('span', { class: 'miss' }, '–');
+      return h('li', { title: m.connected ? null : (m.status || 'deska zatím nenalezena') }, mark,
+        url ? h('a', { href: url, rel: 'noopener noreferrer' }, m.name) : h('span', {}, m.name));
     })),
-    h('p', {}, d.ai_model
-      ? 'Shrnutí píše automaticky AI (Claude) z textu a příloh. Může se splést.'
-      : 'Shrnutí vznikají automaticky z textu oznámení a příloh.',
-    ' Právně platí znění na úřední desce obce.'));
+    h('p', {}, '✓ deska připojena · – zatím nečteme. ',
+      d.ai_model ? 'Shrnutí píše AI (Claude) z textu a příloh a může se splést. ' : 'Shrnutí vznikají automaticky z textu oznámení a příloh. ',
+      'Právně platí znění na úřední desce obce.'));
 }
 
 // ---------- detail ----------
 
+const docIcon = (k) => ({ mapa: ICON_MAP, sken: ICON_SCAN, obrazek: ICON_IMG }[k] || ICON_DOC);
+
+function section(id, title, ...content) {
+  return h('section', { 'aria-labelledby': id }, h('h2', { id, class: 'h2' }, title), ...content);
+}
+
 function renderDetail(id) {
+  const back = h('a', { class: 'back', href: '#/' }, icon(ICON_BACK, 20), 'Zpět na přehled');
+  back.addEventListener('click', (e) => {
+    if (fromList) { e.preventDefault(); history.back(); } // zachová filtr i pozici v seznamu
+  });
+  const header = h('header', { class: 'top top--detail' }, h('div', { class: 'col' }, back));
   const it = state.data.items.find((x) => x.id === id);
-  window.scrollTo(0, 0);
-  const back = h('a', { class: 'back', href: '#/' }, icon(BACK, 20), 'Zpět na přehled');
   if (!it) {
-    return mount('Nenalezeno', h('header', { class: 'top top--detail' }, h('div', { class: 'top__inner col' }, back)),
-      h('div', { class: 'content col' }, h('p', {}, 'Oznámení už na desce není nebo odkaz neplatí.')));
+    mount('Nenalezeno', header, h('div', { class: 'col detail' }, h('p', {}, 'Oznámení už na desce není nebo odkaz neplatí.')));
+    return;
   }
   const s = it.s || {};
-  const u = urgency(it);
-  const docs = (it.docs || []).map((d) => ({ ...d, url: safeUrl(d.url) })).filter((d) => d.url);
+  const w = when(it);
+  const docs = (it.docs || []).map((x) => ({ ...x, url: safeUrl(x.url) })).filter((x) => x.url);
   const original = safeUrl(it.url);
+  const bullets = Array.isArray(s.bullets) ? s.bullets : [];
+  const whenText = !w ? null
+    : w.type === 'running' ? `probíhá do ${dateCz(w.until, { wd: true })}`
+      : `${dateCz(w.date, { wd: true })}${s.time && w.type === 'event' ? ` v ${s.time}` : ''} · ${relDay(w.date)}`;
 
-  const todoBox = s.action
-    ? h('section', { class: u ? 'todo' : 'calm', 'aria-labelledby': 'h-todo' },
-      u ? h('h2', { id: 'h-todo' }, icon(CLOCK, 18), u.kind === 'deadline' ? 'Co můžeš udělat' : 'Kdy') : h('h2', { id: 'h-todo', class: 'vh' }, 'Co můžeš udělat'),
-      h('p', { class: u ? 'todo__main' : '' }, s.action),
-      u ? h('p', { class: 'muted' }, u.kind === 'running' ? `Platí ještě do ${dateCz(u.date)}.` : `${inDays(u.date).charAt(0).toUpperCase()}${inDays(u.date).slice(1)}.`) : null)
-    : h('p', { class: 'calm' }, 'Jen pro informaci, nic dělat nemusíš.');
-
-  mount(s.tldr || it.t,
-    h('header', { class: 'top top--detail' }, h('div', { class: 'top__inner col' }, back)),
-    h('article', { class: 'content col detail' },
-      h('div', { class: 'section' },
-        h('div', { class: 'card__meta' }, tag(it), h('span', {}, `${it.o} · vyvěšeno ${dateCz(it.p, { year: true })}`)),
+  mount(s.tldr || it.t, header,
+    h('article', { class: 'col detail' },
+      h('div', {},
+        h('div', { class: 'detail__meta' }, `${(it.o || '').toUpperCase()} · ${label(it)} · vyvěšeno ${dateCz(it.p, { year: true })}`, badges(it)),
         h('h1', {}, s.tldr || it.t)),
-      todoBox,
-      s.bullets?.length ? h('section', { class: 'section', 'aria-labelledby': 'h-gist' },
-        h('h2', { id: 'h-gist', style: 'margin:0;font-size:18px' }, 'Ve zkratce'),
-        h('ul', { class: 'bullets' }, s.bullets.map((b) => h('li', {}, b)))) : null,
-      s.where ? h('section', { class: 'section', 'aria-labelledby': 'h-where' },
-        h('h2', { id: 'h-where', style: 'margin:0;font-size:18px' }, 'Kde'),
-        h('p', { style: 'margin:0' }, s.where)) : null,
-      h('section', { class: 'section', 'aria-labelledby': 'h-docs' },
-        h('h2', { id: 'h-docs', style: 'margin:0;font-size:18px' }, docs.length ? 'Přílohy' : 'Bez příloh'),
-        docs.map((d) => h('a', { class: 'doc', href: d.url, rel: 'noopener noreferrer' },
-          icon(DOC_ICON[d.k] || DOC_ICON.jine, 28, 'var(--link)'),
-          h('span', { class: 'doc__body' },
-            h('span', { class: 'doc__name' }, d.n || 'Příloha'),
-            h('span', { class: 'doc__info' }, [
-              d.x ? d.x.toUpperCase() : null,
-              d.k === 'sken' ? (d.ocr ? 'sken, text rozpoznán (OCR)' : 'sken') : d.k === 'mapa' ? 'mapa / výkres' : null,
-              d.pg ? `${d.pg} ${plural(d.pg, 'strana', 'strany', 'stran')}` : null,
-              d.w,
-            ].filter(Boolean).join(' · ')))))),
+      s.action
+        ? h('section', { class: w ? 'todo' : 'todo todo--calm', 'aria-label': 'Co můžeš udělat' },
+          h('p', { class: 'todo__main' }, s.action),
+          whenText ? h('p', { class: 'todo__when' }, whenText) : null)
+        : h('section', { class: 'todo todo--calm', 'aria-label': 'Co můžeš udělat' },
+          h('p', {}, whenText || 'Jen pro informaci, nic dělat nemusíš.')),
+      s.impact || s.affects ? h('section', { class: 'meaning', 'aria-labelledby': 'h-mean' },
+        h('h2', { id: 'h-mean', class: 'h2' }, 'CO TO ZNAMENÁ'),
+        s.impact ? h('p', { class: 'meaning__lead' }, s.impact) : null,
+        s.affects ? h('p', { class: 'muted' }, h('strong', {}, 'Týká se: '), s.affects) : null,
+        s.importance === 'vysoka' && s.importance_why ? h('p', { class: 'muted' }, h('strong', {}, 'Proč je to důležité: '), s.importance_why) : null) : null,
+      bullets.length ? section('h-gist', s.src === 'claude' ? 'CO PŘESNĚ' : 'VE ZKRATCE',
+        h('ul', { class: 'bullets' }, bullets.slice(0, 5).map((b) => h('li', {}, b))),
+        bullets.length > 5 ? h('details', { class: 'more-details' },
+          h('summary', {}, `Další podrobnosti (${bullets.length - 5})`),
+          h('ul', { class: 'bullets' }, bullets.slice(5).map((b) => h('li', {}, b)))) : null) : null,
+      s.facts?.length ? section('h-facts', 'KLÍČOVÉ ÚDAJE',
+        h('dl', { class: 'facts' }, s.facts.map((f) => [h('dt', {}, f.label), h('dd', {}, f.value)]))) : null,
+      s.dates?.length ? section('h-dates', 'DŮLEŽITÁ DATA',
+        h('ul', { class: 'dates' }, s.dates.filter((x) => isIso(x.date)).map((x) => h('li', { class: daysTo(x.date) < 0 ? 'past' : null },
+          h('span', { class: 'mono' }, dateCz(x.date, { wd: true })), h('span', {}, x.what))))) : null,
+      s.where ? section('h-where', 'KDE', h('p', { style: 'margin:0' }, s.where)) : null,
+      section('h-docs', docs.length ? `PŘÍLOHY (${docs.length})` : 'BEZ PŘÍLOH',
+        h('div', { class: 'docs' }, docs.map((x) => {
+          const title = x.w ? x.w.charAt(0).toUpperCase() + x.w.slice(1) : (x.n || 'Příloha');
+          return h('a', { class: 'doc', href: x.url, rel: 'noopener noreferrer' },
+            h('span', { class: 'muted' }, icon(docIcon(x.k), 24)),
+            h('span', { class: 'doc__body' },
+              h('span', { class: 'doc__name' }, title),
+              x.sum ? h('span', { class: 'doc__sum' }, x.sum) : null,
+              h('span', { class: 'doc__info' }, [
+                x.w && x.n && fold(x.n) !== fold(x.w) ? x.n : null,
+                x.x ? x.x.toUpperCase() : null,
+                x.k === 'sken' ? (x.ocr ? 'sken, text rozpoznán' : 'sken') : x.k === 'mapa' ? 'mapa / výkres' : null,
+                x.pg ? `${x.pg} ${plural(x.pg, 'strana', 'strany', 'stran')}` : null,
+              ].filter(Boolean).join(' · '))));
+        }))),
+      s.contact ? section('h-contact', 'KAM SE OBRÁTIT', h('p', { style: 'margin:0' }, s.contact)) : null,
       h('section', { class: 'official' },
         h('div', {}, 'Úřední název: ', it.t),
         it.cj ? h('div', {}, `Č. j.: ${it.cj}`) : null,
-        it.u ? h('div', {}, `Visí do ${dateCz(it.u, { year: true })}`) : null,
-        it.r ? h('div', {}, `Sejmuto ${dateCz(it.r, { year: true })}`) : null,
+        isIso(it.u) ? h('div', {}, `Visí do ${dateCz(it.u, { year: true })}`) : null,
+        it.r ? h('div', {}, `Sejmuto ${dateCz(it.r.slice(0, 10), { year: true })}`) : null,
         original ? h('a', { href: original, rel: 'noopener noreferrer' }, `Původní znění na úřední desce (${it.o})`) : null,
         h('p', {}, s.src === 'claude'
           ? 'Shrnutí napsala AI (Claude) z textu a příloh. Může se splést – právně platí znění na úřední desce.'
@@ -344,9 +454,11 @@ async function start() {
   try {
     const res = await fetch(DATA, { cache: 'no-cache' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    state.data = await res.json();
+    const data = await res.json();
+    if (!Array.isArray(data.items) || !Array.isArray(data.members)) throw new Error('neplatný formát dat');
+    state.data = data;
   } catch (err) {
-    mount('Chyba', h('div', { class: 'content col' }, h('h1', {}, 'Data se nepodařilo načíst'), h('p', {}, String(err))));
+    mount('Chyba', h('div', { class: 'col pad' }, h('h1', {}, 'Data se nepodařilo načíst'), h('p', {}, String(err.message || err))));
     return;
   }
   window.addEventListener('hashchange', route);

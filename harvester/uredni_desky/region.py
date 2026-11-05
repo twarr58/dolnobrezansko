@@ -22,7 +22,7 @@ from pathlib import Path
 
 import httpx
 
-from . import USER_AGENT, ai, cache, digest, documents
+from . import USER_AGENT, ai, cache, digest, documents, webpage
 from .build import load_state, run_build
 from .extra import sources_from_entries
 from .fetch import fetch_all
@@ -184,8 +184,8 @@ async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, 
             try:
                 content, ctype = await documents.download(client, url)
             except (httpx.HTTPError, ValueError) as exc:
-                log.info("Příloha %s: %s", url, exc)
-                return cached or {"url": url, "error": str(exc)[:200]}
+                log.info("Příloha %s: %s %s", url, type(exc).__name__, exc)
+                return cached or {"url": url, "error": f"{type(exc).__name__}: {exc}"[:200]}
         info = await asyncio.to_thread(documents.analyze, content, url, doc.get("name") or "", ctype)
         doc_cache[url] = info.to_cache()
         return {**info.to_cache(), "bytes": content, "full_text": info.full_text}
@@ -193,23 +193,52 @@ async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, 
     active = [i for i in items if not i.get("removed")]
     active.sort(key=lambda i: (i.get("posted") or "", i.get("first_seen") or ""), reverse=True)
 
+    async def load_page(it: dict) -> None:
+        """Oznámení bez příloh v seznamu (ALIS, Vismo…): přílohy a text ze stránky oznámení."""
+        url = it.get("url") or ""
+        if it.get("docs") or not url.startswith(("http://", "https://")) or documents._FILE_EXT.search(url):
+            return
+        key = f"page:{url}"
+        cached = doc_cache.get(key)
+        stale = not cached or (not cached.get("links")
+                               and cached.get("checked", "") < (now - timedelta(days=1)).isoformat())
+        if stale and budget["docs"] > 0:
+            budget["docs"] -= 1
+            async with dl_sem:
+                try:
+                    r = await client.get(url, headers=webpage.HTML_HEADERS, timeout=30)
+                    r.raise_for_status()
+                    links, text = documents.page_attachments(webpage.response_text(r), str(r.url))
+                    cached = {"links": links, "text": text, "checked": now.isoformat(timespec="seconds")}
+                    doc_cache[key] = cached
+                except (httpx.HTTPError, ValueError) as exc:
+                    log.info("Stránka oznámení %s: %s %s", url, type(exc).__name__, exc)
+        if cached:
+            it["docs"] = cached.get("links", [])
+            it["_body"] = cached.get("text", "")
+
+    await asyncio.gather(*(load_page(it) for it in active))
+
     async def process(it: dict) -> None:
         sig = _signature(it)
         prev = summaries.get(it["id"])
-        want_ai = summarizer is not None and not (prev and prev.get("sig") == sig and prev.get("ai"))
+        current = bool(prev and prev.get("sig") == sig and prev.get("ai") and prev.get("v") == ai.VERSION)
+        want_ai = summarizer is not None and not current
         docs = [await get_doc(d, want_ai) for d in it.get("docs", [])]
         result = {"sig": sig, "ai": prev.get("ai") if prev and prev.get("sig") == sig else None}
         if want_ai and summarizer.available():
             meta = {"Název": it["title"], "Vyvěšeno": it.get("posted"), "Vyvěšeno do": it.get("until"),
-                    "Číslo jednací": it.get("cj"), "Dnešní datum": now.date().isoformat()}
+                    "Číslo jednací": it.get("cj"), "Dnešní datum": now.date().isoformat(),
+                    "Text na stránce oznámení": (it.get("_body") or "")[:4000]}
             payload = [{"name": d0.get("name"), "ext": d.get("ext"), "pages": d.get("pages", 0),
                         "bytes": d.get("bytes"), "text": d.get("full_text") or d.get("text", "")}
                        for d0, d in zip(it.get("docs", []), docs)]
             async with ai_sem:
                 out = await summarizer.summarize(meta, payload)
             if out:
-                result["ai"] = out
-                result["at"] = now.isoformat(timespec="seconds")
+                result.update(ai=out, v=ai.VERSION, at=now.isoformat(timespec="seconds"))
+            elif prev and prev.get("sig") == sig:
+                result["v"] = prev.get("v")
         summaries[it["id"]] = result
 
     try:
@@ -222,7 +251,7 @@ async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, 
                  summarizer.used, summarizer.tokens_in, summarizer.tokens_out, ai.MODEL)
     keep = {i["id"] for i in items}
     summaries = {k: v for k, v in summaries.items() if k in keep}
-    live_docs = {d["url"] for i in items for d in i.get("docs", [])}
+    live_docs = {d["url"] for i in items for d in i.get("docs", [])} | {f"page:{i.get('url')}" for i in items}
     doc_cache = {k: v for k, v in doc_cache.items() if k in live_docs}
     _write_gz(state_dir / "docs.json.gz", doc_cache)
     _write_gz(state_dir / "summaries.json.gz", summaries)
@@ -237,20 +266,28 @@ def _valid_date(s) -> str | None:
 
 
 def item_description(it: dict, docs: list[dict], summary: dict | None) -> dict:
-    s = digest.describe(it["title"], it.get("posted"), it.get("until"), docs, it.get("agendas"))
+    s = digest.describe(it["title"], it.get("posted"), it.get("until"), docs, it.get("agendas"),
+                        body=it.get("_body", ""))
     a = (summary or {}).get("ai")
     if a:
-        s.update(src="claude", tldr=a.get("tldr") or s["tldr"], bullets=[b for b in a.get("bullets", []) if b][:4],
+        bullets = a.get("details") or a.get("bullets") or []  # verze 1 měla jen bullets
+        s.update(src="claude", tldr=a.get("tldr") or s["tldr"], bullets=[b for b in bullets if b][:10],
                  action=a.get("action") or s.get("action", ""))
         if a.get("category") in digest.LABELS:
             s["cat"] = a["category"]
-        for key, src in (("deadline", "deadline"), ("event", "event")):
-            if d := _valid_date(a.get(src)):
+        for key in ("deadline", "event"):
+            if d := _valid_date(a.get(key)):
                 s[key] = d
         if a.get("event_time"):
             s["time"] = a["event_time"][:5]
-        if a.get("where"):
-            s["where"] = a["where"]
+        for key in ("where", "impact", "affects", "contact", "importance", "importance_why"):
+            if a.get(key):
+                s[key] = a[key]
+        if facts := [f for f in a.get("facts", []) if f.get("label") and f.get("value")]:
+            s["facts"] = facts[:14]
+        if dates := [{"date": d, "what": x["what"]} for x in a.get("dates", [])
+                     if (d := _valid_date(x.get("date"))) and x.get("what")]:
+            s["dates"] = sorted(dates, key=lambda x: x["date"])[:12]
     s["label"] = digest.LABELS.get(s["cat"], "Ostatní")
     return {k: v for k, v in s.items() if v not in (None, "", [])}
 
@@ -274,13 +311,14 @@ def build_output(region: dict, members: list[dict], boards: list[dict], items: l
         if it["board"] not in name_of or (it.get("removed") and it["removed"] < since):
             continue
         summary = summaries.get(it["id"])
-        ai_docs = {d.get("index"): d.get("what") for d in ((summary or {}).get("ai") or {}).get("docs", [])}
+        ai_docs = {d.get("index"): d for d in ((summary or {}).get("ai") or {}).get("docs", [])}
         docs = []
         for n, d in enumerate(it.get("docs", []), 1):
             info = doc_cache.get(d["url"], {})
             docs.append({k: v for k, v in {
                 "n": d.get("name"), "url": d["url"], "k": info.get("kind"), "x": info.get("ext"),
-                "pg": info.get("pages"), "ocr": info.get("ocr"), "w": ai_docs.get(n)}.items() if v})
+                "pg": info.get("pages"), "ocr": info.get("ocr"), "w": ai_docs.get(n, {}).get("what"),
+                "sum": ai_docs.get(n, {}).get("summary")}.items() if v})
         out_items.append({k: v for k, v in {
             "id": it["id"], "o": name_of[it["board"]], "t": it["title"], "url": it.get("url"),
             "p": it.get("posted"), "u": it.get("until"), "cj": it.get("cj"), "r": it.get("removed"),
@@ -339,7 +377,7 @@ def sample(out_dir: Path) -> dict:
     day = lambda n: (today + timedelta(days=n))  # noqa: E731
     fill = lambda t: re.sub(r"\{d([+-]\d+)\}", lambda m: f"{day(int(m.group(1))).day}. {day(int(m.group(1))).month}. "
                                                        f"{day(int(m.group(1))).year}", t)  # noqa: E731
-    members, boards, items, docs = [], [], [], {}
+    members, boards, items, docs, summaries = [], [], [], {}, {}
     for m in region["members"]:
         bid = f"ukazka-{m['name']}" if m.get("source") else None
         members.append({"name": m["name"], "publisher": m["publisher"], "web": m.get("web", ""), "board": bid,
@@ -355,7 +393,10 @@ def sample(out_dir: Path) -> dict:
         items.append({"id": f"u{n}", "board": f"ukazka-{r['o']}", "title": r["title"], "url": "https://example.org/",
                       "posted": day(r["pd"]).isoformat(), "until": day(r["ud"]).isoformat(), "cj": r.get("cj"),
                       "docs": item_docs, "first_seen": now.isoformat(timespec="seconds")})
-    data = build_output(region, members, boards, items, docs, {}, now)
+        if r.get("ai"):
+            raw_ai = re.sub(r"\{iso([+-]\d+)\}", lambda m: day(int(m.group(1))).isoformat(), json.dumps(r["ai"]))
+            summaries[f"u{n}"] = {"ai": json.loads(fill(raw_ai))}
+    data = build_output(region, members, boards, items, docs, summaries, now)
     data["sample"] = True
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "region.json").write_text(json.dumps(data, ensure_ascii=False, indent=1), "utf-8")

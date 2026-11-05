@@ -33,11 +33,14 @@ make serve         # http://localhost:8000
 
 ## Shrnutí od Claude (volitelné)
 
-Bez klíče se popisy dělají jen pravidly. S klíčem Claude přečte u každého **nového** oznámení
-přílohy (PDF včetně map a skenů posílá celé, delší než 40 stran jako vytažený text) a napíše
-krátké shrnutí. Hotová shrnutí se ukládají (`summaries.json.gz` ve větvi `data`), znovu se platí
+Bez přihlášení se popisy dělají jen pravidly. S přihlášením Claude přečte u každého **nového**
+oznámení přílohy (až 10 příloh; PDF včetně map a skenů posílá celé, delší než 100 stran jako
+vytažený text; u oznámení bez příloh v seznamu i přílohy a text ze stránky oznámení) a vrátí dvě vrstvy:
+rychlou (jedna věta, co udělat a do kdy, důležitost) a rozbor příloh (co to znamená, koho se to týká,
+co přesně – parametry, částky, změny, klíčové údaje, data, kontakt, obsah každé přílohy). Hotová shrnutí se ukládají (`summaries.json.gz` ve větvi `data`), znovu se platí
 jen při změně oznámení. Limit shrnutí za běh: proměnná repozitáře `AI_LIMIT` (výchozí 40),
-model: `AI_MODEL` (výchozí `claude-opus-5-5`).
+model: `AI_MODEL` (výchozí `claude-opus-5-5`), hloubka čtení: `AI_EFFORT` (výchozí `medium`).
+Změna obsahu shrnutí zvýší `ai.VERSION` – stará shrnutí se pak postupně přepočítají.
 
 ### Přihlášení bez klíče (doporučeno): Workload Identity Federation
 
