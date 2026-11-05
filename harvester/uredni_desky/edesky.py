@@ -29,6 +29,40 @@ _DASHBOARD = re.compile(r"edesky\.cz/desky/(\d+)")
 
 # Rozpoznané texty příloh z API (URL přílohy → text) – použijí se, když soubor nejde stáhnout.
 TEXTS: dict[str, str] = {}
+# Přílohy z edesky.cz: URL přílohy → kde je její rozpoznaný text (veřejný soubor edesky_text_url).
+ATTACHMENTS: dict[str, dict] = {}
+_TEXT_FILES: dict[str, str] = {}  # stažené edesky_text_url v tomto běhu
+
+
+def _http(url: str) -> bool:
+    return url.startswith(("https://", "http://"))
+
+
+def _clean_text(raw: str) -> str:
+    from html import unescape
+
+    return re.sub(r"<[^>]+>", " ", unescape(unescape(raw)))
+
+
+def split_text_file(content: str, doc_id: str) -> dict[str, str]:
+    """Soubor edesky_text_url → {id přílohy: text}. Každá příloha začíná „<id přílohy> <id dokumentu> <soubor> <url>“."""
+    starts = list(re.finditer(rf"(?<!\d)(\d{{5,}}) {re.escape(doc_id)} (\S+) (\S+) ?", content))
+    out = {}
+    for n, m in enumerate(starts):
+        end = starts[n + 1].start() if n + 1 < len(starts) else len(content)
+        out[m.group(1)] = _clean_text(content[m.end():end]).strip()
+    return out
+
+
+async def attachment_text(client: httpx.AsyncClient, ref: dict) -> str:
+    """Rozpoznaný text jedné přílohy z veřejného souboru edesky_text_url (jeden soubor na dokument)."""
+    url = ref["text_url"]
+    if url not in _TEXT_FILES:
+        resp = await client.get(url, timeout=60)
+        resp.raise_for_status()
+        _TEXT_FILES[url] = resp.text
+    parts = split_text_file(_TEXT_FILES[url], ref["doc_id"])
+    return parts.get(ref["att_id"]) or ("\n\n".join(parts.values()) if len(parts) <= 1 else "")
 
 
 class _RedactApiKey(logging.Filter):
@@ -104,17 +138,28 @@ def parse_page(content: bytes) -> Page:
         edesky_url = _attr(doc, _DOC_URL_ATTRS)
         if not name or not edesky_url:
             continue
-        info: dict = {"iri": edesky_url, "url": doc.get("orig_url") or edesky_url, "název": {"cs": name}}
+        orig = doc.get("orig_url") or ""
+        info: dict = {"iri": edesky_url, "url": orig if _http(orig) else edesky_url, "název": {"cs": name}}
         if (created := _attr(doc, _DATE_ATTRS)[:10]) and re.match(r"\d{4}-\d{2}-\d{2}$", created):
             info["vyvěšení"] = {"datum": created}
+        text_url = doc.get("edesky_text_url") or ""
+        doc_id = doc.get("edesky_id") or (re.search(r"/dokument/(\d+)", edesky_url) or [None, ""])[1]
         docs = []
         for att in doc.iter("attachment"):
-            url = att.get("url") or att.get("orig_url")
-            if not url:
+            att_url = att.get("url") or ""
+            att_orig = att.get("orig_url") or ""
+            # Odkaz pro čtenáře: originální soubor na webu obce. Stránka edesky.cz (/dokument/…#priloha_…)
+            # je bez přihlášení skrytá, takže jen když originál chybí.
+            link = att_orig if _http(att_orig) else att_url
+            if not _http(link):
                 continue
-            docs.append({"název": {"cs": " ".join((att.get("name") or name).split())}, "url": url})
+            m = re.search(r"#priloha_(\d+)", att_url)
+            att_id = att.get("edesky_id") or (m.group(1) if m else "")
+            docs.append({"název": {"cs": " ".join((att.get("name") or name).split())}, "url": link})
             if att.text and att.text.strip():
-                TEXTS[url] = unquote(att.text.strip())
+                TEXTS[link] = unquote(att.text.strip())
+            if _http(text_url) and att_id and doc_id:
+                ATTACHMENTS[link] = {"text_url": text_url, "att_id": att_id, "doc_id": doc_id}
         if docs:
             info["dokument"] = docs
         infos.append(info)

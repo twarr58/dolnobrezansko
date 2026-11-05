@@ -15,7 +15,7 @@ def _xml(page=1, total_pages=1, docs=1):
             name='ČEZ - plánovaná odstávka {page}{n}' orig_url='http://www.okrouhlo.cz/file/{page}{n}.pdf'>
           <attachments>
             <attachment contains_text='1' mimetype='application/pdf' name='Odstávka'
-              url='https://edesky.cz/attachments/2026_w45/2334_{page}{n}/odstavka'
+              url='https://edesky.cz/dokument/{page}{n}#priloha_99{page}{n}'
               orig_url='http://www.okrouhlo.cz/file/{page}{n}.pdf'>{quote('Odstávka elektřiny 13. 11. 2026 od 7:30 do 15:00')}</attachment>
           </attachments>
         </document>""" for n in range(docs))
@@ -34,8 +34,10 @@ def test_parse_documents_with_texts():
     assert i["vyvěšení"]["datum"] == "2026-11-01"
     assert i["url"] == "http://www.okrouhlo.cz/file/10.pdf" and i["iri"] == "https://edesky.cz/dokument/10"
     att = i["dokument"][0]["url"]
-    assert att.startswith("https://edesky.cz/attachments/")  # přílohy z edesky.cz, ne z blokovaného webu obce
+    assert att == "http://www.okrouhlo.cz/file/10.pdf"  # odkaz pro čtenáře: originál na webu obce
     assert edesky.TEXTS[att] == "Odstávka elektřiny 13. 11. 2026 od 7:30 do 15:00"
+    assert edesky.ATTACHMENTS[att] == {"text_url": "https://edesky.cz/dokument/10.txt", "att_id": "9910",
+                                       "doc_id": "10"}
 
 
 def test_fetch_board_pages_and_key(monkeypatch):
@@ -123,3 +125,46 @@ def test_alternative_attribute_names():
     page = edesky.parse_page(xml)
     assert page.raw == 1 and page.infos[0]["název"]["cs"] == "Rozpočtové opatření"
     assert page.infos[0]["vyvěšení"]["datum"] == "2026-11-04" and page.sample_attrs == ["loaded_at", "title", "url"]
+
+
+TEXT_FILE = (
+    "49866785 38492238 Mapa_uzavirky.pdf https://vestec.cz/wp-content/uploads/mapa.pdf Lucie Novakova\n"
+    "Digitálně podepsal\n  2026-11-05 08:48:40 +0100 "
+    "49866786 38492238 Oznameni.pdf https://vestec.cz/wp-content/uploads/oznameni.pdf  \n \n"
+    "Městský úřad Černošice stanovuje přechodnou úpravu provozu dne 28. 11. 2026\n&lt;br&gt; sídlo: Mnichovice\n"
+)
+
+
+def test_split_text_file_per_attachment():
+    parts = edesky.split_text_file(TEXT_FILE, "38492238")
+    assert set(parts) == {"49866785", "49866786"}
+    assert parts["49866786"].startswith("Městský úřad Černošice") and "<br>" not in parts["49866786"]
+    assert "28. 11. 2026" not in parts["49866785"]
+
+
+def test_edesky_attachment_uses_public_text_without_downloading_original(tmp_path, monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_FEDERATION_RULE_ID", raising=False)
+    edesky.ATTACHMENTS.clear(), edesky._TEXT_FILES.clear(), edesky.TEXTS.clear()
+    orig = "https://vestec.cz/wp-content/uploads/oznameni.pdf"
+    edesky.ATTACHMENTS[orig] = {"text_url": "https://edesky.cz/dokument/38492238.txt", "att_id": "49866786",
+                                "doc_id": "38492238"}
+    hits = []
+
+    def handler(req):
+        hits.append(str(req.url))
+        if req.url.host == "edesky.cz":
+            return httpx.Response(200, text=TEXT_FILE)
+        return httpx.Response(403)
+
+    items = [{"id": "i1", "board": "b1", "title": "OOP č. 423/2026", "posted": "2026-11-05",
+              "docs": [{"name": "Oznameni.pdf", "url": orig}]}]
+
+    async def go():
+        from datetime import datetime, timezone
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as c:
+            return await region.enrich(c, items, tmp_path, ai_limit=0, now=datetime(2026, 11, 5, tzinfo=timezone.utc))
+
+    docs, _ = asyncio.run(go())
+    assert hits == ["https://edesky.cz/dokument/38492238.txt"]  # originál na blokovaném webu se nezkouší
+    assert docs[orig]["kind"] == "text" and docs[orig]["ext"] == "pdf" and "28. 11. 2026" in docs[orig]["text"]
