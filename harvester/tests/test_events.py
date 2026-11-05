@@ -124,3 +124,53 @@ def test_linklist_jesenice_place_after_date():
         ("Kafe se starostou", "2026-11-23", "16:00", "Obřadní síň"),
         ("Adventní koncert ZUŠ", "2026-12-03", None, None),
     ]
+
+
+def test_munipolis_cards():
+    html = """<div data-test="timeline-item"><h2 data-test="timeline-item-title">Strašidelná BU-BU stezka ve Zlatníkách!</h2>
+      <div data-test="event-info-published">Zveřejněno od: 4. 11. 2026 13:16</div>
+      <div data-test="event-info-date">7. 11. 2026 17:30 - 7. 11. 2026 20:30</div>
+      <div data-test="event-info-place">Zlatníky V remízku</div></div>
+      <div data-test="timeline-item"><h2 data-test="timeline-item-title">Zájezd</h2>
+      <div data-test="event-info-date">14. 11. 2026 09:30 - 15. 11. 2026 20:00</div></div>"""
+    got = events.parse_munipolis(html, "https://zlatniky-hodkovice.cz/event-calendar")
+    assert got == [
+        {"t": "Strašidelná BU-BU stezka ve Zlatníkách!", "d": "2026-11-07", "time": "17:30", "place": "Zlatníky V remízku",
+         "url": "https://zlatniky-hodkovice.cz/event-calendar"},
+        {"t": "Zájezd", "d": "2026-11-14", "end": "2026-11-15", "time": "09:30", "url": "https://zlatniky-hodkovice.cz/event-calendar"},
+    ]
+
+
+def test_posts_zvole_polydum():
+    html = """<a href="/aktualne/polyfunkcni-dum/zpravy-z-polydomu/411-divadelni-perlicky-2872cs.html">
+        <h3>4.11. Divadelní perličky pro naše dětičky</h3><p>Datum:</p><p>26. 10. 2026</p></a>
+      <a href="/aktualne/polyfunkcni-dum/zpravy-z-polydomu/uz-zitra-2855cs.html">Už zítra 14.10. v Polydomě vyprávění o Jordánsku. Datum: 13. 10. 2026</a>
+      <a href="/aktualne/polyfunkcni-dum/zpravy-z-polydomu/1212-vanocni-koncert-2628cs.html">12.12. Vánoční koncert Datum: 25. 11. 2025</a>
+      <a href="/aktualne/polyfunkcni-dum/zpravy-z-polydomu/21126-elisky-2656cs.html">21.1.26 cestovatelské vyprávění Datum: 5. 1. 2026</a>
+      <a href="/aktualne/polyfunkcni-dum/zpravy-z-polydomu/novy-rok-2700cs.html">5.1. Novoroční koncert Datum: 20. 12. 2026</a>
+      <a href="/aktualne/polyfunkcni-dum/zpravy-z-polydomu/nekona-2846cs.html">Dnes se představení nekoná. Datum: 7. 10. 2026</a>"""
+    got = events.parse_posts(html, "https://www.zvole.info/aktualne/polyfunkcni-dum/zpravy-z-polydomu/",
+                             r"/zpravy-z-polydomu/[^/]+\.html", "Polyfunkční dům Zvole")
+    assert [(e["d"], e["t"]) for e in got] == [
+        ("2026-11-04", "Divadelní perličky pro naše dětičky"),
+        ("2026-10-14", "Už zítra 14.10. v Polydomě vyprávění o Jordánsku."),
+        ("2025-12-12", "Vánoční koncert"),
+        ("2026-01-21", "Cestovatelské vyprávění"),
+        ("2027-01-05", "Novoroční koncert"),
+    ]
+    assert got[0]["place"] == "Polyfunkční dům Zvole"
+
+
+def test_linklist_brezova_olesko():
+    import json as _json
+    from pathlib import Path
+
+    region = _json.loads((Path(__file__).resolve().parent.parent / "uredni_desky" / "data" / "region.json").read_text())
+    cfg = {m["name"]: m.get("events") for m in region["members"]}["Březová-Oleško"]
+    html = """<a href="/vismo/kalendar-akci.asp?hledani=1&amp;datum_od=13.11.2026">13 počet akcí 1</a>
+      <ul><li class="u"><a href="/pozvanka%2Dsv%2Dmartin/a-1289">Pozvánka Sv. Martin</a>
+      <p>13.11.2026 17:00, v 17.00 hodin na Jezírka</p><p>Typ akce:</p><a href="/ap/hledani=1&amp;typ_akce=1104">Pro děti</a></li></ul>"""
+    got = events.parse_linklist(html, "https://www.brezova-olesko.cz/vismo/kalendar-akci.asp", cfg["match"])
+    assert got == [{"t": "Pozvánka Sv. Martin", "d": "2026-11-13", "time": "17:00", "place": "v 17.00 hodin na Jezírka",
+                    "url": "https://www.brezova-olesko.cz/pozvanka%2Dsv%2Dmartin/a-1289"}]
+    assert "{od}" in cfg["range_url"] and "{do}" in cfg["range_url"]
