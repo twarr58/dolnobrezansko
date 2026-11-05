@@ -92,7 +92,7 @@ svg { flex: 0 0 auto; }
 .main { min-width: 0; }
 @media (min-width: 980px) {
   .layout { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 48px; align-items: start; }
-  .panel { position: sticky; top: 0; max-height: 100vh; overflow-y: auto; padding: 20px 4px 20px 0; border-bottom: 0; }
+  .panel { padding: 20px 0; border-bottom: 0; } /* bez vlastního posuvníku – panel jede se stránkou */
   .main { padding-top: 6px; }
 }
 
