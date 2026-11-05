@@ -241,6 +241,9 @@ function weekStrip(groups, onPick) {
       },
       h('span', { class: 'day-btn__wd' }, weekday(iso)),
       h('span', { class: 'day-btn__d' }, String(+iso.slice(8, 10))),
+      h('span', { class: 'day-btn__full' }, `${weekday(iso)} ${dateCz(iso)}`),
+      h('span', { class: 'day-btn__rel' }, i < 2 ? relDay(iso) : ''),
+      h('span', { class: 'day-btn__count' }, items.length ? `${items.length} ${plural(items.length, 'termín', 'termíny', 'termínů')}` : 'nic'),
       h('span', { class: 'dots', 'aria-hidden': 'true' }, ['warn', 'event', 'start'].filter((k) => kinds.has(k)).map((k) => h('span', { class: `dot dot--${k}` })))));
     }));
 }
@@ -333,14 +336,14 @@ function renderHome() {
     ].filter(Boolean));
   };
 
-  const chips = h('div', { class: 'chips', role: 'group', 'aria-label': 'Obec' });
+  const chips = h('div', { class: 'places', role: 'group', 'aria-label': 'Obec' });
   const total = d.items.filter((it) => !it.r).length;
   const names = ['', ...connected.map((m) => m.name)
     .sort((a, b) => (counts.get(b) || 0) - (counts.get(a) || 0) || a.localeCompare(b, 'cs'))];
   const paintChips = () => chips.replaceChildren(...names.map((name) => h('button', {
-    type: 'button', class: 'chip', 'aria-pressed': String(state.filter.obec === name),
+    type: 'button', class: 'place', 'aria-pressed': String(state.filter.obec === name),
     onclick: () => { state.filter.obec = state.filter.obec === name ? '' : name; state.limit = STEP; writeFilter(); paintChips(); paint(); },
-  }, h('span', {}, name || 'Všechny obce'), h('span', { class: 'chip__n' }, String(name ? counts.get(name) || 0 : total)))));
+  }, h('span', { class: 'place__name' }, name || 'Všechny obce'), h('span', { class: 'place__n' }, String(name ? counts.get(name) || 0 : total)))));
   paintChips();
 
   let timer;
