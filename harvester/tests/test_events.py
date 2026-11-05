@@ -87,3 +87,23 @@ def test_collect_vismo_window_link_only_and_failure(tmp_path):
         {"obec": "C", "url": "https://c.cz/akce", "read": False, "n": 0},
     ]
     assert "A" in json.loads((tmp_path / "events.json").read_text())
+
+
+def test_linklist_psary_and_vestec():
+    psary = """<h1>Kalendář akcí</h1><table>
+      <tr><td><a href="https://psary.cz/udalosti/slavnosti-svetel-2/">Slavnosti světel</a></td><td></td><td>17:00 - 07.11.2026</td></tr>
+      <tr><td><a href="https://psary.cz/udalosti/jana-poncarova/">Jana Poncarová v naší knihovně</a></td><td>Knihovna</td>
+          <td>17:00 - 12.11.2026</td></tr>
+      <tr><td><a href="https://psary.cz/udalosti/zajezd/">Zájezd adventní trhy</a></td><td>28.11.2026</td></tr></table>
+      <a href="https://psary.cz/kalendar-seniori/">Aktivní senioři</a>"""
+    got = events.parse_linklist(psary, "https://psary.cz/blizke-udalosti/", r"psary\.cz/udalosti/[a-z0-9-]+")
+    assert got == [
+        {"t": "Slavnosti světel", "d": "2026-11-07", "time": "17:00", "url": "https://psary.cz/udalosti/slavnosti-svetel-2/"},
+        {"t": "Jana Poncarová v naší knihovně", "d": "2026-11-12", "time": "17:00", "place": "Knihovna",
+         "url": "https://psary.cz/udalosti/jana-poncarova/"},
+        {"t": "Zájezd adventní trhy", "d": "2026-11-28", "url": "https://psary.cz/udalosti/zajezd/"},
+    ]
+    vestec = """<article class="gallery-item"><a href="https://vestec.cz/events/farmarske-trhy-24/">Farmářské trhy 21.11.2026</a></article>
+      <article class="gallery-item"><a href="https://vestec.cz/events/betlemske-svetlo-6/">Betlémské světlo 23.12.2026</a></article>"""
+    got = events.parse_linklist(vestec, "https://vestec.cz/udalosti/", r"vestec\.cz/events/")
+    assert [(e["t"], e["d"]) for e in got] == [("Farmářské trhy", "2026-11-21"), ("Betlémské světlo", "2026-12-23")]

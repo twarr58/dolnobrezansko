@@ -11,6 +11,7 @@ Nastavení je u obce v data/region.json pod klíčem „newsletter“:
   page_param, pages  (volitelně) stránkování archivu: ?<page_param>=2 … <pages>
   num_re      (volitelně) skupiny num a year, když text odkazu nic neříká („Stáhnout“) – např. z názvu souboru
   browser     (volitelně) true = hlavičky běžného prohlížeče (web odmítá roboty podle identifikace)
+  also        (volitelně) další stránky se stejnými odkazy (např. „aktuální číslo“ mimo archiv)
   detail      (volitelně) {"match", "exclude"}: archiv odkazuje na stránku čísla, PDF je až na ní – odkaz se
               nahradí prvním souborem, který vyhoví „match“; z textu stránky se vezme i měsíc a rok vydání.
               Vyřešené stránky se pamatují, každá se otevře jen jednou.
@@ -51,6 +52,26 @@ def _year(text: str) -> int | None:
     return years[-1] if years else None
 
 
+_MONTH_SLUGS = {"leden": "leden", "unor": "únor", "brezen": "březen", "duben": "duben", "kveten": "květen",
+                "cervenec": "červenec", "cerven": "červen", "srpen": "srpen", "zari": "září", "rijen": "říjen",
+                "listopad": "listopad", "prosinec": "prosinec"}
+_MONTH_ORDER = ["leden", "únor", "březen", "duben", "květen", "červen", "červenec", "srpen", "září", "říjen",
+                "listopad", "prosinec"]
+
+
+def _title_from_url(url: str) -> str:
+    """Název z adresy, když odkaz nemá text (obrázek): …/rijen-2026/ → „Říjen 2026“."""
+    stem = re.sub(r"[_-]+", " ", Path(unquote(urlsplit(url).path.rstrip("/"))).stem).strip()
+    words = [_MONTH_SLUGS.get(w.lower(), w) for w in stem.split()]
+    out = " ".join(words)
+    return out[:1].upper() + out[1:]
+
+
+def _month_no(title: str) -> int | None:
+    m = re.match(r"\s*(" + "|".join(sorted(_MONTH_ORDER, key=len, reverse=True)) + r")\b", title, re.I)
+    return str(_MONTH_ORDER.index(m.group(1).lower()) + 1) if m else None
+
+
 def parse_archive(html: bytes | str, base_url: str, cfg: dict) -> list[dict]:
     """Archivní stránka → čísla zpravodaje v pořadí ze stránky (archivy bývají od nejnovějšího)."""
     doc = lxml.html.fromstring(html)
@@ -83,7 +104,10 @@ def parse_archive(html: bytes | str, base_url: str, cfg: dict) -> list[dict]:
         if num is None and (m := _NUM.search(title)):
             num = m.group(1)
         if not title:
-            title = re.sub(r"[_-]+", " ", Path(unquote(urlsplit(url).path)).stem).strip()
+            title = _title_from_url(url)
+            year = year or _year(title)
+        if num is None and (mon := _month_no(title)):
+            num = mon  # „Říjen 2026“: pořadí v roce podle měsíce
         issue = {"t": title, "url": url, "y": year, "n": int(num) if num else None, "_text": from_text}
         old = found.get(url)
         if old is None or (from_text and not old["_text"]):
@@ -170,7 +194,7 @@ async def resolve_details(client: httpx.AsyncClient, issues: list[dict], detail:
 
 
 def archive_pages(cfg: dict) -> list[str]:
-    pages = [cfg["url"]]
+    pages = [cfg["url"], *cfg.get("also", [])]
     if cfg.get("page_param"):
         sep = "&" if "?" in cfg["url"] else "?"
         pages += [f"{cfg['url']}{sep}{cfg['page_param']}={n}" for n in range(2, int(cfg.get("pages", 1)) + 1)]
