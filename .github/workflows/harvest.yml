@@ -22,8 +22,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -41,8 +41,8 @@ jobs:
     # Claude: přihlášení bez klíče přes Workload Identity Federation (viz README). Pravidlo v Claude Console
     # přijímá jen token GitHubu z repo:twarr58/dolnobrezansko:ref:refs/heads/main.
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -116,13 +116,13 @@ jobs:
             [ -f "state/$f" ] && cp "state/$f" state-out/ || true
           done
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: state
           path: state-out
           retention-days: 1
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: site
 
@@ -132,10 +132,10 @@ jobs:
     permissions:
       contents: write # plný stav (items.json…) se ukládá do větve `data`
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           sparse-checkout: README.md
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: state
           path: state-out
@@ -162,4 +162,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
