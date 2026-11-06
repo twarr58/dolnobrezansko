@@ -1,7 +1,7 @@
 """Znaky (erby) obcí pro web.
 
-Znak uložený v repozitáři (`erb` v data/region.json, soubor ve web/erby) má přednost. Ostatním obcím se znak
-najde ve Wikidatech (P94 – vyobrazení znaku, podle `qid` nebo `erb_qid`) a stáhne se z Wikimedia Commons
+Znak uložený v repozitáři (`erb` v data/region.json, soubor ve web/erby) má přednost. Ostatním obcím se stáhne
+soubor `erb_commons` z Wikimedia Commons, nebo se znak najde ve Wikidatech (P94 – vyobrazení znaku, podle `qid` nebo `erb_qid`) a stáhne se z Wikimedia Commons
 jako náhled 120 px. Stažené znaky se drží ve stavu (state/erby.json), takže Commons se ptáme jednou za týden.
 """
 from __future__ import annotations
@@ -55,19 +55,20 @@ async def collect(client: httpx.AsyncClient, members: list[dict], site_dir: Path
     except (OSError, ValueError):
         cache = {}
     out = {m["name"]: m["erb"] for m in members if m.get("erb")}
-    todo = [m for m in members if not m.get("erb") and m.get("slug") and wikidata_qid(m)]
+    todo = [m for m in members if not m.get("erb") and m.get("slug") and (m.get("erb_commons") or wikidata_qid(m))]
     # znovu se ptáme jednou za týden – i u obcí, které znak ve Wikidatech zatím nemají
     stale = [m for m in todo if cache.get(m["slug"], {}).get("checked", "") < (now - timedelta(days=REFRESH_DAYS)).isoformat()]
     files: dict[str, str] = {}
     wd_ok = False
-    if stale:
+    lookup = sorted({wikidata_qid(m) for m in stale if not m.get("erb_commons")})
+    if lookup:
         try:
-            files = await coa_files(client, sorted({wikidata_qid(m) for m in stale}))
+            files = await coa_files(client, lookup)
             wd_ok = True
         except (httpx.HTTPError, ValueError, KeyError) as exc:
             log.warning("Znaky obcí: Wikidata nejdou (%r), zůstávají uložené", exc)
     for m in stale:
-        name = files.get(wikidata_qid(m))
+        name = m.get("erb_commons") or files.get(wikidata_qid(m))
         prev = cache.get(m["slug"], {})
         if not name:
             if wd_ok:  # znak ve Wikidatech není – zeptáme se zase za týden; při výpadku Wikidat hned příště

@@ -63,3 +63,21 @@ def test_failed_wikidata_keeps_previous_crests(tmp_path):
             return await erby.collect(c, members, tmp_path / "site", tmp_path / "state", NOW)
 
     assert asyncio.run(go()) == {}
+
+
+def test_commons_file_from_config_skips_wikidata(tmp_path):
+    hosts = []
+
+    def handler(req):
+        hosts.append(req.url.host)
+        assert "Liber%20CZ%20CoA.gif" in str(req.url)
+        return httpx.Response(200, content=b"GIF89a" + b"0" * 50, headers={"content-type": "image/gif"})
+
+    members = [{"name": "Libeř", "slug": "liber", "qid": "Q1863455", "erb_commons": "Liber CZ CoA.gif"}]
+
+    async def go():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as c:
+            return await erby.collect(c, members, tmp_path / "site", tmp_path / "state", NOW)
+
+    assert asyncio.run(go()) == {"Libeř": "erby/liber.gif"}
+    assert hosts == ["commons.wikimedia.org"]
