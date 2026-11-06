@@ -275,6 +275,50 @@ function mount(title, ...nodes) {
   document.getElementById('app').replaceChildren(...nodes.flat(Infinity).filter(Boolean));
 }
 
+// ---------- návštěvnost (GoatCounter: bez cookies, bez osobních údajů) ----------
+// Počítá se cesta bez parametrů (#/samosprava, #/obec/psary, #/o/<id>) – filtry ne, aby každé kliknutí
+// na filtr nebylo nové zobrazení. Kliky na odkazy ven se počítají jako události podle druhu odkazu.
+
+const SITE_TITLE = ' – Úřední deska Dolnobřežansko';
+let lastCounted = null;
+
+function gc(vars) {
+  const g = window.goatcounter;
+  if (g && typeof g.count === 'function') {
+    try { g.count(vars); } catch { /* počítadlo nesmí rozbít web */ }
+  } else {
+    (window.gcQueue ||= []).push(vars); // skript se ještě načítá (index.html frontu vyprázdní)
+  }
+}
+
+function countView() {
+  const path = `/${parseHash().parts.join('/')}`;
+  if (path === lastCounted) return;
+  lastCounted = path;
+  const title = document.title.endsWith(SITE_TITLE) ? document.title.slice(0, -SITE_TITLE.length) : 'Přehled';
+  gc({ path, title: title.length > 120 ? `${title.slice(0, 119)}…` : title });
+}
+
+function linkKind(a) {
+  if (a.classList.contains('parcel')) return 'katastr';
+  if (a.classList.contains('doc')) return 'příloha';
+  if (a.classList.contains('meeting__doc')) return 'usnesení';
+  if (a.matches('.issue, .nl__latest, .nl__ext')) return 'zpravodaj';
+  if (a.matches('.ev, .entry--event')) return 'akce';
+  if (/^Původní znění/.test(a.textContent || '')) return 'originál';
+  return 'odkaz';
+}
+
+function countOutbound(e) {
+  if (e.type === 'auxclick' && e.button !== 1) return; // prostřední tlačítko = otevřít v nové kartě
+  const a = e.target.closest?.('a[href^="http"]');
+  if (!a) return;
+  let host;
+  try { host = new URL(a.href).hostname.replace(/^www\./, ''); } catch { return; }
+  if (host === location.hostname) return;
+  gc({ path: `${linkKind(a)}: ${host}`, title: (a.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 100), event: true });
+}
+
 let onList = false;   // je teď zobrazený seznam?
 let fromList = false; // přišel uživatel na detail ze seznamu (pak „Zpět“ = history.back())
 
@@ -1355,8 +1399,11 @@ async function start() {
     mount('Chyba', h('div', { class: 'col pad' }, h('h1', {}, 'Data se nepodařilo načíst'), h('p', {}, String(err.message || err))));
     return;
   }
-  window.addEventListener('hashchange', route);
+  window.addEventListener('hashchange', () => { route(); countView(); });
+  document.addEventListener('click', countOutbound, true);
+  document.addEventListener('auxclick', countOutbound, true);
   route();
+  countView();
 }
 
 start();
