@@ -213,6 +213,7 @@ async def fetch_board(client: httpx.AsyncClient, list_url: str, detail_concurren
     for info, d in zip(infos, details):
         if d is None:
             cache.apply(info)
+    cache.drop_shared_docs(infos, list_url)
     return {"informace": infos}
 
 

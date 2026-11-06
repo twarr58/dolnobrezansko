@@ -4,7 +4,8 @@ import httpx
 
 from uredni_desky.extra import load_extra_sources
 from uredni_desky.fetch import fetch_all
-from uredni_desky.imunis import czech_date, parse_detail, parse_rss, to_informace
+from uredni_desky import cache
+from uredni_desky.imunis import czech_date, fetch_board, parse_detail, parse_listing, parse_rss, to_informace
 from uredni_desky.normalize import normalize_board
 
 RSS = """﻿<?xml version="1.0" encoding="utf-8"?>
@@ -101,3 +102,61 @@ def test_extra_sources_and_fetch():
     first, second = res.payload["informace"]
     assert first["relevantní_do"]["datum"] == "2026-11-14"
     assert "relevantní_do" not in second  # detail selhal (500) → jen údaje z RSS
+
+
+# seznam desky (sem eDeska přesměruje detail některých starých položek) – každá položka má v řádku své soubory
+LISTING = """<html><body><table class="edeska table">
+<thead><tr><th>Název</th><th>Značka</th><th>Přílohy</th></tr></thead><tbody>
+<tr><td><a href="/edeska/detail?id=2627">Přerušení dodávky elektřiny</a></td><td>1550/2026/OÚ</td>
+    <td><a href="/edeska/file?id=59607">dokument PDF</a></td></tr>
+<tr><td><a href="/edeska/detail?id=2616">DSO – závěrečný účet</a></td><td>0965/2026/OÚ</td>
+    <td><a href="/edeska/detail?id=2616">7 dokumentů</a></td></tr>
+<tr><td><a href="/edeska/detail?id=1660">Dočasné omezení užívání pitné vody</a></td><td>980/2019/OÚ</td>
+    <td><a href="/edeska/file?id=47367">dokument PDF</a></td></tr>
+</tbody></table></body></html>"""
+
+
+def test_detail_redirected_to_listing_takes_only_own_row():
+    rss = """<?xml version="1.0"?><rss><channel>
+      <item><link>https://obec.imunis.cz/edeska/detail?id=1660</link><title>Dočasné omezení užívání pitné vody</title></item>
+      <item><link>https://obec.imunis.cz/edeska/detail?id=2627</link><title>Přerušení dodávky elektřiny</title></item>
+    </channel></rss>""".encode()
+
+    def handler(request):
+        if request.url.path.endswith("rss"):
+            return httpx.Response(200, content=rss)
+        if request.url.params.get("id") == "1660":  # starý záznam: detail přesměruje na seznam
+            return httpx.Response(302, headers={"Location": "https://obec.imunis.cz/edeska"})
+        if request.url.path == "/edeska":
+            return httpx.Response(200, text=LISTING)
+        return httpx.Response(200, text=DETAIL.replace("84785", "59607"))
+
+    async def go():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler), follow_redirects=True) as client:
+            return await fetch_board(client, "https://obec.imunis.cz/edeska/feed/rss")
+
+    cache.DETAILS.clear()
+    cache.reset_budget()
+    old, new = asyncio.run(go())["informace"]
+    assert [d["url"] for d in old["dokument"]] == ["https://obec.imunis.cz/edeska/file?id=47367"]
+    assert [d["url"] for d in new["dokument"]] == ["https://obec.imunis.cz/edeska/file?id=59607"]
+
+
+def test_parse_listing_rows():
+    rows = parse_listing(LISTING, "https://obec.imunis.cz/edeska")
+    assert rows["1660"] == [("dokument PDF", "https://obec.imunis.cz/edeska/file?id=47367")]
+    assert rows["2616"] == []  # víc dokumentů → jen odkaz na detail
+
+
+def test_shared_docs_dropped_and_cache_refreshed():
+    f = lambda n: {"název": {"cs": "x"}, "url": f"https://o.cz/edeska/file?id={n}"}  # noqa: E731
+    infos = [{"url": "a", "dokument": [f(1), f(2), f(3)]}, {"url": "b", "dokument": [f(1)]}, {"url": "c", "dokument": [f(2)]}]
+    assert cache.drop_shared_docs(infos, "deska") == 2
+    assert [[d["url"][-1] for d in i["dokument"]] for i in infos] == [["3"], ["1"], ["2"]]
+    # v uloženém stavu: položka se zavlečenými přílohami se z mezipaměti vyřadí → detail se stáhne znovu
+    cache.load_from_state([
+        {"url": "a", "board": "x", "docs": [{"url": "u1"}, {"url": "u2"}]},
+        {"url": "b", "board": "x", "docs": [{"url": "u1"}]},
+        {"url": "c", "board": "y", "docs": [{"url": "u2"}]},
+    ])
+    assert set(cache.DETAILS) == {"c"}

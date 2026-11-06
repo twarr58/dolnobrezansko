@@ -12,6 +12,10 @@ VISMO = {"result": {"items": [
          "isMultiDay": True, "v-id": 1, "v-viewUrl": "/svoz", "codeListItems": ""},
         {"name": "Kino", "fromTime": "19:00", "isStartDay": True, "isMultiDay": False, "isAllDay": True, "v-id": 2,
          "v-viewUrlAbsolute": "https://obec.cz/kino", "codeListItems": [{"name": "Kino", "isHiddenName": False}]},
+        {"name": "Koncert", "fromTime": "19:30", "isStartDay": True, "isMultiDay": False, "isAllDay": False, "v-id": 4,
+         "v-viewUrl": "/koncert"},
+        {"name": "Půlnoc", "fromTime": "0:00", "isStartDay": True, "isMultiDay": False, "isAllDay": False, "v-id": 5,
+         "v-viewUrl": "/pulnoc"},
         {"name": "Zrušeno", "IsCanceled": True, "isStartDay": True, "v-id": 3}]},
     {"date": "2026-11-07T00:00:00+01:00", "events": [
         {"name": "Svoz bioodpadu", "fromTime": "13:00", "isStartDay": False, "isEndDay": True, "isMultiDay": True, "v-id": 1}]},
@@ -24,8 +28,11 @@ VISMO = {"result": {"items": [
 def test_vismo_joins_multi_day_and_keeps_repeats_apart():
     got = events.parse_vismo(VISMO, "https://obec.cz/kalendar")
     assert got == [
-        {"t": "Svoz bioodpadu", "d": "2026-11-06", "time": "13:00", "url": "https://obec.cz/svoz", "end": "2026-11-07"},
-        {"t": "Kino", "d": "2026-11-06", "time": "19:00", "url": "https://obec.cz/kino", "tags": ["Kino"]},
+        # celodenní akce: čas z API (13:00, 22:00…) web obce neukazuje → bez času
+        {"t": "Svoz bioodpadu", "d": "2026-11-06", "url": "https://obec.cz/svoz", "end": "2026-11-07"},
+        {"t": "Kino", "d": "2026-11-06", "url": "https://obec.cz/kino", "tags": ["Kino"]},
+        {"t": "Koncert", "d": "2026-11-06", "time": "19:30", "url": "https://obec.cz/koncert"},
+        {"t": "Půlnoc", "d": "2026-11-06", "url": "https://obec.cz/pulnoc"},
         {"t": "Svoz bioodpadu", "d": "2026-11-13", "time": "13:00", "url": "https://obec.cz/svoz"},
     ]
 
