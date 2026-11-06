@@ -170,6 +170,21 @@ const obecTags = (names) => names.map((n, i) => [i ? h('span', { class: 'obec__s
 /** Jednotné datum v textu: 2026-11-06 → 6. 11. 2026 (AI občas vrátí data v ISO tvaru). */
 const czDates = (text) => String(text ?? '').replace(/\b(\d{4})-(\d{2})-(\d{2})\b/g, (_, y, m, d) => `${+d}. ${+m}. ${y}`);
 
+/** Texty shrnutí s daty v ISO tvaru převede na české (pole s datem pro výpočty – deadline, event … – zůstávají). */
+function czTexts(data) {
+  const TEXT = ['tldr', 'action', 'impact', 'affects', 'where', 'contact', 'importance_why'];
+  for (const it of data.items || []) {
+    const s = it.s;
+    if (s) {
+      for (const k of TEXT) if (typeof s[k] === 'string') s[k] = czDates(s[k]);
+      if (Array.isArray(s.bullets)) s.bullets = s.bullets.map((b) => (typeof b === 'string' ? czDates(b) : b));
+      for (const f of Array.isArray(s.facts) ? s.facts : []) if (typeof f?.value === 'string') f.value = czDates(f.value);
+      for (const x of Array.isArray(s.dates) ? s.dates : []) if (typeof x?.what === 'string') x.what = czDates(x.what);
+    }
+    for (const d of it.docs || []) for (const k of ['sum', 'w']) if (typeof d[k] === 'string') d[k] = czDates(d[k]);
+  }
+}
+
 // ---------- stejná oznámení více obcí ----------
 
 const STOP = new Set(['obec', 'obce', 'obci', 'mezi', 'kvuli', 'bude', 'jsou', 'pro', 'oznameni', 'dolnimi', 'mesto']);
@@ -780,25 +795,40 @@ function villageData(name) {
 
 function renderVillages() {
   const members = state.data.members || [];
+  const horizon = addDays(TODAY, HORIZON);
+  const host = (u) => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return ''; } };
+  const card = (m) => {
+    const v = villageData(m.name);
+    const deadlines = v.dated.filter((x) => x.w.type === 'deadline').length;
+    // co je u obce nejblíž na řadě: lhůta nebo termín v příštích dnech (ne to, co už jen „platí“)
+    const next = v.dated.filter((x) => x.w.type !== 'running' && x.w.date <= horizon)
+      .sort((a, b) => a.w.date.localeCompare(b.w.date) || (a.w.kind === 'warn' ? -1 : 1))[0];
+    const kind = /^město/i.test(m.publisher || '') ? 'město' : 'obec';
+    const num = (n, label, warn) => h('div', { class: `ocard__num${warn && n ? ' ocard__num--warn' : ''}${n ? '' : ' ocard__num--zero'}` },
+      h('dd', {}, String(n)), h('dt', {}, label));
+    return h('li', {}, h('a', { class: 'ocard', href: obecHref(m.name), style: obecStyle(m.name) },
+      h('div', { class: 'ocard__head' },
+        crest(m.name, 46),
+        h('div', { class: 'ocard__id' },
+          h('span', { class: 'ocard__kind' }, [kind, host(m.web)].filter(Boolean).join(' · ')),
+          h('h2', { class: 'ocard__name' }, m.name))),
+      h('dl', { class: 'ocard__nums' },
+        num(v.live.length, plural(v.live.length, 'oznámení', 'oznámení', 'oznámení')),
+        num(deadlines, plural(deadlines, 'lhůta', 'lhůty', 'lhůt'), true),
+        num(v.events.length, plural(v.events.length, 'akce', 'akce', 'akcí'))),
+      next
+        ? h('p', { class: `ocard__next ocard__next--${next.w.kind}` },
+          h('span', { class: 'ocard__when' }, `${weekday(next.w.date)} ${dm(next.w.date)}`),
+          h('span', { class: 'ocard__what' }, next.it.s?.tldr || next.it.t))
+        : h('p', { class: 'ocard__next ocard__next--none' }, `V příštích ${HORIZON} dnech nic s termínem`)));
+  };
   mount('Obce',
     h('div', { class: 'page' },
       siteNav('obce'),
       h('header', { class: 'masthead' },
         h('h1', {}, 'Obce mikroregionu'),
         h('span', { class: 'masthead__meta' }, `${members.length} ${plural(members.length, 'obec', 'obce', 'obcí')} · ${state.data.region?.name || 'Dolnobřežansko'}`)),
-      h('ul', { class: 'obce' }, members.map((m) => {
-        const v = villageData(m.name);
-        const soon = v.dated.filter((x) => x.w.kind === 'warn').length;
-        return h('li', {}, h('a', { class: 'obce__card', href: obecHref(m.name), style: obecStyle(m.name) },
-          crest(m.name, 44),
-          h('span', { class: 'obce__body' },
-            h('span', { class: 'obce__name' }, m.name),
-            h('span', { class: 'obce__stats' },
-              `${v.live.length} ${plural(v.live.length, 'oznámení', 'oznámení', 'oznámení')}`,
-              soon ? h('span', { class: 'obce__warn' }, ` · ${soon} ${plural(soon, 'lhůta', 'lhůty', 'lhůt')}`) : null,
-              v.events.length ? ` · ${v.events.length} ${plural(v.events.length, 'akce', 'akce', 'akcí')}` : null),
-            v.news ? h('span', { class: 'obce__news' }, v.news.name) : null)));
-      })),
+      h('ul', { class: 'ocards' }, members.map(card)),
       h('p', { class: 'credit' }, 'Znaky obcí: weby obcí a Wikimedia Commons.')));
 }
 
@@ -1140,6 +1170,7 @@ async function start() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     if (!Array.isArray(data.items) || !Array.isArray(data.members)) throw new Error('neplatný formát dat');
+    czTexts(data);
     state.data = data;
     OBCE = new Map(data.members.map((m) => [m.name, m]));
   } catch (err) {
