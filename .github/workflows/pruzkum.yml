@@ -10,6 +10,10 @@ on:
         description: "Adresy oddělené mezerou (prázdné = deploy/pruzkum/urls.txt)"
         default: ""
         required: false
+      all_links:
+        description: "Vypsat všechny odkazy (ne jen kontakty, úřad, zápisy)"
+        type: boolean
+        default: false
   push:
     paths: ["deploy/pruzkum/**", ".github/workflows/pruzkum.yml"]
 
@@ -32,6 +36,7 @@ jobs:
         env:
           HARVEST_FALLBACK_PROXY: ${{ secrets.HARVEST_FALLBACK_PROXY }}
           URLS: ${{ inputs.urls }}
+          ALL_LINKS: ${{ (github.event_name == 'push' || inputs.all_links) && '1' || '' }}
         run: |
           set -f
           if [ -n "$URLS" ]; then python deploy/pruzkum/pages.py $URLS; else python deploy/pruzkum/pages.py --file deploy/pruzkum/urls.txt; fi

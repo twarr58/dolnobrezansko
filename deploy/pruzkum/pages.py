@@ -15,6 +15,7 @@ import lxml.html
 UA = "Mozilla/5.0 (X11; Linux x86_64) uredni-desky-pruzkum (+https://github.com/twarr58/dolnobrezansko)"
 LINK_RE = re.compile(r"kontakt|úřad|urad|povinn|usnesen|zápis|zapis|rad[ay]\b|rada|zastupitel|zasedání|zasedani|samospr", re.I)
 MAX_TEXT = int(os.environ.get("MAX_TEXT", "6000"))
+ALL_LINKS = os.environ.get("ALL_LINKS") == "1"  # vypsat všechny odkazy, ne jen kontakty / úřad / zápisy
 
 
 def get(url: str) -> tuple[httpx.Response, str]:
@@ -45,17 +46,19 @@ def dump(url: str) -> None:
         return
     root = lxml.html.fromstring(r.content, base_url=str(r.url))
     root.make_links_absolute(str(r.url))
-    for bad in root.xpath("//script|//style|//noscript|//svg"):
+    for bad in root.xpath("//script|//style|//noscript|//svg|//*[contains(@id,'cookie') or contains(@class,'cookie')]"):
         bad.drop_tree()
     links, seen = [], set()
     for a in root.iter("a"):
         href, text = a.get("href") or "", " ".join(a.text_content().split())
-        if href.startswith("http") and href not in seen and LINK_RE.search(f"{text} {href}"):
+        if href.startswith("http") and href not in seen and (ALL_LINKS or LINK_RE.search(f"{text} {href}")):
             seen.add(href)
             links.append(f"   {text[:70]:<70} {href}")
     print(f"-- odkazy ({len(links)}):")
     print("\n".join(links[:120]))
-    main = (root.xpath("//main") or root.xpath("//*[@id='content' or @id='main' or contains(@class,'content')]") or [root])[0]
+    # hlavní obsah: Vismo #hlobsah, <main>, #content; jinak celá stránka
+    main = (root.xpath("//*[@id='hlobsah']") or root.xpath("//main") or root.xpath("//*[@id='content' or @id='main']")
+            or [root])[0]
     text = re.sub(r"\n\s*\n+", "\n", re.sub(r"[ \t]+", " ", main.text_content()))
     print(f"-- text ({len(text)} znaků, prvních {MAX_TEXT}):")
     print(text[:MAX_TEXT])
