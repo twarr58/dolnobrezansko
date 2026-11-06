@@ -46,7 +46,7 @@ def dump(url: str) -> None:
         return
     root = lxml.html.fromstring(r.content, base_url=str(r.url))
     root.make_links_absolute(str(r.url))
-    for bad in root.xpath("//script|//style|//noscript|//svg|//*[contains(@id,'cookie') or contains(@class,'cookie')]"):
+    for bad in root.xpath("//script|//style|//noscript|//svg"):
         bad.drop_tree()
     links, seen = [], set()
     for a in root.iter("a"):
@@ -59,6 +59,10 @@ def dump(url: str) -> None:
     # hlavní obsah: Vismo #hlobsah, <main>, #content; jinak celá stránka
     main = (root.xpath("//*[@id='hlobsah']") or root.xpath("//main") or root.xpath("//*[@id='content' or @id='main']")
             or [root])[0]
+    # cookie lišta: jen prvky uvnitř hlavního obsahu, které obsah samy neobsahují (Vismo má „cookie“ ve třídě <body>)
+    for bad in main.xpath(".//*[contains(@id,'cookie') or contains(@class,'cookie')]"):
+        if bad.getparent() is not None:
+            bad.drop_tree()
     text = re.sub(r"\n\s*\n+", "\n", re.sub(r"[ \t]+", " ", main.text_content()))
     print(f"-- text ({len(text)} znaků, prvních {MAX_TEXT}):")
     print(text[:MAX_TEXT])
