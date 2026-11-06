@@ -155,11 +155,19 @@ def parse_munipolis(html: str, base: str) -> list[tuple[str, str]]:
 
 
 class Fetcher:
+    """Stahování přímo, při odmítnutí přes záložní proxy; server, který jednou přímo nejde, jede dál přes ni."""
+
     def __init__(self, client: httpx.AsyncClient, fallback: httpx.AsyncClient | None):
         self.client, self.fallback = client, fallback
+        self.proxy_hosts: set[str] = set()
 
     async def get(self, url: str, browser: bool = False) -> httpx.Response:
         headers = BROWSER_HEADERS if browser else HTML_HEADERS
+        host = urlsplit(url).hostname or ""
+        if self.fallback is not None and host in self.proxy_hosts:
+            r = await self.fallback.get(url, headers=headers, timeout=40)
+            r.raise_for_status()
+            return r
         try:
             r = await self.client.get(url, headers=headers, timeout=40)
             r.raise_for_status()
@@ -168,6 +176,7 @@ class Fetcher:
             if self.fallback is None or not (needs_proxy(exc) or isinstance(exc, httpx.HTTPStatusError)
                                              and exc.response.status_code >= 500):
                 raise
+            self.proxy_hosts.add(host)
             r = await self.fallback.get(url, headers=headers, timeout=40)
             r.raise_for_status()
             return r
@@ -328,28 +337,36 @@ async def collect(client: httpx.AsyncClient, members: list[dict], state_dir: Pat
     years = {now.year} | ({now.year - 1} if now.month <= 2 else set())
     f = Fetcher(client, fallback)
     sources = []
-    for m in members:
-        for cfg in m.get("council") or []:
-            key = f"{m['name']}|{cfg['body']}|{cfg['url']}"
-            entry = lists.get(key) or {}
-            fresh = entry.get("checked", "") > (now - timedelta(hours=REFRESH_HOURS)).isoformat() \
-                and entry.get("cfg") == cfg and entry.get("v") == PARSER_VERSION and entry.get("year") == now.year
-            if not fresh:
-                try:
-                    found = await list_documents(f, cfg, years)
-                    entry = {"cfg": cfg, "checked": now.isoformat(timespec="seconds"), "ok": True, "v": PARSER_VERSION,
-                             "year": now.year, "docs": found}
-                    log.info("Samospráva %s (%s): %d dokumentů", m["name"], cfg["body"], len(found))
-                except Exception as exc:  # noqa: BLE001 – web obce nejde: zůstává poslední seznam
-                    log.warning("Samospráva %s (%s): %r", m["name"], cfg["body"], exc)
-                    entry = {**entry, "cfg": cfg, "checked": now.isoformat(timespec="seconds"), "ok": False,
-                             "v": PARSER_VERSION, "year": now.year}
-                lists[key] = entry
-            for d in entry.get("docs", []):
-                docs.setdefault(_id(d["url"]), {}).update({**d, "o": m["name"], "body": cfg["body"],
-                                                           "browser": bool(cfg.get("browser"))})
-            sources.append({"obec": m["name"], "body": cfg["body"], "url": cfg["url"], "ok": entry.get("ok", False),
-                            "n": len(entry.get("docs", []))})
+    pairs = [(m, cfg) for m in members for cfg in m.get("council") or []]
+    list_sem = asyncio.Semaphore(4)  # různé obce souběžně, jedna obec postupně
+
+    async def refresh(m: dict, cfg: dict) -> None:
+        key = f"{m['name']}|{cfg['body']}|{cfg['url']}"
+        entry = lists.get(key) or {}
+        fresh = entry.get("checked", "") > (now - timedelta(hours=REFRESH_HOURS)).isoformat() \
+            and entry.get("cfg") == cfg and entry.get("v") == PARSER_VERSION and entry.get("year") == now.year
+        if fresh:
+            return
+        async with list_sem:
+            try:
+                found = await list_documents(f, cfg, years)
+                entry = {"cfg": cfg, "checked": now.isoformat(timespec="seconds"), "ok": True, "v": PARSER_VERSION,
+                         "year": now.year, "docs": found}
+                log.info("Samospráva %s (%s): %d dokumentů", m["name"], cfg["body"], len(found))
+            except Exception as exc:  # noqa: BLE001 – web obce nejde: zůstává poslední seznam
+                log.warning("Samospráva %s (%s): %r", m["name"], cfg["body"], exc)
+                entry = {**entry, "cfg": cfg, "checked": now.isoformat(timespec="seconds"), "ok": False,
+                         "v": PARSER_VERSION, "year": now.year}
+        lists[key] = entry
+
+    await asyncio.gather(*(refresh(m, cfg) for m, cfg in pairs))
+    for m, cfg in pairs:
+        entry = lists.get(f"{m['name']}|{cfg['body']}|{cfg['url']}") or {}
+        for d in entry.get("docs", []):
+            docs.setdefault(_id(d["url"]), {}).update({**d, "o": m["name"], "body": cfg["body"],
+                                                       "browser": bool(cfg.get("browser"))})
+        sources.append({"obec": m["name"], "body": cfg["body"], "url": cfg["url"], "ok": entry.get("ok", False),
+                        "n": len(entry.get("docs", []))})
 
     # stažení nových dokumentů a shrnutí (nejnovější první)
     budget = {"n": DOC_BUDGET}
@@ -439,17 +456,19 @@ async def list_all(members: list[dict], only: str = "") -> None:
     async with httpx.AsyncClient(**common) as client:
         fallback = httpx.AsyncClient(**common, proxy=proxy) if proxy else None
         f = Fetcher(client, fallback)
-        for m in members:
-            if only and only.lower() not in m["name"].lower():
-                continue
-            for cfg in m.get("council") or []:
-                try:
-                    docs = await list_documents(f, cfg, years)
-                except Exception as exc:  # noqa: BLE001
-                    print(f"!! {m['name']} ({cfg['body']}): {exc!r}")
-                    continue
-                print(f"== {m['name']} ({cfg['body']}): {len(docs)} dokumentů – {cfg['url']}")
-                for d in docs[:6]:
-                    print(f"   {d['date'] or '????-??-??'} {d['kind']:<8} {d['title'][:70]:<70} {d['url']}")
+        pairs = [(m, cfg) for m in members if not only or only.lower() in m["name"].lower()
+                 for cfg in m.get("council") or []]
+
+        async def one(m: dict, cfg: dict) -> str:
+            try:
+                docs = await list_documents(f, cfg, years)
+            except Exception as exc:  # noqa: BLE001
+                return f"!! {m['name']} ({cfg['body']}): {exc!r}"
+            lines = [f"== {m['name']} ({cfg['body']}): {len(docs)} dokumentů – {cfg['url']}"]
+            lines += [f"   {d['date'] or '????-??-??'} {d['kind']:<8} {d['title'][:70]:<70} {d['url']}" for d in docs[:6]]
+            return "\n".join(lines)
+
+        for text in await asyncio.gather(*(one(m, cfg) for m, cfg in pairs)):
+            print(text)
         if fallback:
             await fallback.aclose()

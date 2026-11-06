@@ -28,29 +28,31 @@ zpravodaje a stránku každé obce.
 | Detail oznámení | `#/o/<id>` | Co můžu udělat a do kdy, co to znamená, klíčové údaje a data, přílohy s popisem obsahu, odkaz na původní znění. |
 | Kalendář akcí | `#/akce` | Akce z kalendářů na webech obcí na 60 dní: měsíc nebo seznam, filtr obcí. |
 | Zpravodaje | `#/zpravodaje` | Nejnovější číslo každého zpravodaje a archiv po ročnících. Jen odkazy na weby obcí, bez AI. |
-| Obce | `#/obce`, `#/obec/<slug>` | Karta každé obce (počty oznámení, lhůt a akcí, nejbližší termín) a stránka obce: deska, akce, zpravodaj, odkaz na web a úřední desku. |
+| Samospráva | `#/samosprava` | Co letos rozhodly rady a zastupitelstva: zasedání podle data, hlavní věta a jednotlivé body usnesení (schvaluje, bere na vědomí, ukládá…), filtr obce, orgánu a „jen důležité“. |
+| Obce | `#/obce`, `#/obec/<slug>` | Karta každé obce (počty oznámení, lhůt a akcí, nejbližší termín) a stránka obce: deska, poslední usnesení, akce, zpravodaj, kontakt na úřad (adresa, telefon, e-mail, datová schránka, IČO, úřední hodiny). |
 
 Web je statický (`web/`, bez buildu), umí světlý a tmavý vzhled a funguje na telefonu. U každé položky je
 znak a barva obce.
 
 ## Obce a zdroje dat
 
-| Obec | Úřední deska | Kalendář akcí | Zpravodaj | Znak |
-|---|---|---|---|---|
-| Dolní Břežany | iMunis | Vismo | Dolnobřežanský Rozhled | `web/erby` |
-| Vrané nad Vltavou | iMunis | články na webu | Zrcadlo | `web/erby` |
-| Zvole | Galileo | příspěvky Polydomu | Zvolské noviny | `web/erby` |
-| Psáry | RSS (ALIS) | seznam odkazů | Psárský zpravodaj | Commons |
-| Libeř | Vismo | Vismo | nevydává | Commons |
-| Ohrobec | HTML (web obce) | RDC | Ohrobecký zpravodaj | `web/erby` |
-| Vestec | edesky.cz | seznam odkazů | Vestecké listy | Commons |
-| Jesenice | edesky.cz | seznam odkazů | Jesenický kurýr | Commons |
-| Zlatníky-Hodkovice | hledá se automaticky | Munipolis | nevydává | `web/erby` |
-| Březová-Oleško | edesky.cz | seznam odkazů | nevydává | Commons |
-| Okrouhlo | edesky.cz | – | nevydává | bez znaku (štít s písmenem) |
+| Obec | Úřední deska | Kalendář akcí | Zpravodaj | Usnesení | Znak |
+|---|---|---|---|---|---|
+| Dolní Břežany | iMunis | Vismo | Dolnobřežanský Rozhled | rada + ZO (Vismo po letech, `.doc`) | `web/erby` |
+| Vrané nad Vltavou | iMunis | články na webu | Zrcadlo | zápisy ZO (PDF) | `web/erby` |
+| Zvole | Galileo | příspěvky Polydomu | Zvolské noviny | rada + ZO (PDF, skeny) | `web/erby` |
+| Psáry | RSS (ALIS) | seznam odkazů | Psárský zpravodaj | rada + ZO (stránky, `.doc`) | Commons |
+| Libeř | Vismo | Vismo | nevydává | ZO (stránky) | Commons |
+| Ohrobec | HTML (web obce) | RDC | Ohrobecký zpravodaj | ZO (PDF) | `web/erby` |
+| Vestec | edesky.cz | seznam odkazů | Vestecké listy | rada + ZO (PDF) | Commons |
+| Jesenice | edesky.cz | seznam odkazů | Jesenický kurýr | rada (po letech) + ZO (soubory) | Commons |
+| Zlatníky-Hodkovice | hledá se automaticky | Munipolis | nevydává | zápisy ZO (Munipolis) | `web/erby` |
+| Březová-Oleško | edesky.cz | seznam odkazů | nevydává | zápisy ZO (Vismo po letech) | Commons |
+| Okrouhlo | edesky.cz | – | nevydává | na webu nezveřejňuje | bez znaku (štít s písmenem) |
 
 Všechno je nastavené v [`harvester/uredni_desky/data/region.json`](harvester/uredni_desky/data/region.json),
-viz [Úprava obce v konfiguraci](#úprava-obce-v-konfiguraci).
+viz [Úprava obce v konfiguraci](#úprava-obce-v-konfiguraci). Kontakty úřadů jsou v
+[`data/contacts.json`](harvester/uredni_desky/data/contacts.json) (ze stránek obcí, se zdrojem a datem ověření).
 
 ## Jak to funguje
 
@@ -87,6 +89,7 @@ Hodinový workflow **Sběr desek mikroregionu a nasazení** (`harvest.yml`) spus
 | `harvest.yml` – Sběr desek mikroregionu a nasazení | každou hodinu, ručně, push do `main` | sběr, shrnutí, nasazení webu |
 | `erby.yml` – Znaky obcí | ručně, změna `region.json` | stáhne chybějící znaky z Commons (při odmítnutí přes proxy) do větve `assets` |
 | `discover.yml` – Hledání desek všech obcí | ručně | celostátní hledání desek (viz níže) |
+| `pruzkum.yml` – Průzkum stránek obcí | ručně, změna `deploy/pruzkum/**` | vypíše text a odkazy stránek obcí (při odmítnutí přes proxy) a nalezená usnesení |
 | `probe.yml`, `diagnose.yml`, `explore.yml` | ručně | ladění adaptérů, diagnostika nedostupných desek, průzkum NKOD |
 
 ## Lokální vývoj
@@ -113,6 +116,7 @@ Settings → Secrets and variables → Actions:
 | `ANTHROPIC_FEDERATION_RULE_ID`, `ANTHROPIC_ORGANIZATION_ID`, `ANTHROPIC_SERVICE_ACCOUNT_ID`, `ANTHROPIC_WORKSPACE_ID` | variables | Přihlášení ke Claude bez klíče (doporučeno). |
 | `ANTHROPIC_API_KEY` | secret | Alternativa: přihlášení API klíčem; má přednost před federací. |
 | `AI_MODEL`, `AI_LIMIT`, `AI_EFFORT` | variables | Model (výchozí `claude-haiku-5-5`), nejvýš shrnutí za běh (100), hloubka čtení (`medium`). |
+| `COUNCIL_AI_LIMIT` | variable | Nejvýš rozepsaných zasedání rad a zastupitelstev za běh (výchozí 40). |
 
 ### Přihlášení ke Claude bez klíče (Workload Identity Federation)
 
@@ -153,6 +157,20 @@ oznámení se znovu neshrnují. Shrnutí jsou ve větvi `data` (`summaries.json.
 
 Změna obsahu shrnutí (prompt, schéma) zvýší `ai.VERSION` a stará shrnutí se pak postupně přepočítají.
 
+### Usnesení rad a zastupitelstev
+
+Modul `samosprava.py` jednou za 12 hodin projde u každé obce stránky s usneseními a zápisy (zdroje
+v `region.json` pod klíčem `council`, formáty `vismo_years`, `pages`, `files`, `munipolis`) a vezme
+dokumenty letošního roku. Každý dokument stáhne jednou (PDF, DOCX i starý `.doc`) a Claude ho rozloží
+na body: datum a číslo zasedání, hlavní věta a jednotlivá usnesení – co orgán udělal (schvaluje, bere
+na vědomí, ukládá…), co přesně, částka a důležitost. Procedurální body (program, ověřovatelé) vynechá.
+Skenovaná PDF dostane Claude celá. Shrnutí zasedání se dělá jednou; limit za běh je proměnná
+`COUNCIL_AI_LIMIT` (výchozí 40), zbytek se doplní v dalších bězích. Stav je ve větvi `data`
+(`council.json`). Bez přihlášení ke Claude web ukáže jen odkazy na dokumenty.
+
+Ladění: `python -m uredni_desky samosprava [--obec Psáry]` vypíše nalezené dokumenty bez stahování
+(lokálně i ve workflow `pruzkum.yml`).
+
 ## Úprava obce v konfiguraci
 
 Obec v `harvester/uredni_desky/data/region.json`:
@@ -165,6 +183,7 @@ Obec v `harvester/uredni_desky/data/region.json`:
 | `source` | úřední deska: `{"fmt": "imunis", "subdomain": …}`, `{"fmt": "galileo" \| "vismo" \| "rss" \| "html" \| "edesky", "url": …}`; bez `source` se deska hledá automaticky |
 | `events` | kalendář akcí: `fmt` `vismo`, `rdc`, `article`, `linklist`, `posts`, `munipolis` nebo `link` (jen odkaz); popis v `events.py` |
 | `newsletter` | zpravodaj (`name`, `url`, `match` …; popis v `newsletters.py`), `false` = obec zpravodaj nevydává |
+| `council` | usnesení a zápisy: seznam `{"body": "rada" \| "zastupitelstvo", "fmt": "vismo_years" \| "pages" \| "files" \| "munipolis", "url", "match"}`; popis v `samosprava.py` |
 | `erb` | znak v repozitáři, např. `erby/zvole.svg` (soubor ve `web/erby`) |
 | `erb_commons`, `erb_qid` | soubor znaku na Wikimedia Commons, případně Wikidata ID, podle kterého se znak dohledá (P94); stáhne ho workflow `erby.yml` |
 
@@ -200,6 +219,10 @@ Repozitář je veřejný, proto ho spouštět jen z `main`, ne z pull requestů.
 - `newsletters[]`: `obec`, `name`, `archive`, `issues[]` (`t`, `url`, `y` rok, `fs` poprvé viděno), `ok`
   nebo `none` (obec zpravodaj nevydává)
 - `events`: `sources[]` (kalendáře obcí), `items[]` (`o`, `t`, `d`, `end`, `time`, `place`, `tags`, `url`)
+- `council`: `sources[]` (`obec`, `body`, `url`, `ok`, `n`), `meetings[]` (`id`, `o`, `body` rada \| zastupitelstvo,
+  `kind` usneseni \| zapis, `date`, `no`, `t`, `url`, `x`, `tldr`, `points[]` (`v` sloveso, `t`, `cat`, `amt`, `imp`), `src`)
+- `members[].contact`: `office`, `address`, `phone[]`, `email[]` nebo `form`, `ds`, `ico`, `hours[]`, `hours_note`,
+  `hours_url`, `source`, `checked`
 
 ## Celostátní režim (vypnutý)
 
