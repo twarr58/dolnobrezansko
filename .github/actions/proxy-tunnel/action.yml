@@ -1,0 +1,55 @@
+name: SSH tunel k proxy v ČR
+description: >
+  Otevře šifrovaný SSH tunel na VPS s proxy (squid poslouchá jen na 127.0.0.1:3128) a zpřístupní ho
+  na runneru jako 127.0.0.1:3128. Bez klíče (secret PROXY_SSH_KEY) nedělá nic – harvester pak použije
+  HARVEST_FALLBACK_PROXY tak, jak je nastavená.
+
+inputs:
+  key:
+    description: Soukromý klíč uživatele harvest-tunnel (secret PROXY_SSH_KEY)
+    required: false
+  known-hosts:
+    description: Řádek known_hosts serveru (secret PROXY_SSH_KNOWN_HOSTS) – bez něj se tunel neotevře
+    required: false
+  destination:
+    description: Cíl ve tvaru ssh://harvest-tunnel@IP:PORT (secret PROXY_SSH_DEST)
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        KEY: ${{ inputs.key }}
+        KNOWN_HOSTS: ${{ inputs.known-hosts }}
+        DEST: ${{ inputs.destination }}
+      run: |
+        if [ -z "$KEY" ]; then
+          echo "PROXY_SSH_KEY není nastavený – bez tunelu"
+          exit 0
+        fi
+        if [ -z "$KNOWN_HOSTS" ] || [ -z "$DEST" ]; then
+          echo "::error::K PROXY_SSH_KEY chybí PROXY_SSH_KNOWN_HOSTS nebo PROXY_SSH_DEST"
+          exit 1
+        fi
+        dir="$(mktemp -d)"
+        umask 077
+        printf '%s\n' "$KEY" > "$dir/key"
+        printf '%s\n' "$KNOWN_HOSTS" > "$dir/known_hosts"
+        # StrictHostKeyChecking: server se ověří proti uloženému otisku, podvržený server tunel nedostane
+        ssh -f -N -i "$dir/key" \
+          -o IdentitiesOnly=yes -o BatchMode=yes \
+          -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$dir/known_hosts" \
+          -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=4 \
+          -o ConnectTimeout=20 \
+          -L 127.0.0.1:3128:127.0.0.1:3128 "$DEST"
+        rm -rf "$dir"  # klíč už má ssh načtený; další kroky ho na disku nenajdou
+        for _ in $(seq 1 20); do
+          if (exec 3<>/dev/tcp/127.0.0.1/3128) 2>/dev/null; then
+            echo "Tunel k proxy je otevřený (127.0.0.1:3128)"
+            exit 0
+          fi
+          sleep 1
+        done
+        echo "::error::Tunel k proxy se neotevřel"
+        exit 1

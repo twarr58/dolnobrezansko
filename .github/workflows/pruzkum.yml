@@ -32,6 +32,14 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install ./harvester
+      - name: Tunel k proxy v ČR
+        continue-on-error: true # proxy je jen záloha – bez ní sběr pokračuje přímo
+        uses: ./.github/actions/proxy-tunnel
+        with:
+          key: ${{ secrets.PROXY_SSH_KEY }}
+          known-hosts: ${{ secrets.PROXY_SSH_KNOWN_HOSTS }}
+          destination: ${{ secrets.PROXY_SSH_DEST }}
+
       - name: Průzkum
         env:
           HARVEST_FALLBACK_PROXY: ${{ secrets.HARVEST_FALLBACK_PROXY }}
