@@ -24,7 +24,7 @@ from urllib.parse import urlsplit
 
 import httpx
 
-from . import USER_AGENT, ai, cache, digest, documents, edesky, erby, events, newsletters, samosprava, webpage
+from . import USER_AGENT, ai, cache, digest, documents, edesky, erby, events, newsletters, parcely, samosprava, webpage
 from .build import load_state, run_build
 from .extra import sources_from_entries
 from .fetch import fetch_all, needs_proxy
@@ -523,6 +523,16 @@ async def run(out_dir: Path, state_dir: Path, ai_limit: int = 100, concurrency: 
     data["newsletters"] = news
     data["events"] = event_data
     data["council"] = council
+    # odkazy na parcely do katastru (ČÚZK); bez ČÚZK zůstanou texty bez odkazů
+    async with httpx.AsyncClient(**common) as client:
+        fallback = httpx.AsyncClient(**common, proxy=proxy) if proxy else None
+        try:
+            await parcely.annotate(client, data, state_dir, now, fallback)
+        except Exception as exc:  # noqa: BLE001 – odkazy jsou doplněk, sběr kvůli nim nesmí spadnout
+            log.warning("Parcely: %r", exc)
+        finally:
+            if fallback:
+                await fallback.aclose()
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "region.json").write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), "utf-8")
     log.info("region.json: %d oznámení, %d/%d obcí s deskou", len(data["items"]),
