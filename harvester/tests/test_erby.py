@@ -44,7 +44,7 @@ def test_download_wikidata_and_commons_file_index_and_skip(tmp_path):
     assert set(index) == {"Psáry", "Libeř"}
     assert (tmp_path / "erby" / "psary.png").read_bytes() == PNG and (tmp_path / "erby" / "liber.gif").exists()
     saved = json.loads((tmp_path / "erby" / "index.json").read_text("utf-8"))
-    assert saved["Psáry"] == {"path": "erby/psary.png", "file": "Psary CZ CoA.svg",
+    assert saved["Psáry"] == {"path": "erby/psary.png", "file": "Psary CZ CoA.svg", "v": erby.CLEAN_VERSION,
                               "source": "https://commons.wikimedia.org/wiki/File:Psary_CZ_CoA.svg"}
 
     # druhý běh: soubory jsou – Commons se znovu nestahuje
@@ -87,3 +87,46 @@ def test_failure_without_proxy_keeps_nothing(tmp_path):
 
     assert asyncio.run(go()) == {}
     assert erby.load(members, tmp_path) == {}
+
+
+def test_clear_background_keeps_white_inside_shield():
+    from io import BytesIO
+
+    from PIL import Image, ImageDraw
+
+    im = Image.new("RGB", (60, 70), (250, 250, 250))  # světlé pozadí jako náhledy z Commons
+    d = ImageDraw.Draw(im)
+    d.rectangle((10, 10, 49, 59), fill=(200, 0, 0), outline=(0, 0, 0))  # štít s obrysem
+    d.rectangle((25, 25, 34, 44), fill=(255, 255, 255))  # bílá figura uvnitř
+    buf = BytesIO()
+    im.save(buf, "PNG")
+    out = Image.open(BytesIO(erby.clear_background(buf.getvalue())))
+    assert out.mode == "RGBA" and out.size == (40, 50)  # oříznuto na štít
+    assert out.getpixel((20, 25))[:3] == (255, 255, 255) and out.getpixel((20, 25))[3] == 255  # figura zůstává
+    full = Image.open(BytesIO(erby.clear_background(buf.getvalue(), light=300)))  # nic není pozadí
+    assert full.size == (60, 70)
+
+
+def test_download_saves_crest_without_background(tmp_path):
+    from io import BytesIO
+
+    from PIL import Image
+
+    im = Image.new("RGB", (30, 30), (255, 255, 255))
+    im.paste((0, 0, 200), (5, 5, 25, 25))
+    buf = BytesIO()
+    im.save(buf, "GIF")
+
+    def handler(req):
+        return httpx.Response(200, content=buf.getvalue(), headers={"content-type": "image/gif"})
+
+    members = [{"name": "Libeř", "slug": "liber", "erb_commons": "Liber CZ CoA.gif"}]
+
+    async def go():
+        async with _client(handler) as c:
+            return await erby.download(c, members, tmp_path)
+
+    index = asyncio.run(go())
+    assert index["Libeř"]["path"] == "erby/liber.png" and index["Libeř"]["v"] == erby.CLEAN_VERSION
+    saved = Image.open(tmp_path / "erby" / "liber.png")
+    assert saved.size == (20, 20) and not (tmp_path / "erby" / "liber.gif").exists()
