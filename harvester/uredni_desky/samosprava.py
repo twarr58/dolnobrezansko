@@ -241,7 +241,8 @@ async def list_documents(f: Fetcher, cfg: dict, years: set[int]) -> list[dict]:
                 continue  # stránky zasedání jen z webu obce (ne sdílení, přihlášení, cizí weby)
             if _FILE.search(href):
                 add(href, text, listing, extra=extra)
-            elif href not in [p for p, _ in pages] and _wanted_year(_date(text), f"{text} {href} {extra}", years):
+            elif href not in [p for p, _ in pages] and (_wanted_year(_date(text), f"{text} {href}", years)
+                                                        or not _YEAR.search(f"{text} {unquote(href)}") and extra):
                 pages.append((href, text))
         for page, ptitle in pages[:40]:
             await from_page(page, ptitle)

@@ -201,3 +201,19 @@ def test_pages_skip_share_links_and_take_one_file_per_meeting(monkeypatch):
     docs = asyncio.run(go())
     assert [d["url"] for d in docs] == ["https://www.obec.cz/assets/File.ashx?id=2"]
     assert docs[0]["date"] == "2026-09-24"
+
+
+def test_year_page_does_not_open_other_years():
+    index = """<html><body><h1>Usnesení RM</h1><a href="https://m.cz/rm-2026">USNESENÍ RM 2026</a></body></html>"""
+    year = """<html><body><h1>USNESENÍ RM 2026</h1>
+      <a href="https://m.cz/assets/File.ashx?id=1">RM 01 - 14.01.2026</a>
+      <a href="https://m.cz/rm-2025">USNESENÍ RM 2025</a></body></html>"""
+    hits = []
+
+    async def go():
+        async with _client({"https://m.cz/rm": index, "https://m.cz/rm-2026": year}, hits) as c:
+            cfg = {"body": "rada", "fmt": "vismo_years", "url": "https://m.cz/rm", "match": r"RM \d+ -|usnesen"}
+            return await S.list_documents(S.Fetcher(c, None), cfg, {2026})
+
+    docs = asyncio.run(go())
+    assert [d["date"] for d in docs] == ["2026-01-14"] and "https://m.cz/rm-2025" not in hits
