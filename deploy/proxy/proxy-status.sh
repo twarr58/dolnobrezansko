@@ -112,7 +112,8 @@ fi
 # --- SSH tunel z GitHub Actions ---
 head_ "SSH tunel ($TUNNEL_USER)"
 if id "$TUNNEL_USER" >/dev/null 2>&1; then
-  live="$(pgrep -c -u "$TUNNEL_USER" sshd 2>/dev/null || echo 0)"
+  # pgrep -c vypíše „0“ a vrátí 1, když nic neběží – proto bez „|| echo 0“
+  live="$(pgrep -c -u "$TUNNEL_USER" sshd 2>/dev/null)"; live="${live:-0}"
   if (( live > 0 )); then ok "právě připojeno" "$live (běží sběr)"; else info "právě připojeno" "nikdo"; fi
   if [[ -n "$IS_ROOT" ]] && command -v journalctl >/dev/null; then
     acc="$(journalctl -q -u ssh -u sshd --since '-24 h' -o short-unix 2>/dev/null | grep "Accepted publickey for $TUNNEL_USER")"
@@ -145,8 +146,8 @@ if [[ -n "$IS_ROOT" ]] && command -v nft >/dev/null; then
 fi
 if [[ -n "$IS_ROOT" ]] && command -v fail2ban-client >/dev/null; then
   f2b="$(fail2ban-client status sshd 2>/dev/null)"
-  cur="$(awk -F': *' '/Currently banned/ {print $2}' <<<"$f2b")"
-  tot="$(awk -F': *' '/Total banned/ {print $2}' <<<"$f2b")"
+  cur="$(awk '/Currently banned/ {print $NF}' <<<"$f2b")"  # řádky mají za dvojtečkou tabulátor
+  tot="$(awk '/Total banned/ {print $NF}' <<<"$f2b")"
   [[ -n "$cur" ]] && info "fail2ban (sshd)" "zablokováno teď ${cur}, celkem ${tot:-?}"
 fi
 if [[ -r /var/log/unattended-upgrades/unattended-upgrades.log ]]; then
