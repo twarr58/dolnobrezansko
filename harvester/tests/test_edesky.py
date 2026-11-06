@@ -198,3 +198,66 @@ def test_old_cached_edesky_page_is_replaced_by_text(tmp_path, monkeypatch):
     docs, _ = asyncio.run(go())
     assert hits == ["https://edesky.cz/dokument/38492238.txt"]
     assert docs[url]["src"] == "edesky" and "function(w" not in docs[url]["text"]
+
+
+JESENICE_TEXT = (
+    "49943501 38558247 Oznámení o nálezu č. 32/2026 https://www.mujesenice.cz/assets/File.ashx?id_org=5861&amp;id_dokumenty=19142  \n"
+    "Město Jesenice, Budějovická 303\nČíslo: 2026/32\nOZNÁMENÍ O NÁLEZU\nV souladu s § 1053 zákona č. 89/2012 Sb. "
+    "byl nalezen dámský jízdní kolo, vyzvednout na podatelně do 6. 5. 2027.\n"
+)
+
+
+def test_split_attachments_name_with_spaces_gives_original_url():
+    parts = edesky.split_attachments(JESENICE_TEXT, "38558247")
+    assert parts["49943501"]["orig"] == "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=19142"
+    assert parts["49943501"]["text"].startswith("Město Jesenice") and "Oznámení o nálezu č. 32" not in parts["49943501"]["text"][:20]
+    parts = edesky.split_attachments(TEXT_FILE, "38492238")
+    assert parts["49866786"]["orig"] == "https://vestec.cz/wp-content/uploads/oznameni.pdf"
+
+
+def test_edesky_page_is_never_downloaded_even_with_proxy(tmp_path, monkeypatch):
+    """Produkce: záložní proxy je nastavená a příloha je stránka edesky.cz (API nedalo orig_url).
+
+    Dřív se stáhla stránka s výzvou k přihlášení (pokaždé jiná → nové shrnutí každou hodinu), teď se vezme
+    rozpoznaný text z veřejného souboru a čtenář dostane odkaz na originál na webu obce.
+    """
+    from datetime import datetime, timezone
+
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_FEDERATION_RULE_ID", raising=False)
+    edesky.ATTACHMENTS.clear(), edesky._TEXT_FILES.clear(), edesky.TEXTS.clear()
+    url = "https://edesky.cz/dokument/38558247#priloha_49943501"  # ATTACHMENTS prázdné – odkaz se odvodí z adresy
+    hits = []
+
+    def handler(req):
+        hits.append(str(req.url))
+        if str(req.url) == "https://edesky.cz/dokument/38558247.txt":
+            return httpx.Response(200, text=JESENICE_TEXT)
+        return httpx.Response(200, html="<script>gtm.js</script>Skutečnou podobu dokumentu uvidíte po přihlášení")
+
+    items = [{"id": "i1", "board": "b1", "title": "Oznámení o nálezu č. 32/2026", "posted": "2026-11-06",
+              "url": "https://edesky.cz/dokument/38558247", "docs": [{"name": "Oznámení o nálezu č. 32/2026", "url": url}]}]
+
+    async def go():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as c, \
+                httpx.AsyncClient(transport=httpx.MockTransport(handler)) as proxy:
+            return await region.enrich(c, items, tmp_path, ai_limit=0, now=datetime(2026, 11, 6, 9, tzinfo=timezone.utc),
+                                       fallback=proxy)
+
+    docs, _ = asyncio.run(go())
+    assert hits == ["https://edesky.cz/dokument/38558247.txt"]
+    assert docs[url]["src"] == "edesky" and "jízdní kolo" in docs[url]["text"]
+    assert docs[url]["orig"].startswith("https://www.mujesenice.cz/assets/File.ashx") and docs[url]["ext"] != "html"
+
+    # web: odkaz na přílohu i „původní znění“ vedou na originál na webu obce, ne na stránku edesky.cz
+    reg = {"id": "r", "name": "R", "web": "", "members": [{"name": "Jesenice", "publisher": "Město Jesenice"}]}
+    members = [{"name": "Jesenice", "publisher": "Město Jesenice", "board": "b1"}]
+    out = region.build_output(reg, members, [{"id": "b1", "ok": True}], items, docs, {},
+                              datetime(2026, 11, 6, 9, tzinfo=timezone.utc))
+    item = out["items"][0]
+    assert item["docs"][0]["url"].startswith("https://www.mujesenice.cz/") and item["url"] == item["docs"][0]["url"]
+
+    # další běh: nic se nestahuje, obsah se nezměnil → žádné nové shrnutí
+    hits.clear()
+    asyncio.run(go())
+    assert hits == []

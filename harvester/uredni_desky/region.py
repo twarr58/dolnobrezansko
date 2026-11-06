@@ -213,21 +213,26 @@ async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, 
 
     async def edesky_text_doc(url: str, ref: dict | None, name: str, cached: dict | None) -> dict:
         """Příloha z edesky.cz jako rozpoznaný text (veřejný soubor edesky_text_url nebo text z API)."""
-        text = edesky.TEXTS.get(url, "")
-        if not text and ref is not None:
+        text, orig = edesky.TEXTS.get(url, ""), ""
+        if ref is not None:
             try:
                 async with dl_sem:
-                    text = await edesky.attachment_text(client, ref)
+                    att = await edesky.attachment(client, ref)
+                text, orig = text or att["text"], att["orig"]
             except httpx.HTTPError as exc:
                 log.info("Text přílohy z edesky.cz %s: %s %s", url, type(exc).__name__, exc)
-                return cached or {"url": url, "error": f"{type(exc).__name__}: {exc}"[:200]}
+                if not text:
+                    return cached or {"url": url, "error": f"{type(exc).__name__}: {exc}"[:200]}
         full = documents._clean(text)
-        ext = documents.sniff(b"", url)
+        ext = documents.sniff(b"", orig or url)
+        if ext == "html" and edesky.is_page(url) and not orig:
+            ext = ""
         kind = documents.KIND_MAP if documents._MAP_NAME.search(f"{name} {url}") and len(full) < 3000 \
             else documents.KIND_TEXT
         info = documents.DocInfo(url=url, ext=ext, kind=kind, chars=len(full), text=full[:documents.EXCERPT],
                                  sha=documents.fingerprint(full.encode("utf-8")), checked=stamp)
-        doc_cache[url] = {**info.to_cache(), "src": "edesky"}
+        # orig: originál na webu obce – odkaz pro čtenáře místo stránky edesky.cz, která chce přihlášení
+        doc_cache[url] = {**info.to_cache(), "src": "edesky", **({"orig": orig} if orig else {})}
         return {**doc_cache[url], "full_text": full}
 
     async def get_doc(doc: dict, need_bytes: bool) -> dict:
@@ -237,10 +242,12 @@ async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, 
         if url in fresh_bytes:
             content, full_text = fresh_bytes[url]
             return {**(cached or {}), "bytes": content, "full_text": full_text}
-        ref = edesky.ATTACHMENTS.get(url)
-        if ref is not None and fallback is None:
-            # příloha z edesky.cz: originál je na webu obce, který z runneru nejde – stačí rozpoznaný text
-            # jen text z edesky.cz – starší záznam se staženou stránkou edesky.cz (HTML s menu) se nahradí hned
+        ref = edesky.ref_for(url)
+        if ref is not None and (fallback is None or edesky.is_page(url)):
+            # příloha z edesky.cz: rozpoznaný text z veřejného souboru edesky_text_url. Stránka dokumentu na
+            # edesky.cz se nestahuje nikdy (ani s proxy) – bez přihlášení je to jen obal s výzvou k přihlášení
+            # a při každém stažení vypadá jinak, takže by se oznámení zbytečně shrnovalo pořád znovu.
+            # Starší záznam se staženou stránkou (HTML s menu, bez src=edesky) se nahradí hned.
             if cached and cached.get("src") == "edesky" and cached.get("checked", "") > recheck_before and cached.get("chars"):
                 return cached
             return await edesky_text_doc(url, ref, doc.get("name") or "", cached)
@@ -423,12 +430,16 @@ def build_output(region: dict, members: list[dict], boards: list[dict], items: l
         docs = []
         for n, d in enumerate(it.get("docs", []), 1):
             info = doc_cache.get(d["url"], {})
+            link = info.get("orig") if edesky.is_page(d["url"]) and str(info.get("orig", "")).startswith("http") else d["url"]
             docs.append({k: v for k, v in {
-                "n": d.get("name"), "url": d["url"], "k": info.get("kind"), "x": info.get("ext"),
+                "n": d.get("name"), "url": link, "k": info.get("kind"), "x": info.get("ext"),
                 "pg": info.get("pages"), "ocr": info.get("ocr"), "w": ai_docs.get(n, {}).get("what"),
                 "sum": ai_docs.get(n, {}).get("summary")}.items() if v})
+        page = it.get("url")
+        if edesky.is_page(page or "") and docs:  # stránka edesky.cz chce přihlášení – původní znění je originál přílohy
+            page = next((x["url"] for x in docs if not edesky.is_page(x["url"])), page)
         out_items.append({k: v for k, v in {
-            "id": it["id"], "o": name_of[it["board"]], "t": it["title"], "url": it.get("url"),
+            "id": it["id"], "o": name_of[it["board"]], "t": it["title"], "url": page,
             "p": it.get("posted"), "u": it.get("until"), "cj": it.get("cj"), "r": it.get("removed"),
             "fs": it.get("first_seen"), "docs": docs,
             "s": item_description(it, [doc_cache.get(d["url"], {}) for d in it.get("docs", [])], summary),

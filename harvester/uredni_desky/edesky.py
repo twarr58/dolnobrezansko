@@ -14,6 +14,7 @@ import logging
 import os
 import re
 from dataclasses import dataclass
+from html import unescape
 from datetime import date, timedelta
 from urllib.parse import unquote
 from xml.etree import ElementTree
@@ -39,30 +40,64 @@ def _http(url: str) -> bool:
 
 
 def _clean_text(raw: str) -> str:
-    from html import unescape
-
     return re.sub(r"<[^>]+>", " ", unescape(unescape(raw)))
 
 
-def split_text_file(content: str, doc_id: str) -> dict[str, str]:
-    """Soubor edesky_text_url → {id přílohy: text}. Každá příloha začíná „<id přílohy> <id dokumentu> <soubor> <url>“."""
-    starts = list(re.finditer(rf"(?<!\d)(\d{{5,}}) {re.escape(doc_id)} (\S+) (\S+) ?", content))
+def split_attachments(content: str, doc_id: str) -> dict[str, dict]:
+    """Soubor edesky_text_url → {id přílohy: {"text": rozpoznaný text, "orig": adresa originálu na webu obce}}.
+
+    Každá příloha začíná hlavičkou „<id přílohy> <id dokumentu> <název souboru> <url originálu>“; název může
+    obsahovat mezery („Oznámení o nálezu č. 32/2026“), adresa originálu je první odkaz za ním na stejném řádku.
+    """
+    starts = list(re.finditer(rf"(?<!\d)(\d{{5,}}) {re.escape(doc_id)} ", content))
     out = {}
     for n, m in enumerate(starts):
         end = starts[n + 1].start() if n + 1 < len(starts) else len(content)
-        out[m.group(1)] = _clean_text(content[m.end():end]).strip()
+        head = re.match(r"([^\n]{1,200}?) (https?://\S+) ?", content[m.end():end]) \
+            or re.match(r"(\S+) (\S+) ?", content[m.end():end])
+        body_from = m.end() + (head.end() if head else 0)
+        orig = unescape(head.group(2)) if head and _http(head.group(2)) else ""
+        out[m.group(1)] = {"text": _clean_text(content[body_from:end]).strip(), "orig": orig}
     return out
 
 
-async def attachment_text(client: httpx.AsyncClient, ref: dict) -> str:
-    """Rozpoznaný text jedné přílohy z veřejného souboru edesky_text_url (jeden soubor na dokument)."""
+def split_text_file(content: str, doc_id: str) -> dict[str, str]:
+    """Soubor edesky_text_url → {id přílohy: text}."""
+    return {k: v["text"] for k, v in split_attachments(content, doc_id).items()}
+
+
+async def attachment(client: httpx.AsyncClient, ref: dict) -> dict:
+    """Rozpoznaný text a adresa originálu jedné přílohy z veřejného souboru edesky_text_url (jeden na dokument)."""
     url = ref["text_url"]
     if url not in _TEXT_FILES:
         resp = await client.get(url, timeout=60)
         resp.raise_for_status()
         _TEXT_FILES[url] = resp.text
-    parts = split_text_file(_TEXT_FILES[url], ref["doc_id"])
-    return parts.get(ref["att_id"]) or ("\n\n".join(parts.values()) if len(parts) <= 1 else "")
+    parts = split_attachments(_TEXT_FILES[url], ref["doc_id"])
+    if ref["att_id"] in parts:
+        return parts[ref["att_id"]]
+    if len(parts) == 1:
+        return next(iter(parts.values()))
+    return {"text": "", "orig": ""}
+
+
+async def attachment_text(client: httpx.AsyncClient, ref: dict) -> str:
+    return (await attachment(client, ref))["text"]
+
+
+def ref_for(url: str) -> dict | None:
+    """Odkaz na rozpoznaný text přílohy: z API, jinak odvozený z adresy …/dokument/<id>#priloha_<id>."""
+    if url in ATTACHMENTS:
+        return ATTACHMENTS[url]
+    m = re.match(r"https?://(?:www\.)?edesky\.cz/dokument/(\d+)(?:#priloha_(\d+))?", url or "")
+    if not m:
+        return None
+    return {"text_url": f"https://edesky.cz/dokument/{m.group(1)}.txt", "att_id": m.group(2) or "", "doc_id": m.group(1)}
+
+
+def is_page(url: str) -> bool:
+    """Stránka dokumentu na edesky.cz (bez přihlášení jen výzva k přihlášení) – nikdy ji nestahovat jako přílohu."""
+    return bool(re.match(r"https?://(www\.)?edesky\.cz/dokument/", url or ""))
 
 
 class _RedactApiKey(logging.Filter):
