@@ -208,6 +208,19 @@ Obec v `harvester/uredni_desky/data/region.json`:
 | `erb` | znak v repozitáři, např. `erby/zvole.svg` (soubor ve `web/erby`) |
 | `erb_commons`, `erb_qid` | soubor znaku na Wikimedia Commons, případně Wikidata ID, podle kterého se znak dohledá (P94); stáhne ho workflow `erby.yml` |
 
+## Návštěvnost
+
+Web počítá návštěvy přes [GoatCounter](https://www.goatcounter.com/) (přehled: `dolnobrezansko.goatcounter.com`):
+bez cookies, bez osobních údajů, IP adresy se neukládají – proto web nepotřebuje lištu se souhlasem.
+Skript je v `web/index.html`, počítání v `web/app.js` (oddíl „návštěvnost“):
+
+- **zobrazení stránek** podle cesty bez filtrů: `/`, `/samosprava`, `/obce`, `/obec/psary`, `/o/<id>` (detail oznámení,
+  titulek je jeho shrnutí); změna filtru nové zobrazení nepočítá;
+- **kliky na odkazy ven** jako události `druh: web`: `příloha`, `originál` (původní znění na desce), `katastr`,
+  `usnesení`, `zpravodaj`, `akce`, ostatní `odkaz` – např. `příloha: ohrobec.cz`.
+
+Když se skript GoatCounteru nenačte (blokátor reklam), web funguje dál, jen se návštěva nezapočítá.
+
 ## Proxy v ČR
 
 Runnery GitHub Actions běží v USA a část obecních webů je nepustí (timeout, HTTP 403). Wikimedia

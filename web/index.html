@@ -12,6 +12,11 @@
   <link rel="stylesheet" href="styles.css">
   <script>try { var t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}</script>
   <script type="module" src="app.js"></script>
+  <!-- Návštěvnost: GoatCounter (dolnobrezansko.goatcounter.com) – bez cookies a bez osobních údajů, IP se neukládá.
+       Stránky se počítají ručně z app.js (web přepíná stránky v #/…); co přijde před načtením skriptu, čeká ve frontě. -->
+  <script>window.goatcounter = { no_onload: true };</script>
+  <script data-goatcounter="https://dolnobrezansko.goatcounter.com/count" async src="https://gc.zgo.at/count.js"
+          onload="(window.gcQueue || []).forEach(function (v) { window.goatcounter.count(v); }); window.gcQueue = [];"></script>
 </head>
 <body>
   <a class="skip" href="#app">Přeskočit na obsah</a>
