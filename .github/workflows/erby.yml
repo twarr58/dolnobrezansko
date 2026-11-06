@@ -30,8 +30,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -51,7 +51,7 @@ jobs:
           HARVEST_FALLBACK_PROXY: ${{ secrets.HARVEST_FALLBACK_PROXY }}
         run: python -m uredni_desky erby --out assets ${{ inputs.force && '--force' || '' }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: erby
           path: assets/erby
@@ -63,7 +63,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           sparse-checkout: README.md
       - name: Načíst větev assets
@@ -74,7 +74,7 @@ jobs:
             git worktree add --orphan -b assets-next assets
           fi
           rm -rf assets/erby # obsah přesně podle úkolu erby (i smazané znaky)
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: erby
           path: assets/erby
