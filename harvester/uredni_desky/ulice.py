@@ -10,6 +10,13 @@ Když za ulicí následuje číslo domu („Nádražní u č. p. 137“, „Pra�
 na adresním místě z RÚIAN (vrstva AdresniMisto); když dům nenajde, zůstane bod na ulici. Nalezené adresy se
 pamatují ve stavu, dotazů na adresy je za běh nejvýš ADDR_BUDGET.
 
+Ulice bez slova „ulice“ se najdou i v textu o místě – pole „KDE“ a údaje Místo / Adresa / Lokalita / Stanoviště
+(„Zvolská x Pražská (u zahrádkářů); Pražská, restaurace U Vlastence; Stará Březová – Hlavní“): ulice na začátku
+každé části – a všude v křižovatce „Zvolská x Pražská“.
+
+Čísla silnic („II/101“, „III/1042“, „I/4“) mají bod na silnici z ZABAGED (vrstva Silnice, dálnice) – na úseku
+nejblíž obci oznámení, protože silnice vede přes víc obcí.
+
 Výsledek je u oznámení / zasedání pod klíčem „ul“: {„Malebná“: [49.98587, 14.53001]}, s adresou
 {„Nádražní“: [49.939046, 14.382411, „č. p. 137“]}. Web z bodu udělá odkaz
 https://www.google.com/maps/search/?api=1&query=<šířka>,<délka> – bod, ne hledání podle jména (Jesenic,
@@ -34,7 +41,14 @@ log = logging.getLogger(__name__)
 REFRESH_DAYS = 30
 ADDR_BUDGET = 80        # dotazů na adresní místa za běh
 ADDR_RETRY_DAYS = 30    # nenalezenou adresu zkusit znovu po
-CACHE_VERSION = 2       # 2: ukládají se i kódy ulic (pro adresní místa)
+CACHE_VERSION = 3       # 2: kódy ulic (pro adresní místa); 3: středy obcí a silnice
+ZABAGED_ROADS = "https://ags.cuzk.gov.cz/arcgis/rest/services/ZABAGED_POLOHOPIS/MapServer/79"
+
+# číslo silnice: „II/101“, „III/1042“, „III/0031“, „I/4“ (třída římsky / číslo)
+ROAD = re.compile(r"(?<![\w/])(I{1,3})\s*/\s*(\d{1,5})(?![\d/]|[.,]\d)")
+# údaje o místě (pole „KDE“ a údaje s takovým popiskem): ulice na začátku každé části
+LOC_LABEL = re.compile(r"míst|adres|lokalit|kde|stanovišt|ulic|trasa|úsek", re.I)
+LOC_SEP = re.compile(r"(?:^|[;,\n(]|\s[–—-]\s|\s[x×]\s|:\s)\s*")  # v textu o místě i za čárkou začíná adresa
 
 # číslo domu hned za ulicí: „u č. p. 137“, „č. o. 5“, „137“, „12/3“, „(č. p. 453–457)“ (bere se první)
 NUMBER = re.compile(
@@ -82,10 +96,17 @@ async def load_streets(client: httpx.AsyncClient, obce: list[str], state: dict, 
             cached.get("checked", "") > (now - timedelta(days=REFRESH_DAYS)).isoformat():
         return cached["items"]
     names = ", ".join("'" + o.replace("'", "''") + "'" for o in obce)
-    rows = [f["attributes"] for f in await _get(client, 12, {"where": f"nazev in ({names})", "outFields": "kod,nazev,okres",
-                                                               "returnGeometry": "false"})]
+    feats12 = await _get(client, 12, {"where": f"nazev in ({names})", "outFields": "kod,nazev,okres",
+                                      "returnGeometry": "true", "outSR": "4326", "maxAllowableOffset": "0.003"})
+    rows = [f["attributes"] for f in feats12]
     okres = Counter(r["okres"] for r in rows).most_common(1)[0][0] if rows else None  # stejnojmenné obce jinde pryč
     codes = {r["kod"]: r["nazev"] for r in rows if r["okres"] == okres}
+    centers = {}  # střed obce (střed obdélníku kolem hranice) – k němu nejbližší úsek silnice
+    for f in feats12:
+        a, rings = f["attributes"], (f.get("geometry") or {}).get("rings") or []
+        xs, ys = [p[0] for r in rings for p in r], [p[1] for r in rings for p in r]
+        if a.get("kod") in codes and xs:
+            centers[codes[a["kod"]]] = [round((min(ys) + max(ys)) / 2, 5), round((min(xs) + max(xs)) / 2, 5)]
     items: dict[str, dict[str, list[float]]] = {name: {} for name in codes.values()}
     kody: dict[str, dict[str, int]] = {name: {} for name in codes.values()}
     if codes:
@@ -101,10 +122,57 @@ async def load_streets(client: httpx.AsyncClient, obce: list[str], state: dict, 
             if pt and a.get("nazev") and a.get("obec") in codes and a["nazev"].casefold() not in places:
                 items[codes[a["obec"]]][a["nazev"]] = pt
                 kody[codes[a["obec"]]][a["nazev"]] = a.get("kod")
+    roads = await _load_roads(client, list(centers.values())) if centers else {}
     state["streets"] = {"v": CACHE_VERSION, "obce": sorted(obce), "checked": now.isoformat(timespec="seconds"),
-                        "items": items, "kody": kody}
-    log.info("Ulice: %d ulic v %d obcích", sum(map(len, items.values())), len(codes))
+                        "items": items, "kody": kody, "centers": centers, "roads": roads}
+    log.info("Ulice: %d ulic v %d obcích, %d silnic", sum(map(len, items.values())), len(codes), len(roads))
     return items
+
+
+async def _load_roads(client: httpx.AsyncClient, centers: list[list[float]]) -> dict[str, list[list[float]]]:
+    """Silnice I.–III. třídy v okolí regionu ze ZABAGED: {„II/101“: [bod na každém úseku]}."""
+    lats, lons = [c[0] for c in centers], [c[1] for c in centers]
+    env = f"{min(lons) - 0.05},{min(lats) - 0.04},{max(lons) + 0.05},{max(lats) + 0.04}"
+    roads: dict[str, list[list[float]]] = {}
+    offset = 0
+    while True:
+        r = await client.get(f"{ZABAGED_ROADS}/query", params={
+            "f": "json", "geometry": env, "geometryType": "esriGeometryEnvelope", "inSR": "4326",
+            "spatialRel": "esriSpatialRelIntersects", "outFields": "silnice,typsil_p", "returnGeometry": "true",
+            "outSR": "4326", "maxAllowableOffset": "0.0005", "geometryPrecision": "5",
+            "resultOffset": str(offset), "resultRecordCount": "1000"}, timeout=90)
+        r.raise_for_status()
+        data = r.json()
+        if "error" in data:
+            raise ValueError(f"ZABAGED: {data['error']}")
+        feats = data.get("features", [])
+        for f in feats:
+            a = f["attributes"]
+            m = re.match(r"silnice (I{1,3})\. třídy", a.get("typsil_p") or "")
+            num = (a.get("silnice") or "").split()[0].lstrip("0") if (a.get("silnice") or "").split() else ""
+            pt = _point((f.get("geometry") or {}).get("paths") or [])
+            if m and num.isdigit() and pt:
+                roads.setdefault(f"{m.group(1)}/{num}", []).append(pt)
+        if not data.get("exceededTransferLimit") or not feats or offset > 20000:
+            return roads
+        offset += len(feats)
+
+
+def find_roads(texts: list[str]) -> dict[str, str]:
+    """Čísla silnic v textech: {„III/0031“ (jak je v textu): „III/31“ (klíč ZABAGED)}."""
+    out: dict[str, str] = {}
+    for text in texts:
+        for m in ROAD.finditer(text or ""):
+            out.setdefault(m.group(0), f"{m.group(1)}/{m.group(2).lstrip('0') or '0'}")
+    return out
+
+
+def nearest(points: list[list[float]], to: list[float] | None) -> list[float] | None:
+    if not points:
+        return None
+    if not to:
+        return points[len(points) // 2]
+    return min(points, key=lambda p: (p[0] - to[0]) ** 2 + ((p[1] - to[1]) * 0.64) ** 2)  # 0.64 ≈ cos(50°)
 
 
 def _pattern(streets: dict[str, list[float]]) -> re.Pattern | None:
@@ -145,29 +213,56 @@ def house_number(text: str, pos: int) -> dict | None:
     return {"kind": kind, "a": a, "b": b, "label": label}
 
 
-def scan(texts: list[str], streets: dict[str, dict[str, list[float]]], obec: str) -> dict[str, dict]:
+def scan(texts: list[str], streets: dict[str, dict[str, list[float]]], obec: str,
+         loc_texts: list[str] | tuple = ()) -> dict[str, dict]:
     """Ulice, o kterých texty mluví: za spouštěčem nebo dál ve výčtu za ním. Ulice jsou z obce oznámení,
     nebo z jiné obce regionu, když ji text jmenuje těsně před spouštěčem („Ohrobec (ulice Lipová, …)“).
     Vrací {ulice: {"obec": …, "num": číslo domu nebo None}}; u ulice zmíněné víckrát platí první číslo domu."""
     pats = {o: _pattern(s) for o, s in streets.items()}
+    counts = Counter(n for s in streets.values() for n in s)
+    # ostatní obce: jen jejich ulice, které jsou v regionu jediné a obec oznámení je nemá
+    uniq_sets = {o: {n for n in s if counts[n] == 1} for o, s in streets.items() if o != obec}
+    uniq = [o for o, names in uniq_sets.items() if names]
     found: dict[str, dict] = {}
     clash: set[str] = set()  # stejný název ve dvou obcích jednoho textu – web by nevěděl, který bod je který
-    for text in texts:
-        if not text or not TRIGGER.search(text):
+    own = streets.get(obec, {})
+    cross = re.compile(rf"(?<!\w)((?i:{'|'.join(re.escape(n) for n in sorted(own, key=len, reverse=True))}))"
+                       rf"\s+[x×]\s+") if own else None
+    loc = set(loc_texts)
+    for text in list(texts) + [t for t in loc_texts if t not in texts]:
+        if not text:
             continue
         anchors: dict[str, list[int]] = {}  # obec → konce spouštěčů, které k ní patří
         for t in TRIGGER.finditer(text):
             anchors.setdefault(_obec_before(text, t.start(), list(streets)) or obec, []).append(t.end())
+        if text in loc:  # text o místě: každá část („;“, „–“, „x“, závorka) může začínat ulicí
+            anchors.setdefault(obec, []).extend(m.end() for m in LOC_SEP.finditer(text))
+        if cross is not None:  # křižovatka „Zvolská x Pražská“: obě strany
+            for m in cross.finditer(text):
+                anchors.setdefault(obec, []).extend([m.start(), m.end()])
+        if not anchors:
+            continue
+        # ulice, kterou obec oznámení nemá, ale v regionu je jen v jedné jiné obci („ul. Černická v Nové Zvoli“
+        # v oznámení Březové-Oleška) – za spouštěči obce oznámení se hledá i v ní
+        if obec in anchors:
+            for o in uniq:
+                anchors.setdefault(o, [])
+                anchors[o] = sorted(set(anchors[o]) | set(anchors[obec]))
         for o, ends in anchors.items():
             pat, by_fold = pats.get(o), {n.casefold(): n for n in streets.get(o, {})}
             if pat is None:
                 continue
+            own_trigger = o == obec or any(_obec_before(text, t.start(), list(streets)) == o for t in TRIGGER.finditer(text))
             last_end = -1
             for m in pat.finditer(text):
                 anchor = max([e for e in ends if e <= m.start()] + [last_end])
                 if anchor < 0 or not GAP.fullmatch(text, anchor, m.start()):
                     continue
                 name = by_fold[m.group(1).casefold()]
+                if m.group(1)[0] != name[0]:
+                    continue  # první písmeno musí sedět i velikostí („hlavní silnice“ není ulice Hlavní)
+                if not own_trigger and name not in uniq_sets.get(o, set()):
+                    continue  # jiná obec bez výslovné zmínky: jen ulice jediná v regionu
                 hit = found.setdefault(name, {"obec": o, "num": None})
                 if hit["obec"] != o:
                     clash.add(name)
@@ -177,9 +272,17 @@ def scan(texts: list[str], streets: dict[str, dict[str, list[float]]], obec: str
     return {n: h for n, h in found.items() if n not in clash}
 
 
-def find_streets(texts: list[str], streets: dict[str, dict[str, list[float]]], obec: str) -> dict[str, list[float]]:
+def find_streets(texts: list[str], streets: dict[str, dict[str, list[float]]], obec: str,
+                 loc_texts: list[str] | tuple = ()) -> dict[str, list[float]]:
     """Ulice textu s bodem na ulici (bez adresních míst)."""
-    return {n: streets[h["obec"]][n] for n, h in scan(texts, streets, obec).items()}
+    return {n: streets[h["obec"]][n] for n, h in scan(texts, streets, obec, loc_texts).items()}
+
+
+def _loc_item(it: dict) -> list[str]:
+    s = it.get("s") or {}
+    out = [s.get("where") or ""]
+    out += [str(f.get("value") or "") for f in s.get("facts") or [] if isinstance(f, dict) and LOC_LABEL.search(str(f.get("label") or ""))]
+    return [t for t in out if t]
 
 
 def _akey(kod: int, num: dict) -> str:
@@ -232,20 +335,26 @@ async def annotate(client: httpx.AsyncClient, data: dict, state_dir: Path, now: 
     if streets is None:
         return 0
     kody = (state.get("streets") or {}).get("kody") or {}
+    centers = (state.get("streets") or {}).get("centers") or {}
+    roads = (state.get("streets") or {}).get("roads") or {}
     addr = state.setdefault("addr", {})
-    targets = [(it, _texts_item(it)) for it in data.get("items", [])]
-    targets += [(m, _texts_meeting(m)) for m in (data.get("council") or {}).get("meetings", [])]
-    plans = [(obj, scan(texts, streets, obj.get("o", ""))) for obj, texts in targets]
+    targets = [(it, _texts_item(it), _loc_item(it)) for it in data.get("items", [])]
+    targets += [(m, _texts_meeting(m), []) for m in (data.get("council") or {}).get("meetings", [])]
+    plans = [(obj, scan(texts, streets, obj.get("o", ""), loc), find_roads(texts)) for obj, texts, loc in targets]
     wanted = {}
-    for _, hits in plans:
+    for _, hits, _r in plans:
         for name, h in hits.items():
             kod = kody.get(h["obec"], {}).get(name)
             if h["num"] and kod:
                 wanted[_akey(kod, h["num"])] = (kod, h["num"])
     await resolve_addresses(ruian, wanted, addr, now)
     links = houses = 0
-    for obj, hits in plans:
+    for obj, hits, road_hits in plans:
         ul = {}
+        for shown, key in road_hits.items():  # silnice: úsek nejblíž obci oznámení
+            pt = nearest(roads.get(key) or [], centers.get(obj.get("o", "")))
+            if pt:
+                ul[shown] = list(pt)
         for name, h in hits.items():
             pt = list(streets[h["obec"]][name])
             kod = kody.get(h["obec"], {}).get(name)

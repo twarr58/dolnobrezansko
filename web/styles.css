@@ -463,6 +463,8 @@ details.removed summary { cursor: pointer; font-family: var(--mono); font-size: 
 .parcel:hover, .street:hover { color: var(--accent); text-decoration-style: solid; }
 .parcel::after { content: "↗"; font-size: 0.75em; margin-left: 1px; color: var(--accent); vertical-align: 0.15em; }
 .street::after { content: "⌖"; font-size: 0.8em; margin-left: 2px; color: var(--accent); }
+.maplink { font-size: 0.9em; white-space: nowrap; }
+.maplink::after { content: " ↗"; }
 
 /* patička: počítadlo návštěvníků (GoatCounter) */
 .sitefoot { border-top: 1px solid var(--rule); margin-top: 24px; color: var(--muted); font-size: 13px; }
