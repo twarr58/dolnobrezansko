@@ -113,8 +113,13 @@ def main() -> None:
     r = sub.add_parser("region", help="Sběr desek mikroregionu (data/region.json) s přílohami a popisy")
     r.add_argument("--out", default="site/data")
     r.add_argument("--state", default="state")
+    r.add_argument("--assets", default="assets", help="Checkout větve assets (znaky obcí); chybí-li, jen znaky z repozitáře")
     r.add_argument("--ai-limit", type=int, default=int(os.environ.get("AI_LIMIT") or "100"),
                    help="Max. počet shrnutí od Claude za běh (jen s ANTHROPIC_API_KEY)")
+
+    z = sub.add_parser("erby", help="Stáhne znaky obcí z Wikimedia Commons do <out>/erby (větev assets)")
+    z.add_argument("--out", default="assets")
+    z.add_argument("--force", action="store_true", help="Stáhnout znovu i znaky, které už jsou")
 
     s = sub.add_parser("sample", help="Ukázková data z fixture (bez sítě)")
     s.add_argument("--out", default="web/data")
@@ -123,7 +128,11 @@ def main() -> None:
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     if args.cmd == "region":
         from .region import run as region_run
-        asyncio.run(region_run(Path(args.out), Path(args.state), args.ai_limit))
+        assets = Path(args.assets)
+        asyncio.run(region_run(Path(args.out), Path(args.state), args.ai_limit, assets_dir=assets if assets.is_dir() else None))
+    elif args.cmd == "erby":
+        from .erby import run as erby_run
+        asyncio.run(erby_run(Path(args.out), args.force))
     elif args.cmd == "harvest":
         asyncio.run(_harvest(args))
     elif args.cmd == "discover":

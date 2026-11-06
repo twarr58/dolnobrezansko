@@ -443,7 +443,8 @@ def build_output(region: dict, members: list[dict], boards: list[dict], items: l
     }
 
 
-async def run(out_dir: Path, state_dir: Path, ai_limit: int = 100, concurrency: int = 8) -> dict:
+async def run(out_dir: Path, state_dir: Path, ai_limit: int = 100, concurrency: int = 8,
+              assets_dir: Path | None = None) -> dict:
     now = datetime.now(timezone.utc)
     region = load_region()
     proxy = os.environ.get("HARVEST_FALLBACK_PROXY") or None
@@ -467,10 +468,10 @@ async def run(out_dir: Path, state_dir: Path, ai_limit: int = 100, concurrency: 
             doc_cache, summaries = await enrich(client, items, state_dir, ai_limit, now, fallback, proxy_hosts)
             news = await newsletters.collect(client, region["members"], state_dir, now, fallback)
             event_data = await events.collect(client, region["members"], state_dir, now, fallback)
-            erb_paths = await erby.collect(client, region["members"], out_dir.parent, state_dir, now)
         finally:
             if fallback:
                 await fallback.aclose()
+    erb_paths = erby.load(region["members"], assets_dir)  # znaky z větve assets (workflow erby.yml)
     data = build_output(region, members, boards, items, doc_cache, summaries, now, erb_paths)
     data["newsletters"] = news
     data["events"] = event_data

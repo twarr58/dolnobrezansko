@@ -1,5 +1,5 @@
 {
-  "_poznamka": "Obce mikroregionu. 'slug' = adresa stránky obce na webu, 'color' = barva obce (značka u oznámení), 'erb' = znak obce v web/erby (jinak se stáhne z Wikimedia Commons: soubor 'erb_commons', případně dohledaný ve Wikidatech podle qid nebo erb_qid). 'source' = známá deska (formát jako v extra_sources.json; edesky = přes API edesky.cz pro weby, které z GitHubu nejdou). Obce bez 'source' se hledají automaticky (web z 'web', jinak z Wikidat) a výsledek se ukládá do state/region_sources.json.",
+  "_poznamka": "Obce mikroregionu. 'slug' = adresa stránky obce na webu, 'color' = barva obce (značka u oznámení), 'erb' = znak obce v web/erby (jinak ho workflow erby.yml stáhne z Wikimedia Commons do větve assets: soubor 'erb_commons', případně dohledaný ve Wikidatech podle qid nebo erb_qid). 'source' = známá deska (formát jako v extra_sources.json; edesky = přes API edesky.cz pro weby, které z GitHubu nejdou). Obce bez 'source' se hledají automaticky (web z 'web', jinak z Wikidat) a výsledek se ukládá do state/region_sources.json.",
   "id": "dolnobrezansko",
   "name": "Mikroregion Dolnobřežansko",
   "web": "https://www.dolnobrezansko.cz/",
