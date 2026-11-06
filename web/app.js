@@ -319,6 +319,48 @@ function countOutbound(e) {
   gc({ path: `${linkKind(a)}: ${host}`, title: (a.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 100), event: true });
 }
 
+// Počítadlo v patičce: veřejné počty návštěvníků z GoatCounteru (v jeho nastavení musí být zapnuté
+// „Allow adding visitor counts on your website“). Odpovědi GoatCounter drží v mezipaměti až 4 hodiny.
+// Když se počty nenačtou (vypnuté nastavení, blokátor, výpadek), patička zůstane skrytá.
+const GC_COUNTER = 'https://dolnobrezansko.goatcounter.com/counter/TOTAL.json';
+
+function visitors(n) {
+  const word = n === 1 ? 'návštěvník' : n >= 2 && n <= 4 ? 'návštěvníci' : 'návštěvníků';
+  return `${n.toLocaleString('cs-CZ')} ${word}`;
+}
+
+async function gcTotal(start) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 6000);
+  try {
+    const res = await fetch(start ? `${GC_COUNTER}?start=${start}` : GC_COUNTER, { signal: ctrl.signal });
+    if (!res.ok) return null;
+    const digits = String((await res.json()).count ?? '').replace(/\D/g, ''); // „1,234“ → 1234
+    return digits ? Number(digits) : null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function renderFooter() {
+  const foot = document.getElementById('sitefoot');
+  if (!foot) return;
+  const monthStart = `${localTodayIso().slice(0, 7)}-01`;
+  const [month, total] = await Promise.all([gcTotal(monthStart), gcTotal('')]);
+  if (month == null && total == null) return;
+  const parts = [
+    month != null ? `${visitors(month)} tento měsíc` : null,
+    total != null ? `${total.toLocaleString('cs-CZ')} celkem` : null,
+  ].filter(Boolean);
+  foot.replaceChildren(h('div', { class: 'sitefoot__in' },
+    h('span', {}, parts.join(' · ')),
+    h('span', { class: 'sitefoot__how' }, 'měřeno bez cookies a osobních údajů (',
+      h('a', { href: 'https://www.goatcounter.com/', rel: 'noopener noreferrer', target: '_blank' }, 'GoatCounter'), ')')));
+  foot.hidden = false;
+}
+
 let onList = false;   // je teď zobrazený seznam?
 let fromList = false; // přišel uživatel na detail ze seznamu (pak „Zpět“ = history.back())
 
@@ -1404,6 +1446,7 @@ async function start() {
   document.addEventListener('auxclick', countOutbound, true);
   route();
   countView();
+  renderFooter();
 }
 
 start();

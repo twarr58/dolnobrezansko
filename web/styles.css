@@ -461,3 +461,8 @@ details.removed summary { cursor: pointer; font-family: var(--mono); font-size: 
 .parcel { color: inherit; text-decoration: underline dotted var(--accent); text-decoration-thickness: 1.5px; text-underline-offset: 3px; white-space: nowrap; }
 .parcel:hover { color: var(--accent); text-decoration-style: solid; }
 .parcel::after { content: "↗"; font-size: 0.75em; margin-left: 1px; color: var(--accent); vertical-align: 0.15em; }
+
+/* patička: počítadlo návštěvníků (GoatCounter) */
+.sitefoot { border-top: 1px solid var(--rule); margin-top: 24px; color: var(--muted); font-size: 13px; }
+.sitefoot__in { max-width: 1200px; margin: 0 auto; padding: 14px 16px 20px; display: flex; flex-wrap: wrap; gap: 4px 16px; justify-content: center; text-align: center; }
+.sitefoot__in a { color: inherit; }
