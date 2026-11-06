@@ -35,7 +35,7 @@ from .webpage import BROWSER_HEADERS
 log = logging.getLogger(__name__)
 
 REFRESH_HOURS = 6
-PARSER_VERSION = 2  # zvýšit při změně čtení akcí – uložené akce se pak načtou znovu hned, ne až po REFRESH_HOURS
+PARSER_VERSION = 3  # zvýšit při změně čtení akcí – uložené akce se pak načtou znovu hned, ne až po REFRESH_HOURS
 WINDOW_DAYS = 60  # akce na příštích N dní
 MAX_EVENTS = 300  # na obec
 
@@ -77,6 +77,15 @@ def vismo_ids(html: str) -> tuple[str, str]:
     return obj.group(1), block.group(1) if block else ""
 
 
+def _vismo_time(e: dict) -> str | None:
+    """Čas začátku jako „H:MM“. Celodenní akce (isAllDay) web obce ukazuje bez času – API u nich vrací zbytkový
+    čas (typicky 22:00, tj. půlnoc posunutá o časové pásmo, nebo 13:00 u svozů), který by byl zavádějící."""
+    t = e.get("fromTime")
+    if e.get("isAllDay") or not t or not re.fullmatch(r"\d{1,2}:\d{2}", t) or t in ("0:00", "00:00"):
+        return None
+    return t
+
+
 def parse_vismo(data: dict, base_url: str) -> list[dict]:
     """Odpověď GetEventsByDay → akce. Vícedenní akce je v každém dni zvlášť (isStartDay … isEndDay) – spojí se;
     opakovaná akce (týž objekt další víkend) je nový výskyt."""
@@ -94,7 +103,7 @@ def parse_vismo(data: dict, base_url: str) -> list[dict]:
             else:
                 tags = e.get("codeListItems") if isinstance(e.get("codeListItems"), list) else []
                 ev = {k: v for k, v in {
-                    "t": _clean(e.get("name")), "d": d, "time": e.get("fromTime"),  # isAllDay bývá i u akcí s časem
+                    "t": _clean(e.get("name")), "d": d, "time": _vismo_time(e),
                     "url": e.get("v-viewUrlAbsolute") or urljoin(base_url, e.get("v-viewUrl") or ""),
                     "tags": [t["name"] for t in tags if t.get("name") and not t.get("isHiddenName")][:3],
                 }.items() if v}
