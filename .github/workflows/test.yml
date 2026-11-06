@@ -1,0 +1,32 @@
+name: Testy
+
+# Jen testy harvesteru – pro pull requesty (i od Dependabotu) a po merge změn, které sběr nespouštějí
+# (závislosti v pyproject.toml, testy, workflow). Sběr ani nasazení se tím nespouští.
+on:
+  pull_request:
+    paths: ["harvester/**", ".github/**"]
+  push:
+    branches: [main]
+    paths: ["harvester/pyproject.toml", "harvester/tests/**", ".github/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: harvester/pyproject.toml
+      - run: pip install -e "harvester[dev]"
+      - run: pytest -q harvester

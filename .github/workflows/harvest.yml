@@ -4,9 +4,11 @@ on:
   schedule:
     - cron: "17 * * * *" # každou hodinu
   workflow_dispatch:
+  # Po merge jen při změně kódu harvesteru nebo webu. Ne při změně závislostí (pyproject.toml), testů ani
+  # workflow (PR od Dependabotu) – ty ověří test.yml; nové verze knihoven použije další hodinový sběr.
   push:
     branches: [main]
-    paths: ["web/**", "harvester/**", ".github/workflows/harvest.yml"]
+    paths: ["web/**", "harvester/uredni_desky/**"]
 
 # Výchozí práva jen ke čtení. Kód, který zpracovává cizí soubory (PDF, obrázky, Word, OCR), běží v úkolu
 # harvest bez práva zápisu do repozitáře; stav do větve `data` ukládá samostatný úkol save-state a web

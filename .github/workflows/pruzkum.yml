@@ -14,8 +14,9 @@ on:
         description: "Vypsat všechny odkazy (ne jen kontakty, úřad, zápisy)"
         type: boolean
         default: false
+  # pushem jen při změně seznamu stránek k průzkumu (deploy/pruzkum/**); jinak ručně
   push:
-    paths: ["deploy/pruzkum/**", ".github/workflows/pruzkum.yml", "harvester/uredni_desky/samosprava.py"]
+    paths: ["deploy/pruzkum/**"]
 
 permissions:
   contents: read
