@@ -114,7 +114,7 @@ jobs:
         run: |
           mkdir -p state-out
           cp state/items.json.gz state/boards.json state-out/
-          for f in docs.json.gz summaries.json.gz region_sources.json discovered.json obce.json newsletters.json events.json council.json parcely.json; do
+          for f in docs.json.gz summaries.json.gz region_sources.json discovered.json obce.json newsletters.json events.json council.json parcely.json ulice.json; do
             [ -f "state/$f" ] && cp "state/$f" state-out/ || true
           done
 

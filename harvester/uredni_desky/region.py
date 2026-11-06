@@ -24,7 +24,7 @@ from urllib.parse import urlsplit
 
 import httpx
 
-from . import USER_AGENT, ai, cache, digest, documents, edesky, erby, events, newsletters, parcely, samosprava, webpage
+from . import USER_AGENT, ai, cache, digest, documents, edesky, erby, events, newsletters, parcely, samosprava, ulice, webpage
 from .build import load_state, run_build
 from .extra import sources_from_entries
 from .fetch import fetch_all, needs_proxy
@@ -523,13 +523,17 @@ async def run(out_dir: Path, state_dir: Path, ai_limit: int = 100, concurrency: 
     data["newsletters"] = news
     data["events"] = event_data
     data["council"] = council
-    # odkazy na parcely do katastru (ČÚZK); bez ČÚZK zůstanou texty bez odkazů
+    # odkazy na parcely do katastru a na ulice do map (ČÚZK); bez ČÚZK zůstanou texty bez odkazů
     async with httpx.AsyncClient(**common) as client:
         fallback = httpx.AsyncClient(**common, proxy=proxy) if proxy else None
         try:
             await parcely.annotate(client, data, state_dir, now, fallback)
         except Exception as exc:  # noqa: BLE001 – odkazy jsou doplněk, sběr kvůli nim nesmí spadnout
             log.warning("Parcely: %r", exc)
+        try:
+            await ulice.annotate(client, data, state_dir, now, fallback)
+        except Exception as exc:  # noqa: BLE001 – odkazy jsou doplněk, sběr kvůli nim nesmí spadnout
+            log.warning("Ulice: %r", exc)
         finally:
             if fallback:
                 await fallback.aclose()

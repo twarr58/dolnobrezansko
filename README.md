@@ -178,6 +178,19 @@ z něj udělá odkaz do Nahlížení do KN (`nahlizenidokn.cuzk.gov.cz/ZobrazObj
 Nalezená ID se pamatují ve stavu (`parcely.json`), dotazů je nejvýš 60 za běh. Odkaz se na webu ukáže jen
 tam, kde text o parcele opravdu mluví (ne např. u „kancelář č. 1“).
 
+### Odkazy na ulice do Google Map
+
+Modul `ulice.py` stáhne z RÚIAN (vrstva Ulice) seznam ulic obcí regionu a ke každé bod přímo na ulici
+(střed úseku nejblíž středu ulice); pamatuje se 30 dní ve stavu (`ulice.json`). V textech shrnutí pak najde
+ulice, o kterých text opravdu mluví: za „ulice / ul. / komunikace / třída“ a dál ve výčtu („v ulicích
+Vestecká, K Jahodárně, Průběžná a Hrnčířská“; neznámá položka výčet nepřeruší). Bez takového kontextu odkaz
+nevznikne („Pražská plynárenská“, „Dolní“ v „Dolní Břežany“). Ulice jsou z obce oznámení, nebo z jiné obce
+regionu, když ji text jmenuje těsně před spouštěčem („Ohrobec (ulice Lipová, …)“); stejný název ve dvou
+obcích jednoho textu odkaz nedostane. Ulice pojmenované jako obec nebo její část („Zdiměřice“) se vynechají.
+Libeř a Okrouhlo pojmenované ulice v RÚIAN nemají. Odkaz vede na bod
+(`google.com/maps/search/?api=1&query=šířka,délka`), ne na hledání podle jména – stejnojmenných obcí
+a ulic je v ČR víc.
+
 ### Usnesení rad a zastupitelstev
 
 Modul `samosprava.py` jednou za 12 hodin projde u každé obce stránky s usneseními a zápisy (zdroje
@@ -216,7 +229,7 @@ Skript je v `web/index.html`, počítání v `web/app.js` (oddíl „návštěvn
 
 - **zobrazení stránek** podle cesty bez filtrů: `/`, `/samosprava`, `/obce`, `/obec/psary`, `/o/<id>` (detail oznámení,
   titulek je jeho shrnutí); změna filtru nové zobrazení nepočítá;
-- **kliky na odkazy ven** jako události `druh: web`: `příloha`, `originál` (původní znění na desce), `katastr`,
+- **kliky na odkazy ven** jako události `druh: web`: `příloha`, `originál` (původní znění na desce), `katastr`, `mapa`,
   `usnesení`, `zpravodaj`, `akce`, ostatní `odkaz` – např. `příloha: ohrobec.cz`.
 
 Když se skript GoatCounteru nenačte (blokátor reklam), web funguje dál, jen se návštěva nezapočítá.
@@ -285,6 +298,7 @@ Repozitář je veřejný, proto ho spouštět jen z `main`, ne z pull requestů.
 - `council`: `sources[]` (`obec`, `body`, `url`, `ok`, `n`), `meetings[]` (`id`, `o`, `body` rada \| zastupitelstvo,
   `kind` usneseni \| zapis, `date`, `no`, `t`, `url`, `x`, `tldr`, `points[]` (`v` sloveso, `t`, `cat`, `amt`, `imp`), `src`)
 - `items[].pl`, `council.meetings[].pl`: odkazy na parcely `{„259/13“: [ID parcely v RÚIAN, „k. ú.“]}`
+- `items[].ul`, `council.meetings[].ul`: ulice s bodem na mapě `{„Malebná“: [šířka, délka]}`
 - `members[].contact`: `office`, `address`, `phone[]`, `email[]` nebo `form`, `ds`, `ico`, `hours[]`, `hours_note`,
   `hours_url`, `source`, `checked`
 
