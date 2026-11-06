@@ -56,14 +56,17 @@ NUMBER = re.compile(
     r"(?P<a>\d{1,4})(?:\s*/\s*(?P<b>\d{1,4})[a-zA-Z]?)?(?![\d,]\d)", re.I)
 # za číslem nesmí být jednotka, počet nebo datum („Březovská 20 čísel popisných“, „Dlouhá 7 domů“, „Pražská 20. 11.“)
 DATE_AFTER = re.compile(r"\.\s*(?:\d|(?:ledna|února|března|dubna|května|června|července|srpna|září|října|listopadu|prosince)\b)", re.I)
+# další čísla téhož výčtu („č. p. 93 a 122“, „32, 34, 52“, „453–457“) a závorka – výčet ulic pokračuje až za nimi
+MORE_NUMBERS = re.compile(r"(?:\s*(?:,|a|i|–|-)\s*\d{1,4}(?:\s*/\s*\d{1,4})?)*\s*\)?")
 NOT_HOUSE = re.compile(r"\s*(?:čís|dom|adres|objekt|parcel|byt|m\b|m2|m²|km|kč|%|hod|min|let|osob|metr|ks|x\b)", re.I)
 
 # „ulice“ ve všech pádech, „ul.“, „(místní) komunikace“, „třída“
-TRIGGER = re.compile(r"(?<!\w)(?:ul\.|ulic(?:e|i|í|ích|emi|ím)\b|komunikac(?:e|i|í|ích)\b|tříd(?:a|ě|u)\b)", re.I)
+TRIGGER = re.compile(r"(?<!\w)(?:ul\.|ulic(?:e|i|í|ích|emi|ím)\b|komunikac(?:e|i|í|ích)\b|tříd(?:a|ě|u)\b"
+                     r"|adres(?:a|y|e|u|ou|ách|ami)?\b)", re.I)
 # mezi spouštěčem / předchozí ulicí a další ulicí ve výčtu smí být jen oddělovače a jiné položky výčtu
 # (název s velkým písmenem, nejvýš tři slova, za ním čárka) – ulice, kterou RÚIAN nezná, výčet nepřeruší
 _ITEM = r"[A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ0-9][\w.]*(?:\s+[\w.]+){0,2}\s*,\s*"
-GAP = re.compile(rf"[\s,;:]*(?:{_ITEM})*(?:(?:a|i|nebo|či)\s+)?(?:(?:ul\.|ulic\w*)\s*)?")
+GAP = re.compile(rf"[\s,;:)]*(?:{_ITEM})*(?:(?:a|i|nebo|či)\s+)?(?:(?:ul\.|ulic\w*)\s*)?")
 
 
 def _point(paths: list[list[list[float]]]) -> list[float] | None:
@@ -210,7 +213,8 @@ def house_number(text: str, pos: int) -> dict | None:
     if kind is None and b is None and a <= 31 and DATE_AFTER.match(rest):
         return None  # „Pražská 20. 11.“, „Polní 5. listopadu“ – datum, ne číslo domu
     label = f"č. p. {a}" if kind == "p" else f"č. o. {a}" if kind == "o" else f"{a}/{b}" if b else str(a)
-    return {"kind": kind, "a": a, "b": b, "label": label}
+    end = MORE_NUMBERS.match(text, m.end()).end()
+    return {"kind": kind, "a": a, "b": b, "label": label, "end": end}
 
 
 def scan(texts: list[str], streets: dict[str, dict[str, list[float]]], obec: str,
@@ -266,9 +270,11 @@ def scan(texts: list[str], streets: dict[str, dict[str, list[float]]], obec: str
                 hit = found.setdefault(name, {"obec": o, "num": None})
                 if hit["obec"] != o:
                     clash.add(name)
-                elif hit["num"] is None:
-                    hit["num"] = house_number(text, m.end())
-                last_end = m.end()
+                num = house_number(text, m.end())
+                if hit["num"] is None and hit["obec"] == o:
+                    hit["num"] = num
+                # výčet „Májová (č. p. 131) a Větrná (č. p. 93, 122)“ pokračuje až za čísly domů
+                last_end = num["end"] if num else m.end()
     return {n: h for n, h in found.items() if n not in clash}
 
 

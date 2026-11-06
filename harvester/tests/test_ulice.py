@@ -163,3 +163,14 @@ def test_roads_found_and_nearest_section():
         "II/101": "II/101", "III/0031": "III/31", "III/10115": "III/10115"}
     assert U.nearest([[50.0, 14.0], [49.9, 14.4], [49.95, 14.45]], [49.94, 14.43]) == [49.95, 14.45]
 
+
+def test_street_list_continues_after_house_numbers():
+    st = {"Dolní Břežany": {"Májová": [1, 1], "Větrná": [2, 2]}}
+    for text in ["Část obce Lhota: ulice Májová (č. p. 131) a Větrná (č. p. 93, 122); kat. území Lhota",
+                 "Dotčené adresy: Májová č. p. 131; Větrná č. p. 93 a 122."]:
+        hits = U.scan([text], st, "Dolní Břežany")
+        assert {n: h["num"] and h["num"]["label"] for n, h in hits.items()} == {"Májová": "č. p. 131", "Větrná": "č. p. 93"}, text
+    # ulice bez čísla v nadpisu, číslo až v dalším textu – číslo se doplní
+    hits = U.scan(["přerušit elektřinu (ulice Májová a Větrná)", "ulice Májová (č. p. 131) a Větrná (č. p. 93, 122)"], st, "Dolní Břežany")
+    assert hits["Větrná"]["num"]["a"] == 93 and hits["Májová"]["num"]["a"] == 131
+
