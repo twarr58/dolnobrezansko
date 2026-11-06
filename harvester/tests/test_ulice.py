@@ -142,3 +142,24 @@ def test_address_point_and_fallback(tmp_path):
     queries.clear()  # další běh: adresy z mezipaměti (i nenalezená, do ADDR_RETRY_DAYS)
     asyncio.run(go())
     assert queries == []
+
+
+def test_location_texts_crossings_and_unique_street_elsewhere():
+    st = {"Březová-Oleško": {"Zvolská": [1, 1], "Pražská": [2, 2], "Hlavní": [3, 3]},
+          "Zvole": {"Černická": [4, 4], "Pražská": [5, 5]}}
+    where = "Zvolská x Pražská (u zahrádkářů); Pražská, restaurace U Vlastence; Stará Březová – Hlavní, náves"
+    assert U.find_streets([where], st, "Březová-Oleško", [where]) == {"Zvolská": [1, 1], "Pražská": [2, 2], "Hlavní": [3, 3]}
+    kde = "Obřadní síň Obecního úřadu Dolní Břežany, Pražská 78, 252 41 Dolní Břežany"
+    assert U.find_streets([kde], {"Dolní Břežany": {"Pražská": [9, 9]}}, "Dolní Břežany", [kde]) == {"Pražská": [9, 9]}
+    # křižovatka „A x B“ i mimo údaje o místě; „hlavní silnice“ (malé písmeno) není ulice Hlavní
+    assert U.find_streets(["Svoz: Zvolská x Pražská v 10:10, pak hlavní silnice"], st, "Březová-Oleško") == {
+        "Zvolská": [1, 1], "Pražská": [2, 2]}
+    # ulice jen v jiné obci regionu (Černická ve Zvoli), jediná v regionu → bod ze Zvole; Pražská ne (je i v obci oznámení)
+    assert U.find_streets(["KC Jurta na konci ul. Černická v Nové Zvoli"], st, "Březová-Oleško") == {"Černická": [4, 4]}
+
+
+def test_roads_found_and_nearest_section():
+    assert U.find_roads(["Uzavírka II/101, objížďka po III/0031 a III/10115; ne 2/2026"]) == {
+        "II/101": "II/101", "III/0031": "III/31", "III/10115": "III/10115"}
+    assert U.nearest([[50.0, 14.0], [49.9, 14.4], [49.95, 14.45]], [49.94, 14.43]) == [49.95, 14.45]
+

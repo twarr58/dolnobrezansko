@@ -229,44 +229,51 @@ function withParcels(text, pl) {
 // ---------- odkazy na ulice do Google Map ----------
 
 const MAPS_URL = (pt) => `https://www.google.com/maps/search/?api=1&query=${pt[0]},${pt[1]}`;
-const STREET_TRIGGER = /(?<![\p{L}\d])(?:ul\.|ulic(?:e|i|í|ích|emi|ím)(?![\p{L}])|komunikac(?:e|i|í|ích)(?![\p{L}])|tříd(?:a|ě|u)(?![\p{L}]))/giu;
-const STREET_ITEM = String.raw`[A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ0-9][\p{L}\d.]*(?:\s+[\p{L}\d.]+){0,2}\s*,\s*`;
-const STREET_GAP = new RegExp(String.raw`^[\s,;:]*(?:${STREET_ITEM})*(?:(?:a|i|nebo|či)\s+)?(?:(?:ul\.|ulic\p{L}*)\s*)?$`, 'u');
 const STREET_NEXT_CAP = /^\s+[A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ]\p{L}/u;
 
 /**
- * Text s odkazy na ulice: ul = {„Malebná“: [šířka, délka]} z harvesteru (ulice.py – ulice obce z RÚIAN, o kterých
- * text mluví; s číslem domu bod na domě). Odkaz jen tam, kde text o ulici opravdu mluví (za „ulice / ul. / komunikace“, dál ve výčtu) – stejně
- * jako v harvesteru, aby „Pražská plynárenská“ nebo „Dolní Břežany“ nebyly odkaz. Odkaz vede na bod v Google Mapách.
+ * Text s odkazy na ulice a silnice: ul = {„Malebná“: [šířka, délka], „Nádražní“: [šířka, délka, „č. p. 137“],
+ * „II/101“: [šířka, délka]} z harvesteru (ulice.py). O tom, co je ulice, rozhodl harvester podle kontextu
+ * (za „ulice“, ve výčtu, v údajích o místě, v křižovatce „A x B“) – web jen odkazuje názvy z ul. Neodkazuje,
+ * když za názvem pokračuje slovo s velkým písmenem („Dolní“ v „Dolní Břežany“) nebo když nesedí velikost
+ * prvního písmena („hlavní silnice“ není ulice Hlavní). Odkaz vede na bod v Google Mapách.
  */
 function streetsIn(str, ul) {
-  // [šířka, délka] = bod na ulici; [šířka, délka, „č. p. 137“] = bod na domě (číslo domu bylo v textu za ulicí)
+  // [šířka, délka] = bod na ulici / silnici; [šířka, délka, „č. p. 137“] = bod na domě
   const names = Object.keys(ul).filter((n) => Array.isArray(ul[n]) && ul[n].length >= 2 && Number.isFinite(ul[n][0]) && Number.isFinite(ul[n][1]));
   if (!names.length) return str;
-  const triggers = [...str.matchAll(STREET_TRIGGER)].map((m) => m.index + m[0].length);
-  if (!triggers.length) return str;
   const fold = new Map(names.map((n) => [n.toLocaleLowerCase('cs'), n]));
   const alt = names.sort((a, b) => b.length - a.length).map((n) => n.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')).join('|');
-  const rx = new RegExp(`(?<![\\p{L}\\d])(${alt})(?![\\p{L}\\d])`, 'giu');
+  const rx = new RegExp(`(?<![\\p{L}\\d/])(${alt})(?![\\p{L}\\d]|/\\d)`, 'giu');
   const out = [];
   let pos = 0;
-  let last = -1;
   for (const m of str.matchAll(rx)) {
-    const anchor = Math.max(last, ...triggers.filter((e) => e <= m.index));
     const end = m.index + m[0].length;
-    if (anchor < 0 || !STREET_GAP.test(str.slice(anchor, m.index)) || STREET_NEXT_CAP.test(str.slice(end))) continue;
     const name = fold.get(m[1].toLocaleLowerCase('cs'));
-    if (!name) continue;
+    if (!name || m[1][0] !== name[0] || STREET_NEXT_CAP.test(str.slice(end))) continue;
+    const pt = ul[name];
+    const road = /^I{1,3}\/\d/.test(name);
     out.push(str.slice(pos, m.index), h('a', {
-      class: 'street', href: MAPS_URL(ul[name]), rel: 'noopener noreferrer', target: '_blank',
-      title: `${name}${typeof ul[name][2] === 'string' ? ` ${ul[name][2]}` : ''} – otevřít v Google Mapách`,
+      class: 'street', href: MAPS_URL(pt), rel: 'noopener noreferrer', target: '_blank',
+      title: `${road ? 'Silnice ' : ''}${name}${typeof pt[2] === 'string' ? ` ${pt[2]}` : ''} – otevřít v Google Mapách`,
     }, m[1]));
     pos = end;
-    last = end;
   }
   if (!out.length) return str;
   out.push(str.slice(pos));
   return out;
+}
+
+/**
+ * Hledání místa v Google Mapách podle textu „KDE“ (pojmenovaná místa jako „KC Jurta u Potoka, konec ul. Černická“
+ * nejsou v žádném registru): text bez závorek + obec oznámení, když text žádnou obec regionu nezmiňuje.
+ */
+function placeSearchUrl(where, obec) {
+  let q = String(where || '').replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim();
+  // obec připojit, jen když text žádnou obec regionu nezmiňuje („Nová Zvole“ už je Zvole – nepřidávat jinou)
+  const named = (state.data?.members || []).some((m) => fold(q).includes(fold(m.name)));
+  if (obec && !named) q = `${q}, ${obec}`;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q.slice(0, 200))}`;
 }
 
 /** Text s odkazy na parcely (katastr) i ulice (Google Mapy) podle údajů oznámení / zasedání (pl, ul). */
@@ -352,7 +359,7 @@ function countView() {
 
 function linkKind(a) {
   if (a.classList.contains('parcel')) return 'katastr';
-  if (a.classList.contains('street')) return 'mapa';
+  if (a.classList.contains('street') || a.classList.contains('maplink')) return 'mapa';
   if (a.classList.contains('sitefoot__sponsor')) return 'podpora';
   if (a.classList.contains('doc')) return 'příloha';
   if (a.classList.contains('meeting__doc')) return 'usnesení';
@@ -1466,7 +1473,10 @@ function renderDetail(id) {
       s.dates?.length ? section('h-dates', 'DŮLEŽITÁ DATA',
         h('ul', { class: 'dates' }, s.dates.filter((x) => isIso(x.date)).map((x) => h('li', { class: daysTo(x.date) < 0 ? 'past' : null },
           h('span', { class: 'mono' }, dateCz(x.date, { wd: true })), h('span', {}, withLinks(x.what, it)))))) : null,
-      s.where ? section('h-where', 'KDE', h('p', { style: 'margin:0' }, withLinks(s.where, it))) : null,
+      s.where ? section('h-where', 'KDE', h('p', { style: 'margin:0' }, withLinks(s.where, it),
+        // hledání v mapě jen u jednoho místa – výčet míst („…; …“) nebo dlouhý popis úseků by Google nenašel
+        !s.where.includes(';') && s.where.length <= 140 ? [' ', h('a', { class: 'maplink', href: placeSearchUrl(s.where, it.o),
+          rel: 'noopener noreferrer', target: '_blank', title: 'Vyhledat místo v Google Mapách' }, 'Ukázat na mapě')] : null)) : null,
       section('h-docs', docs.length ? `PŘÍLOHY (${docs.length})` : 'BEZ PŘÍLOH',
         h('div', { class: 'docs' }, docs.map((x) => {
           const title = x.w ? x.w.charAt(0).toUpperCase() + x.w.slice(1) : (x.n || 'Příloha');

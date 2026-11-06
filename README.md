@@ -178,7 +178,7 @@ z něj udělá odkaz do Nahlížení do KN (`nahlizenidokn.cuzk.gov.cz/ZobrazObj
 Nalezená ID se pamatují ve stavu (`parcely.json`), dotazů je nejvýš 60 za běh. Odkaz se na webu ukáže jen
 tam, kde text o parcele opravdu mluví (ne např. u „kancelář č. 1“).
 
-### Odkazy na ulice do Google Map
+### Odkazy na ulice, domy a silnice do Google Map
 
 Modul `ulice.py` stáhne z RÚIAN (vrstva Ulice) seznam ulic obcí regionu a ke každé bod přímo na ulici
 (střed úseku nejblíž středu ulice); pamatuje se 30 dní ve stavu (`ulice.json`). V textech shrnutí pak najde
@@ -194,6 +194,21 @@ popisných“, „300 m“, „20. 11.“) a evidenční čísla se za číslo d
 dotazů je nejvýš 80 za běh. Libeř a Okrouhlo pojmenované ulice v RÚIAN nemají. Odkaz vede na bod
 (`google.com/maps/search/?api=1&query=šířka,délka`), ne na hledání podle jména – stejnojmenných obcí
 a ulic je v ČR víc.
+
+Bez slova „ulice“ se ulice najdou i v textu o místě – pole „KDE“ a údaje Místo / Adresa / Lokalita /
+Stanoviště: ulice na začátku každé části (za „;“, „,“, „–“, „x“, závorkou), např. „Zvolská x Pražská (u
+zahrádkářů); Pražská, restaurace U Vlastence; Stará Březová – Hlavní“ nebo „Obřadní síň …, 5. května 78“ –
+a všude v křižovatce „Zvolská x Pražská“. První písmeno názvu musí sedět i velikostí („hlavní silnice“ není
+ulice Hlavní). Ulici, kterou obec oznámení nemá, ale v regionu je jen v jedné jiné obci („ul. Černická
+v Nové Zvoli“ v oznámení Březové-Oleška), najde v té obci.
+
+Čísla silnic („II/101“, „III/1042“, „III/0031“, „I/4“) mají bod na silnici ze ZABAGED (vrstva Silnice,
+dálnice; `ags.cuzk.gov.cz/…/ZABAGED_POLOHOPIS/MapServer/79`) – na úseku nejblíž středu obce oznámení, protože
+silnice vede přes víc obcí. Silnice v okolí regionu se pamatují spolu s ulicemi (30 dní).
+
+U pole „KDE“ s jedním místem (bez „;“, do 140 znaků) web přidá „Ukázat na mapě“ – hledání v Google Mapách podle
+textu místa (pojmenovaná místa jako „KC Jurta u Potoka“ v žádném registru nejsou); obec se připojí, jen když text
+žádnou obec regionu nezmiňuje.
 
 ### Usnesení rad a zastupitelstev
 
@@ -309,7 +324,7 @@ Repozitář je veřejný, proto ho spouštět jen z `main`, ne z pull requestů.
 - `council`: `sources[]` (`obec`, `body`, `url`, `ok`, `n`), `meetings[]` (`id`, `o`, `body` rada \| zastupitelstvo,
   `kind` usneseni \| zapis, `date`, `no`, `t`, `url`, `x`, `tldr`, `points[]` (`v` sloveso, `t`, `cat`, `amt`, `imp`), `src`)
 - `items[].pl`, `council.meetings[].pl`: odkazy na parcely `{„259/13“: [ID parcely v RÚIAN, „k. ú.“]}`
-- `items[].ul`, `council.meetings[].ul`: ulice s bodem na mapě `{„Malebná“: [šířka, délka]}`, s číslem domu `{„Nádražní“: [šířka, délka, „č. p. 137“]}`
+- `items[].ul`, `council.meetings[].ul`: ulice a silnice s bodem na mapě `{„Malebná“: [šířka, délka], „II/101“: [šířka, délka]}`, s číslem domu `{„Nádražní“: [šířka, délka, „č. p. 137“]}`
 - `members[].contact`: `office`, `address`, `phone[]`, `email[]` nebo `form`, `ds`, `ico`, `hours[]`, `hours_note`,
   `hours_url`, `source`, `checked`
 
