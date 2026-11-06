@@ -236,11 +236,12 @@ const STREET_NEXT_CAP = /^\s+[A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ]\p{L}/u;
 
 /**
  * Text s odkazy na ulice: ul = {„Malebná“: [šířka, délka]} z harvesteru (ulice.py – ulice obce z RÚIAN, o kterých
- * text mluví). Odkaz jen tam, kde text o ulici opravdu mluví (za „ulice / ul. / komunikace“, dál ve výčtu) – stejně
+ * text mluví; s číslem domu bod na domě). Odkaz jen tam, kde text o ulici opravdu mluví (za „ulice / ul. / komunikace“, dál ve výčtu) – stejně
  * jako v harvesteru, aby „Pražská plynárenská“ nebo „Dolní Břežany“ nebyly odkaz. Odkaz vede na bod v Google Mapách.
  */
 function streetsIn(str, ul) {
-  const names = Object.keys(ul).filter((n) => Array.isArray(ul[n]) && ul[n].length === 2 && ul[n].every(Number.isFinite));
+  // [šířka, délka] = bod na ulici; [šířka, délka, „č. p. 137“] = bod na domě (číslo domu bylo v textu za ulicí)
+  const names = Object.keys(ul).filter((n) => Array.isArray(ul[n]) && ul[n].length >= 2 && Number.isFinite(ul[n][0]) && Number.isFinite(ul[n][1]));
   if (!names.length) return str;
   const triggers = [...str.matchAll(STREET_TRIGGER)].map((m) => m.index + m[0].length);
   if (!triggers.length) return str;
@@ -258,7 +259,7 @@ function streetsIn(str, ul) {
     if (!name) continue;
     out.push(str.slice(pos, m.index), h('a', {
       class: 'street', href: MAPS_URL(ul[name]), rel: 'noopener noreferrer', target: '_blank',
-      title: `Ulice ${name} – otevřít v Google Mapách`,
+      title: `${name}${typeof ul[name][2] === 'string' ? ` ${ul[name][2]}` : ''} – otevřít v Google Mapách`,
     }, m[1]));
     pos = end;
     last = end;
