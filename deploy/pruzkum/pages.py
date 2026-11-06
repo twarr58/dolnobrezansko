@@ -57,8 +57,9 @@ def dump(url: str) -> None:
     print(f"-- odkazy ({len(links)}):")
     print("\n".join(links[:120]))
     # hlavní obsah: Vismo #hlobsah, <main>, #content; jinak celá stránka
-    main = (root.xpath("//*[@id='hlobsah']") or root.xpath("//main") or root.xpath("//*[@id='content' or @id='main']")
-            or [root])[0]
+    # hlavní obsah: první kandidát s textem (Vismo má #hlobsah někdy jen jako prázdnou kotvu „přeskočit na obsah“)
+    candidates = root.xpath("//*[@id='hlobsah']") + root.xpath("//main") + root.xpath("//*[@id='content' or @id='main']")
+    main = next((c for c in candidates if len(" ".join(c.text_content().split())) > 200), root)
     # cookie lišta: jen prvky uvnitř hlavního obsahu, které obsah samy neobsahují (Vismo má „cookie“ ve třídě <body>)
     for bad in main.xpath(".//*[contains(@id,'cookie') or contains(@class,'cookie')]"):
         if bad.getparent() is not None:
