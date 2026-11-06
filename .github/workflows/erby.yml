@@ -12,10 +12,10 @@ on:
         type: boolean
         default: false
   push:
+    branches: [main] # zapisuje do větve assets – jen z main, ne z rozpracovaných větví
     paths:
       - "harvester/uredni_desky/data/region.json"
       - "harvester/uredni_desky/erby.py"
-      - ".github/workflows/erby.yml"
 
 # Stahování a úprava obrázků (cizí data) běží jen s právem čtení; do větve assets zapisuje úkol save.
 permissions:

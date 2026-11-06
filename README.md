@@ -86,10 +86,11 @@ Hodinový workflow **Sběr desek mikroregionu a nasazení** (`harvest.yml`) spus
 
 | Workflow | Spouštění | Co dělá |
 |---|---|---|
-| `harvest.yml` – Sběr desek mikroregionu a nasazení | každou hodinu, ručně, push do `main` | sběr, shrnutí, nasazení webu |
-| `erby.yml` – Znaky obcí | ručně, změna `region.json` | stáhne chybějící znaky z Commons (při odmítnutí přes proxy) do větve `assets` |
+| `harvest.yml` – Sběr desek mikroregionu a nasazení | každou hodinu, ručně, merge změny kódu harvesteru (`harvester/uredni_desky/**`) nebo webu (`web/**`) | sběr, shrnutí, nasazení webu |
+| `test.yml` – Testy | pull request, merge změny závislostí, testů nebo workflow, ručně | jen `pytest` – sběr ani nasazení nespouští (merge PR od Dependabotu) |
+| `erby.yml` – Znaky obcí | ručně, merge změny `region.json` nebo `erby.py` | stáhne chybějící znaky z Commons (při odmítnutí přes proxy) do větve `assets` |
 | `discover.yml` – Hledání desek všech obcí | ručně | celostátní hledání desek (viz níže) |
-| `pruzkum.yml` – Průzkum stránek obcí | ručně, změna `deploy/pruzkum/**` | vypíše text a odkazy stránek obcí (při odmítnutí přes proxy) a nalezená usnesení |
+| `pruzkum.yml` – Průzkum stránek obcí | ručně, push změny `deploy/pruzkum/**` | vypíše text a odkazy stránek obcí (při odmítnutí přes proxy) a nalezená usnesení |
 | `probe.yml`, `diagnose.yml`, `explore.yml` | ručně | ladění adaptérů, diagnostika nedostupných desek, průzkum NKOD |
 
 **Práva workflow:** kód, který zpracovává cizí soubory (PDF, obrázky, Word, OCR), běží jen s právem čtení
