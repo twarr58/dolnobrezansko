@@ -12,6 +12,8 @@
   --warn-ink: #9a3412;
   --warn-soft: #fdece6;
   --start: #5c6570;         /* začíná / probíhá */
+  --oc-mix: 0%;             /* tmavý režim: barvy obcí zesvětlit, ať jsou na tmavém pozadí čitelné */
+  --crest-glow: none;       /* tmavý režim: světlý obrys, aby tmavé štíty nesplynuly s pozadím */
   --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   color-scheme: light;
@@ -20,13 +22,13 @@
   :root:not([data-theme="light"]) {
     --bg: #111418; --surface: #1a1e24; --ink: #e8eaed; --muted: #9aa3ad; --rule: #2a3038; --rule-strong: #3a414b;
     --accent: #8fb4f0; --accent-soft: #1c2a42; --warn: #f0894f; --warn-ink: #f6a87a; --warn-soft: #3a2116;
-    --start: #9aa3ad; color-scheme: dark;
+    --start: #9aa3ad; --oc-mix: 45%; --crest-glow: drop-shadow(0 0 0.6px rgba(255, 255, 255, 0.85)); color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #111418; --surface: #1a1e24; --ink: #e8eaed; --muted: #9aa3ad; --rule: #2a3038; --rule-strong: #3a414b;
   --accent: #8fb4f0; --accent-soft: #1c2a42; --warn: #f0894f; --warn-ink: #f6a87a; --warn-soft: #3a2116;
-  --start: #9aa3ad; color-scheme: dark;
+  --start: #9aa3ad; --oc-mix: 45%; --crest-glow: drop-shadow(0 0 0.6px rgba(255, 255, 255, 0.85)); color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -74,35 +76,27 @@ svg { flex: 0 0 auto; }
 .theme__btn + .theme__btn { border-left: 1px solid var(--rule); }
 .theme__btn:hover, .theme__cycle:hover { color: var(--ink); }
 .theme__btn[aria-pressed="true"] { background: var(--surface); color: var(--ink); }
-.theme__cycle { display: none; width: 44px; height: 44px; border-radius: 8px; }
-@media (max-width: 600px) { .theme { display: none; } .theme__cycle { display: inline-flex; } }
+.theme__cycle { display: none; width: 40px; height: 44px; border-radius: 8px; }
+@media (max-width: 760px) { .theme { display: none; } .theme__cycle { display: inline-flex; } }
 .sitenav__logo { flex: none; display: inline-flex; align-items: center; margin-right: 6px; padding: 2px 0; border-radius: 50%; }
 .sitenav__logo img { display: block; width: 40px; height: 40px; }
-@media (max-width: 420px) { .sitenav__logo img { width: 34px; height: 34px; } .sitenav__logo { margin-right: 0; } }
-.sitenav__tab { flex: none; display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; margin-bottom: -1px;
+@media (max-width: 760px) { .sitenav__logo img { width: 32px; height: 32px; } .sitenav__logo { margin-right: 2px; } }
+.sitenav__tab { flex: none; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; margin-bottom: -1px;
   border-bottom: 2px solid transparent; color: var(--muted); font-weight: 500; text-decoration: none; white-space: nowrap; }
+.sitenav__tab svg { opacity: 0.8; }
 .sitenav__tab:hover { color: var(--ink); }
 .sitenav__tab[aria-current="page"] { color: var(--ink); font-weight: 700; border-bottom-color: var(--ink); }
+.sitenav__tab[aria-current="page"] svg { opacity: 1; }
+.sitenav__short { display: none; }
+/* telefon: čtyři sekce vždy vedle sebe – ikona nad krátkým popiskem, nic se neusekne */
+@media (max-width: 760px) {
+  .sitenav { gap: 2px; }
+  .sitenav__tabs { overflow: visible; justify-content: space-between; gap: 0; }
+  .sitenav__tab { flex: 1 1 0; min-width: 0; flex-direction: column; justify-content: center; gap: 2px; min-height: 52px; padding: 4px 2px; font-size: 12px; }
+  .sitenav__long { display: none; }
+  .sitenav__short { display: inline; }
+}
 .sitenav + .masthead { padding-top: 16px; }
-@media (max-width: 420px) { .sitenav__tab { padding: 0 10px; font-size: 15px; } }
-
-/* Zpravodaje: karta na obec – nejnovější číslo, starší čísla po letech, odkaz na archiv */
-.news__intro { margin: 16px 0 20px; color: var(--muted); max-width: 70ch; }
-.news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 16px; align-items: start; }
-.news { display: flex; flex-direction: column; gap: 10px; padding: 18px; border: 1px solid var(--rule); border-radius: 12px; min-width: 0; }
-.news__obec { margin: 0; font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: var(--muted); text-transform: uppercase; }
-.news__name { margin: 0; font-size: 20px; line-height: 1.25; }
-.news__latest { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); font-weight: 600; text-decoration: none; }
-.news__latest:hover { text-decoration: underline; }
-.news__latest svg { flex: none; }
-.news__label { display: block; font-size: 12px; font-weight: 500; color: var(--muted); }
-.news__empty { margin: 0; font-size: 14px; color: var(--muted); }
-.news__older summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--accent); }
-.news__year h3 { margin: 10px 0 4px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
-.news__year ul { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 0 14px; }
-.news__year li { min-height: 36px; display: flex; align-items: center; white-space: nowrap; }
-.news__archive { margin-top: auto; font-size: 14px; }
-.news__missing { margin: 24px 0 0; font-size: 14px; color: var(--muted); }
 
 /* Stránka: hlavička + panel vlevo + časová osa vpravo (na telefonu pod sebou) */
 .page { max-width: 1200px; margin: 0 auto; padding: 0 16px 32px; }
@@ -141,11 +135,12 @@ svg { flex: 0 0 auto; }
 .vil { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border: 0; border-radius: 6px;
   background: transparent; text-align: left; font-size: 15px; cursor: pointer; }
 .vil:hover { background: var(--bg); }
+.vil__name { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
 .vil[aria-pressed="true"] { background: var(--bg); color: var(--accent); font-weight: 600; box-shadow: inset 0 0 0 1px var(--accent); }
 .vil[aria-pressed="true"] .vil__n { color: var(--accent); }
 .topics { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; margin: 0 -4px; padding: 0 4px; }
 .topics::-webkit-scrollbar { display: none; }
-.topic { flex: none; min-height: 40px; padding: 0 12px; border: 0; border-radius: 6px; background: transparent; color: var(--ink); font-size: 15px; white-space: nowrap; cursor: pointer; }
+.topic { flex: none; display: inline-flex; align-items: center; min-height: 40px; padding: 0 12px; border: 0; border-radius: 6px; background: transparent; color: var(--ink); font-size: 15px; white-space: nowrap; cursor: pointer; }
 .topic:hover { background: var(--surface); }
 .topic[aria-pressed="true"] { background: var(--ink); color: var(--bg); font-weight: 600; }
 .topic__n { margin-left: 6px; font-family: var(--mono); font-size: 12px; opacity: 0.7; }
@@ -174,7 +169,7 @@ svg { flex: 0 0 auto; }
 .cal__day--sel { box-shadow: inset 0 0 0 2px var(--accent); }
 .cal__evs { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .cal__ev { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 12.5px; line-height: 1.35;
-  padding: 1px 5px; border-radius: 4px; background: var(--accent-soft); color: var(--ink); }
+  padding: 1px 5px; border-radius: 2px 4px 4px 2px; background: var(--accent-soft); color: var(--ink); border-left: 3px solid var(--obec-c, var(--accent)); }
 .cal__time { font-family: var(--mono); font-size: 11px; color: var(--accent); margin-right: 4px; }
 .cal__more { font-size: 12px; color: var(--accent); padding-left: 5px; }
 .cal__dots { display: none; }
@@ -222,6 +217,8 @@ svg { flex: 0 0 auto; }
 .summary strong { color: var(--ink); }
 .summary .legend { margin-left: auto; }
 @media (max-width: 600px) {
+  /* posuvné řádky témat a dní: přechod na konci ukáže, že je jich víc */
+  .topics, .days { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); padding-right: 24px; }
   .fbtn { flex: 1 1 0; justify-content: center; }
   .vilpanel { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .vil { font-size: 14px; padding: 0 10px; }
@@ -246,8 +243,8 @@ svg { flex: 0 0 auto; }
 .entry--event { border-left-color: var(--accent); }
 .entry:hover .entry__title { text-decoration: underline; text-underline-offset: 3px; }
 .entry__meta { font-family: var(--mono); font-size: 12px; color: var(--muted); }
-.entry__meta--warn { color: var(--warn-ink); font-weight: 600; }
-.entry__title { margin: 0; font-size: 17px; line-height: 1.3; font-weight: 600; }
+.entry__when--warn { color: var(--warn-ink); font-weight: 600; }
+.entry__title { margin: 0; font-size: 17px; line-height: 1.3; font-weight: 600; display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .entry__sub { font-size: 14px; color: var(--muted); }
 .badge { font-family: var(--sans); font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); margin-left: 6px; }
 .badge--hot { background: var(--warn-soft); color: var(--warn-ink); }
@@ -279,13 +276,16 @@ details.removed summary { cursor: pointer; font-family: var(--mono); font-size: 
 
 /* Detail */
 .top--detail { padding: 8px 0; }
-.back { display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 4px; font-weight: 600; text-decoration: none; }
-.detail { display: flex; flex-direction: column; gap: 22px; padding-top: 16px; padding-bottom: 32px; }
+.back { display: inline-flex; align-items: center; gap: 6px; height: 44px; margin-top: 8px; padding: 0 4px 0 0; font-weight: 600; text-decoration: none; }
+.detail { display: flex; flex-direction: column; gap: 22px; max-width: 760px; padding-top: 8px; padding-bottom: 32px; }
 .detail__meta { font-family: var(--mono); font-size: 12px; color: var(--muted); display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .detail h1 { margin: 6px 0 0; font-size: 24px; line-height: 1.25; }
 .h2 { margin: 0 0 8px; font-size: 13px; font-family: var(--mono); font-weight: 600; color: var(--muted); letter-spacing: 0.04em; }
 .todo { border-left: 3px solid var(--warn); background: var(--warn-soft); padding: 14px 16px; border-radius: 0 8px 8px 0; }
 .todo--calm { border-left-color: var(--rule-strong); background: var(--surface); }
+.todo--event { border-left-color: var(--accent); background: var(--accent-soft); }
+.todo--event .todo__when { color: var(--accent); }
+.todo--calm .todo__when { color: var(--muted); }
 .todo p { margin: 0; }
 .todo__main { font-size: 17px; line-height: 1.45; font-weight: 600; }
 .todo__when { margin-top: 4px !important; font-family: var(--mono); font-size: 13px; color: var(--warn-ink); }
@@ -313,3 +313,92 @@ details.removed summary { cursor: pointer; font-family: var(--mono); font-size: 
 .official a { font-weight: 600; font-size: 15px; padding: 8px 0; }
 .entry__sub { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .warn-note { color: var(--warn-ink); font-weight: 600; }
+
+/* ---------- Obce: znak a barva obce, stejně ve všech sekcích ---------- */
+[style*="--oc"] { --obec-c: color-mix(in srgb, var(--oc) calc(100% - var(--oc-mix)), #ffffff); }
+.crest { flex: none; display: inline-block; object-fit: contain; vertical-align: -3px; filter: var(--crest-glow); }
+.crest--blank { filter: none; }
+.crest--blank { display: inline-flex; align-items: center; justify-content: center; background: var(--obec-c, var(--muted)); color: var(--bg);
+  border-radius: 2px 2px 50% 50% / 2px 2px 45% 45%; font-family: var(--sans); font-weight: 700; line-height: 1; }
+.obec { display: inline-flex; align-items: center; gap: 5px; color: var(--ink); font-weight: 600; white-space: nowrap; vertical-align: bottom; }
+.obec .crest { vertical-align: 0; }
+.obec--link { color: var(--ink); text-decoration: none; }
+.obec--link:hover { text-decoration: underline; }
+.obec__sep { color: var(--muted); }
+.entry__meta .obec, .row__meta .obec { font-family: var(--sans); font-size: 12.5px; }
+.villages__obec { display: inline-flex; align-items: center; gap: 6px; }
+.villages p .obec { font-weight: 500; color: var(--muted); }
+.chip .crest { margin-left: -2px; }
+.news__intro { margin: 16px 0 12px; color: var(--muted); max-width: 70ch; }
+.credit { margin: 20px 0 0; font-size: 13px; color: var(--muted); }
+
+/* pruh obce: nahoře na stránce obce a nad seznamem při výběru obce */
+.band { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--rule);
+  border-left: 4px solid var(--obec-c, var(--accent)); background: color-mix(in srgb, var(--obec-c, var(--accent)) 7%, var(--bg)); color: var(--ink); text-decoration: none; }
+.band--link { margin-top: 14px; }
+.band--link:hover { border-color: var(--rule-strong); border-left-color: var(--obec-c, var(--accent)); }
+.band--page { margin-top: 4px; padding: 18px 20px; }
+.band__text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 220px; }
+.band h1 { margin: 0; font-size: 26px; line-height: 1.2; }
+.band__sub { font-size: 14px; color: var(--muted); }
+.band__go { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; color: var(--accent); font-weight: 600; font-size: 15px; }
+.band__links { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+.band__btn { display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px; border: 1px solid var(--rule-strong); border-radius: 8px;
+  background: var(--bg); color: var(--ink); font-size: 15px; font-weight: 500; text-decoration: none; white-space: nowrap; }
+.band__btn:hover { border-color: var(--muted); }
+
+/* seznam obcí */
+.obce { list-style: none; margin: 16px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr)); gap: 10px; }
+.obce__card { display: flex; align-items: center; gap: 14px; height: 100%; padding: 14px 16px; border: 1px solid var(--rule); border-radius: 12px;
+  border-left: 4px solid var(--obec-c, var(--accent)); color: var(--ink); text-decoration: none; }
+.obce__card:hover { border-color: var(--rule-strong); border-left-color: var(--obec-c, var(--accent)); background: var(--surface); }
+.obce__body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.obce__name { font-size: 17px; font-weight: 700; }
+.obce__stats { font-size: 13.5px; color: var(--muted); }
+.obce__warn { color: var(--warn-ink); font-weight: 600; }
+.obce__news { font-size: 13px; color: var(--muted); }
+
+/* stránka obce: oznámení vlevo, akce a zpravodaj vpravo */
+.village { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 8px 40px; padding-bottom: 24px; }
+@media (max-width: 860px) { .village { grid-template-columns: minmax(0, 1fr); } }
+.village__main, .village__side { min-width: 0; }
+.village__entries { padding-top: 6px; }
+.more-link { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; font-weight: 600; text-decoration: none; }
+.more-link:hover { text-decoration: underline; }
+
+/* zpravodaje: řádek na zpravodaj, archiv po ročnících pod řádkem */
+.nls { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule); }
+.nl { border-bottom: 1px solid var(--rule); scroll-margin-top: 12px; }
+.nl__row { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) auto; align-items: center; gap: 10px 20px; padding: 14px 0; }
+.nl__obec { display: flex; align-items: center; gap: 12px; min-width: 0; color: var(--ink); text-decoration: none; }
+.nl__obec:hover .nl__name { text-decoration: underline; }
+.nl__obec > span { display: flex; flex-direction: column; min-width: 0; }
+.nl__name { font-size: 17px; font-weight: 700; line-height: 1.25; }
+.nl__place { font-size: 13px; color: var(--muted); }
+.nl__latest { display: flex; align-items: center; gap: 10px; min-width: 0; color: var(--accent); text-decoration: none; }
+.nl__latest > span { display: flex; flex-direction: column; min-width: 0; }
+.nl__latest strong { font-size: 16px; }
+.nl__latest:hover strong { text-decoration: underline; }
+.nl__latest .badge { align-self: flex-start; margin: 2px 0 0; }
+.nl__latest--side { padding: 12px 14px; border: 1px solid var(--rule); border-radius: 8px; margin-top: 8px; }
+.nl__label { font-size: 12px; color: var(--muted); }
+.nl__empty { font-size: 14px; }
+.nl__more { height: 40px; }
+.nl__more[aria-expanded="true"] svg { transform: rotate(180deg); }
+.nl__archive { display: flex; flex-direction: column; gap: 10px; margin: 0 0 14px; padding: 12px; border-radius: 10px; background: var(--surface); }
+.years .topic[aria-pressed="false"] { color: var(--ink); }
+.issues { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.issue { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 44px; padding: 6px 10px; border: 1px solid var(--rule);
+  border-radius: 6px; background: var(--bg); color: var(--accent); font-size: 14.5px; text-decoration: none; }
+.issue:hover { border-color: var(--accent); }
+.issue .badge { margin: 0; }
+.nl__ext { font-size: 14px; align-self: flex-start; padding: 6px 0; }
+@media (max-width: 700px) {
+  .nl__row { grid-template-columns: minmax(0, 1fr) auto; }
+  .nl__obec { grid-column: 1 / -1; }
+  .issues { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* detail: stejné oznámení u dalších obcí */
+.twins { font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 4px 0; }
+.twins .obec { margin-left: 4px; }

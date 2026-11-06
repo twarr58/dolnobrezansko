@@ -147,3 +147,25 @@ def test_year_as_loose_text_between_tags_jesenice():
       <div><hr /></div><div></div>2024<br /><ul><li><a href="/assets/File.ashx?id_org=5861&amp;id_dokumenty=1">Leden</a></li></ul></td>"""
     got = newsletters.parse_archive(html, cfg["url"], cfg)
     assert [i["t"] for i in got] == ["Říjen 2026", "Únor 2026", "Leden 2026", "Prosinec 2025", "Září 2025", "Leden 2024"]
+
+
+def test_first_seen_marks_only_issues_added_after_first_run(tmp_path):
+    pages = {"n": PAGE}
+
+    def handler(req):
+        return httpx.Response(200, html=pages["n"])
+
+    members = [{"name": "Vrané", "newsletter": {"name": "Zrcadlo", "url": "https://obec.cz/z/", "match": "/files/.*zrcadlo",
+                                                  "exclude": "cen[ií]k"}}]
+
+    async def run(now):
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            return await newsletters.collect(client, members, tmp_path, now)
+
+    first = asyncio.run(run(datetime(2026, 11, 1, tzinfo=timezone.utc)))
+    assert all("fs" not in i for i in first[0]["issues"])  # první průchod: datum neznámé, nic není „nové“
+    pages["n"] = PAGE.replace("<body>", '<body><a href="/files/Zrcadlo%20230.pdf">Zrcadlo č. 230 (4/2026)</a>')
+    later = asyncio.run(run(datetime(2026, 11, 2, 13, tzinfo=timezone.utc)))
+    issues = later[0]["issues"]
+    assert issues[0]["t"] == "Zrcadlo č. 230 (4/2026)" and issues[0]["fs"].startswith("2026-11-02")
+    assert all("fs" not in i for i in issues[1:])
