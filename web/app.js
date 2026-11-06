@@ -352,6 +352,7 @@ function countView() {
 function linkKind(a) {
   if (a.classList.contains('parcel')) return 'katastr';
   if (a.classList.contains('street')) return 'mapa';
+  if (a.classList.contains('sitefoot__sponsor')) return 'podpora';
   if (a.classList.contains('doc')) return 'příloha';
   if (a.classList.contains('meeting__doc')) return 'usnesení';
   if (a.matches('.issue, .nl__latest, .nl__ext')) return 'zpravodaj';
@@ -395,21 +396,40 @@ async function gcTotal(start) {
   }
 }
 
+const SPONSOR_URL = 'https://github.com/sponsors/twarr58';
+
+/**
+ * Patička na všech stránkách: odkaz na podporu provozu (vždy) a počty návštěvníků z GoatCounteru (když se
+ * načtou). Neoficiální web – to říká i patička, ať nikdo nemá dojem, že přispívá obci.
+ */
 async function renderFooter() {
   const foot = document.getElementById('sitefoot');
   if (!foot) return;
+  const stats = h('span', { class: 'sitefoot__stats', hidden: true });
+  const how = h('span', { class: 'sitefoot__how', hidden: true }, 'návštěvnost měřena bez cookies a osobních údajů (',
+    h('a', { href: 'https://www.goatcounter.com/', rel: 'noopener noreferrer', target: '_blank' }, 'GoatCounter'), ')');
+  foot.replaceChildren(
+    h('div', { class: 'sitefoot__in' },
+      stats,
+      h('a', {
+        class: 'sitefoot__sponsor', href: SPONSOR_URL, rel: 'noopener noreferrer', target: '_blank',
+        title: 'Web je nekomerční a neoficiální. Příspěvek jde na provoz: AI shrnutí oznámení a server v ČR.',
+      }, h('span', { class: 'sitefoot__heart', 'aria-hidden': 'true' }, '♥'), ' Podpořit provoz')),
+    h('div', { class: 'sitefoot__in sitefoot__in--small' },
+      h('span', {}, 'Neoficiální nekomerční web – nejde o stránky obcí, závazné je znění na jejich úředních deskách.'),
+      how));
+  foot.hidden = false;
+
   const monthStart = `${localTodayIso().slice(0, 7)}-01`;
   const [month, total] = await Promise.all([gcTotal(monthStart), gcTotal('')]);
-  if (month == null && total == null) return;
   const parts = [
     month != null ? `${visitors(month)} tento měsíc` : null,
     total != null ? `${total.toLocaleString('cs-CZ')} celkem` : null,
   ].filter(Boolean);
-  foot.replaceChildren(h('div', { class: 'sitefoot__in' },
-    h('span', {}, parts.join(' · ')),
-    h('span', { class: 'sitefoot__how' }, 'měřeno bez cookies a osobních údajů (',
-      h('a', { href: 'https://www.goatcounter.com/', rel: 'noopener noreferrer', target: '_blank' }, 'GoatCounter'), ')')));
-  foot.hidden = false;
+  if (!parts.length) return;
+  stats.textContent = parts.join(' · ');
+  stats.hidden = false;
+  how.hidden = false;
 }
 
 let onList = false;   // je teď zobrazený seznam?

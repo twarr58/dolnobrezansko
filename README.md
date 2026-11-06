@@ -221,6 +221,13 @@ Obec v `harvester/uredni_desky/data/region.json`:
 | `erb` | znak v repozitáři, např. `erby/zvole.svg` (soubor ve `web/erby`) |
 | `erb_commons`, `erb_qid` | soubor znaku na Wikimedia Commons, případně Wikidata ID, podle kterého se znak dohledá (P94); stáhne ho workflow `erby.yml` |
 
+## Podpora provozu
+
+Web je nekomerční a neoficiální; provoz stojí AI shrnutí oznámení a server s proxy v ČR. Podpořit ho jde přes
+[GitHub Sponsors](https://github.com/sponsors/twarr58): odkaz „♥ Podpořit provoz“ je v patičce webu (vždy, i když
+se nenačtou počty návštěv; klik se v GoatCounteru počítá jako událost `podpora`) a tlačítko „Sponsor“ v repozitáři
+zapíná `.github/FUNDING.yml`.
+
 ## Návštěvnost
 
 Web počítá návštěvy přes [GoatCounter](https://www.goatcounter.com/) (přehled: `dolnobrezansko.goatcounter.com`):
