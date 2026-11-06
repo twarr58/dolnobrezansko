@@ -1,0 +1,84 @@
+{
+  "_poznamka": "Kontakty úřadů obcí pro stránku obce. Jen údaje úřadu (ne osobní kontakty), převzaté z webu obce – zdroj v 'source', datum ověření v 'checked'. Úřední hodiny jako [den, čas]. IČO Zlatníků-Hodkovic z Wikidat (web ho neuvádí).",
+  "Dolní Břežany": {
+    "office": "Obecní úřad Dolní Břežany", "address": "5. května 78, 252 41 Dolní Břežany",
+    "phone": ["241 910 396"], "email": ["podatelna@dolnibrezany.cz", "kancelar@dolnibrezany.cz"],
+    "ds": "9h6berv", "ico": "00241202",
+    "hours": [["Po", "8:00–12:00, 13:00–17:00"], ["Út", "8:00–12:00 (jen podatelna)"], ["St", "8:00–12:00, 13:00–17:00"],
+              ["Čt", "8:00–12:00 (jen podatelna)"], ["Pá", "8:00–12:00 (jen podatelna)"]],
+    "source": "https://www.dolnibrezany.cz/povinne-zverejnovane-informace", "checked": "2026-11-06"
+  },
+  "Vrané nad Vltavou": {
+    "office": "Obecní úřad Vrané nad Vltavou", "address": "Březovská 112, 252 46 Vrané nad Vltavou",
+    "phone": ["257 760 351"], "email": ["ou@vranenadvltavou.cz"],
+    "ds": "jr6bgyi", "ico": "00241831",
+    "hours": [["Po", "8:00–12:00, 13:00–18:00"], ["St", "8:00–12:00, 13:00–18:00"]],
+    "source": "https://vranenadvltavou.cz/kontakty/", "checked": "2026-11-06"
+  },
+  "Zvole": {
+    "office": "Obecní úřad Zvole", "address": "J. Štulíka 56, 252 45 Zvole",
+    "phone": ["257 760 337"], "email": ["podatelna@zvole.info"],
+    "ds": "v4yam5a", "ico": "00241890",
+    "hours": [["Po", "8:00–12:00, 13:00–18:00"], ["Čt", "8:00–12:00, 13:00–18:00"]],
+    "source": "https://www.zvole.info/kontakty/", "checked": "2026-11-06"
+  },
+  "Psáry": {
+    "office": "Obecní úřad Psáry", "address": "Pražská 137, 252 44 Psáry",
+    "phone": ["241 940 454"], "form": "https://psary.cz/emailovy-kontaktni-formular/",
+    "ds": "rvhbuxe", "ico": "00241580",
+    "hours": [["Po", "8:00–12:00, 13:00–17:00"], ["Út", "8:00–12:00, 13:00–16:00"], ["St", "8:00–12:00, 13:00–18:00"],
+              ["Čt", "8:00–12:00, 13:00–16:00"], ["Pá", "8:00–12:00"]],
+    "source": "https://psary.cz/kontakty/", "checked": "2026-11-06"
+  },
+  "Libeř": {
+    "office": "Obecní úřad Libeř", "address": "Libeř 35, 252 41 Dolní Břežany",
+    "phone": ["241 940 477"], "email": ["podatelna@liber.cz"],
+    "ds": "2xcbmtm", "ico": "00241415",
+    "hours": [["Po", "7:30–15:30"], ["St", "7:30–18:00 (v létě do 15:30)"]],
+    "source": "https://www.liber.cz/povinne-zverejnovane-informace", "checked": "2026-11-06"
+  },
+  "Ohrobec": {
+    "office": "Obecní úřad Ohrobec", "address": "U Rybníků II 30, 252 45 Ohrobec",
+    "phone": ["257 760 338"], "email": ["podatelna@ohrobec.cz"],
+    "ds": "vwnbwac", "ico": "00241491",
+    "hours": [["Po", "8:00–12:00, 13:00–18:00"], ["St", "8:00–12:00, 13:00–18:00"]],
+    "source": "https://www.ohrobec.cz/kontakty", "checked": "2026-11-06"
+  },
+  "Vestec": {
+    "office": "Obecní úřad Vestec", "address": "Vestecká 3, 252 50 Vestec",
+    "phone": ["313 035 501"], "email": ["podatelna@vestec.cz"],
+    "ds": "cytasj8", "ico": "00507644",
+    "hours": [["Po", "7:30–12:00, 13:00–17:00"], ["Út", "8:00–12:00, 13:00–16:00"], ["St", "8:00–12:00, 13:00–18:00"],
+              ["Čt", "8:00–12:00, 13:00–16:00"], ["Pá", "zavřeno"]],
+    "hours_note": "Web obce je uvádí jako letní úřední hodiny.",
+    "source": "https://vestec.cz/obec-vestec/urad/", "checked": "2026-11-06"
+  },
+  "Jesenice": {
+    "office": "Městský úřad Jesenice", "address": "Budějovická 303, 252 42 Jesenice",
+    "phone": ["241 021 715"], "email": ["podatelna@mujesenice.cz"],
+    "ds": "3nzb42m", "ico": "00241318",
+    "hours_url": "https://www.mujesenice.cz/kontakty/ms-1046/p1=1046",
+    "source": "https://www.mujesenice.cz/vismo/isvs.asp?id_org=5861", "checked": "2026-11-06"
+  },
+  "Zlatníky-Hodkovice": {
+    "office": "Obecní úřad Zlatníky-Hodkovice", "address": "Náves sv. Petra a Pavla 113, Zlatníky, 252 41 Zlatníky-Hodkovice",
+    "phone": ["241 931 980", "775 811 349"], "email": ["zlatniky@zlatniky.cz"],
+    "ds": "iqvbycp", "ico": "00241873",
+    "hours": [["Po", "8:00–12:00, 13:00–17:00"], ["St", "8:00–12:00, 13:00–17:00"]],
+    "source": "https://zlatniky-hodkovice.cz/kontakty", "checked": "2026-11-06"
+  },
+  "Březová-Oleško": {
+    "office": "Obecní úřad Březová-Oleško", "address": "Hlavní 1143, Oleško, 252 45 Zvole u Prahy",
+    "phone": ["224 283 505"], "email": ["podatelna@brezova-olesko.cz", "info@brezova-olesko.cz"],
+    "ds": "88qbqnr", "ico": "44684983",
+    "hours": [["Po", "8:00–12:00, 13:00–18:00"], ["Čt", "8:00–12:00, 13:00–18:00"]],
+    "source": "https://www.brezova-olesko.cz/kontakty/os-10/p1=4181", "checked": "2026-11-06"
+  },
+  "Okrouhlo": {
+    "office": "Obecní úřad Okrouhlo", "address": "Okrouhlo 44, 254 01 Jílové u Prahy",
+    "phone": ["257 760 340"], "email": ["ouokrouhlo@okrouhlo.cz"],
+    "ds": "q9fap9c", "ico": "00241504",
+    "hours": [["Po", "8:00–13:00"], ["St", "15:00–18:00"], ["Čt", "8:00–13:00"]],
+    "source": "https://www.okrouhlo.cz/kontakt/os-10/p1=303", "checked": "2026-11-06"
+  }
+}

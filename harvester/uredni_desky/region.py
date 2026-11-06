@@ -42,6 +42,17 @@ def load_region() -> dict:
     return json.loads(resources.files(__package__).joinpath("data/region.json").read_text("utf-8"))
 
 
+CONTACT_KEYS = ("office", "address", "phone", "email", "form", "ds", "ico", "hours", "hours_note", "hours_url",
+                "source", "checked")
+
+
+def load_contacts() -> dict[str, dict]:
+    """Kontakty úřadů obcí (data/contacts.json) – jen známé klíče, bez poznámek souboru."""
+    raw = json.loads(resources.files(__package__).joinpath("data/contacts.json").read_text("utf-8"))
+    return {name: {k: v for k, v in c.items() if k in CONTACT_KEYS}
+            for name, c in raw.items() if not name.startswith("_") and isinstance(c, dict)}
+
+
 def _read_json(path: Path, default):
     try:
         if path.suffix == ".gz":
@@ -408,6 +419,7 @@ def build_output(region: dict, members: list[dict], boards: list[dict], items: l
     by_board = {b["id"]: b for b in boards}
     name_of = {m["board"]: m["name"] for m in members if m.get("board")}
     conf = {m["name"]: m for m in region.get("members", [])}
+    contacts = load_contacts()
     erb_paths = erb_paths if erb_paths is not None else {n: c["erb"] for n, c in conf.items() if c.get("erb")}
     out_members = []
     for m in members:
@@ -418,7 +430,7 @@ def build_output(region: dict, members: list[dict], boards: list[dict], items: l
             "publisher": m["publisher"], "web": m.get("web"),
             "board_url": b.get("access_url") or m.get("board_link"), "fmt": b.get("fmt"),
             "ok": bool(b.get("ok")), "count": b.get("count", 0), "error": b.get("error"),
-            "status": m.get("status"), "connected": bool(m.get("board")),
+            "status": m.get("status"), "connected": bool(m.get("board")), "contact": contacts.get(m["name"]),
         }.items() if v not in (None, "")})
     since = (now - timedelta(days=SHOW_REMOVED_DAYS)).isoformat()
     out_items = []

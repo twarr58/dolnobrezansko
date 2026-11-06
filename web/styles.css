@@ -415,3 +415,19 @@ details.removed summary { cursor: pointer; font-family: var(--mono); font-size: 
 /* detail: stejné oznámení u dalších obcí */
 .twins { font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 4px 0; }
 .twins .obec { margin-left: 4px; }
+
+/* kontakt úřadu na stránce obce */
+.contact { display: flex; flex-direction: column; gap: 6px; padding-bottom: 8px; font-size: 15px; }
+.contact p { margin: 0; }
+.contact__office { font-weight: 700; }
+.contact__addr { color: var(--muted); }
+.contact__list { margin: 6px 0 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; }
+.contact__list dt { color: var(--muted); font-size: 14px; }
+.contact__list dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.contact__h { margin: 10px 0 0; font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: var(--muted); text-transform: uppercase; }
+.contact__hours { align-self: flex-start; border-collapse: collapse; font-size: 14.5px; font-variant-numeric: tabular-nums; }
+.contact__hours th { text-align: left; font-weight: 500; padding: 3px 14px 3px 0; color: var(--muted); }
+.contact__hours td { padding: 3px 0; }
+.contact__hours .contact__now { padding-left: 10px; font-family: var(--mono); font-size: 11px; color: var(--accent); }
+.contact__hours tr.is-today th, .contact__hours tr.is-today td { color: var(--ink); font-weight: 700; }
+.contact__note, .contact__src { font-size: 13px; color: var(--muted); }

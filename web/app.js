@@ -832,6 +832,34 @@ function renderVillages() {
       h('p', { class: 'credit' }, 'Znaky obcí: weby obcí a Wikimedia Commons.')));
 }
 
+/** Kontakt úřadu obce: adresa, telefon, e-mail, datová schránka, IČO, úřední hodiny (dnešní den zvýrazněný). */
+function contactBox(m) {
+  const c = m.contact;
+  if (!c) return null;
+  const tel = (p) => `tel:+420${String(p).replace(/\D/g, '').replace(/^420/, '')}`;
+  const today = weekday(TODAY);
+  const row = (label, ...value) => [h('dt', {}, label), h('dd', {}, ...value)];
+  const list = (arr) => (Array.isArray(arr) ? arr : [arr]).filter(Boolean);
+  return h('section', { class: 'contact', 'aria-labelledby': 'h-contact' },
+    h('h2', { id: 'h-contact', class: 'section-title section-title--first' }, 'KONTAKT'),
+    h('p', { class: 'contact__office' }, c.office),
+    h('p', { class: 'contact__addr' }, c.address),
+    h('dl', { class: 'contact__list' },
+      list(c.phone).length ? row('Telefon', list(c.phone).map((p, i) => [i ? ', ' : '', h('a', { href: tel(p) }, p)])) : null,
+      list(c.email).length ? row('E-mail', list(c.email).map((e, i) => [i ? ', ' : '', h('a', { href: `mailto:${e}` }, e)]))
+        : safeUrl(c.form) ? row('E-mail', h('a', { href: safeUrl(c.form), rel: 'noopener noreferrer', target: '_blank' }, 'kontaktní formulář ↗')) : null,
+      c.ds ? row('Datová schránka', h('span', { class: 'mono' }, c.ds)) : null,
+      c.ico ? row('IČO', h('span', { class: 'mono' }, c.ico)) : null),
+    Array.isArray(c.hours) && c.hours.length ? [
+      h('h3', { class: 'contact__h' }, 'Úřední hodiny'),
+      h('table', { class: 'contact__hours' }, h('tbody', {}, c.hours.map(([d, t]) => h('tr', { class: fold(d) === fold(today) ? 'is-today' : null },
+        h('th', { scope: 'row' }, d), h('td', {}, t), h('td', { class: 'contact__now' }, fold(d) === fold(today) ? 'dnes' : ''))))),
+      c.hours_note ? h('p', { class: 'contact__note' }, c.hours_note) : null,
+    ] : safeUrl(c.hours_url) ? h('p', {}, h('a', { href: safeUrl(c.hours_url), rel: 'noopener noreferrer', target: '_blank' }, 'Úřední hodiny na webu obce ↗')) : null,
+    safeUrl(c.source) ? h('p', { class: 'contact__src' }, 'Podle ', h('a', { href: safeUrl(c.source), rel: 'noopener noreferrer', target: '_blank' }, 'webu obce'),
+      isIso(c.checked) ? `, ověřeno ${dateCz(c.checked, { year: true })}` : '', '.') : null);
+}
+
 function renderVillage(slug) {
   const m = (state.data.members || []).find((x) => x.slug === slug || fold(x.name) === fold(slug));
   if (!m) {
@@ -874,7 +902,8 @@ function renderVillage(slug) {
           v.undated.length ? h('ul', { class: 'rows' }, v.undated.slice(0, 6).map((it) => row(it, it.p, 'vyvěšeno'))) : null,
           h('a', { class: 'more-link', href: `#/?obec=${encodeURIComponent(m.name)}` }, `Všechna oznámení obce (${v.live.length})`, icon('M9 5l7 7-7 7', 16))),
         h('aside', { class: 'village__side' },
-          h('h2', { class: 'section-title section-title--first' }, 'AKCE'),
+          contactBox(m),
+          h('h2', { class: `section-title${m.contact ? '' : ' section-title--first'}` }, 'AKCE'),
           v.events.length ? h('ul', { class: 'rows' }, v.events.slice(0, 6).map(evRow))
             : h('p', { class: 'empty' }, v.evSource ? 'V příštích dnech žádné akce.' : 'Kalendář akcí obce zatím nečteme.'),
           v.events.length ? h('a', { class: 'more-link', href: `#/akce?pohled=seznam&skryt=${encodeURIComponent(others.join(','))}` }, `Všechny akce obce (${v.events.length})`, icon('M9 5l7 7-7 7', 16)) : null,
