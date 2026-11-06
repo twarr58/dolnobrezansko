@@ -24,7 +24,7 @@ from urllib.parse import urlsplit
 
 import httpx
 
-from . import USER_AGENT, ai, cache, digest, documents, edesky, erby, events, newsletters, parcely, samosprava, ulice, webpage
+from . import USER_AGENT, ai, cache, digest, documents, edesky, erby, events, kalendar, newsletters, parcely, samosprava, ulice, webpage
 from .build import load_state, run_build
 from .extra import sources_from_entries
 from .fetch import fetch_all, needs_proxy
@@ -538,6 +538,10 @@ async def run(out_dir: Path, state_dir: Path, ai_limit: int = 100, concurrency: 
             if fallback:
                 await fallback.aclose()
     out_dir.mkdir(parents=True, exist_ok=True)
+    try:  # kalendáře k odběru (.ics) a „cal“ u akcí; doplněk – sběr kvůli nim nesmí spadnout
+        log.info("Kalendář: %d událostí", kalendar.write(data, out_dir, now))
+    except Exception as exc:  # noqa: BLE001
+        log.warning("Kalendář: %r", exc)
     (out_dir / "region.json").write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), "utf-8")
     log.info("region.json: %d oznámení, %d/%d obcí s deskou", len(data["items"]),
              sum(m.get("connected", False) for m in data["members"]), len(data["members"]))
@@ -614,5 +618,6 @@ def sample(out_dir: Path) -> dict:
                             for n, (m, c) in enumerate(councils) for k in range(3)),
                            key=lambda x: x["date"], reverse=True)}
     out_dir.mkdir(parents=True, exist_ok=True)
+    kalendar.write(data, out_dir, now)
     (out_dir / "region.json").write_text(json.dumps(data, ensure_ascii=False, indent=1), "utf-8")
     return data
