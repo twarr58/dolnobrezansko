@@ -114,6 +114,35 @@ def parse_detail(html: str, base: str) -> Detail:
     return p.detail
 
 
+_DETAIL_ID = re.compile(r"/edeska/detail\?id=(\d+)")
+
+
+def _detail_id(url: str) -> str | None:
+    m = _DETAIL_ID.search(url)
+    return m.group(1) if m else None
+
+
+def is_listing(requested: str, final_url: str) -> bool:
+    """Místo detailu přišel seznam desky: eDeska u některých (starých) položek detail přesměruje na /edeska.
+    Pozná se podle konečné adresy – detail jiné položky ani seznam nejsou detailem téhle."""
+    want = _detail_id(requested)
+    return want is not None and _detail_id(final_url) != want
+
+
+def parse_listing(html: str, base: str) -> dict[str, list[tuple[str, str]]]:
+    """Seznam desky → {id detailu: [(název, url souboru)]} podle řádků tabulky (soubory jen z řádku položky)."""
+    out: dict[str, list[tuple[str, str]]] = {}
+    for row in re.split(r"<tr[\s>]", html, flags=re.I)[1:]:
+        ids = set(_DETAIL_ID.findall(row))
+        if len(ids) != 1:
+            continue
+        files = [(" ".join(re.sub(r"<[^>]+>", " ", text).split()), urljoin(base, href.replace("&amp;", "&")))
+                 for href, text in re.findall(r'<a[^>]+href="([^"]*/edeska/file\?id=\d+)"[^>]*>(.*?)</a>', row, re.S | re.I)]
+        out[ids.pop()] = files
+    return out
+
+
+
 def _first(fields: dict[str, str], *labels: str) -> str | None:
     lowered = {k.lower(): v for k, v in fields.items()}
     for label in labels:
@@ -160,13 +189,18 @@ async def fetch_board(client: httpx.AsyncClient, rss_url: str, detail_concurrenc
             try:
                 r = await client.get(item.url)
                 r.raise_for_status()
-                return parse_detail(r.text, item.url)
             except httpx.HTTPError:
                 return None  # bez detailu zůstanou údaje z RSS
+            if is_listing(item.url, str(r.url)):
+                # detail přesměroval na seznam desky → přílohy jen z řádku této položky, ne všechny ze stránky
+                files = parse_listing(r.text, str(r.url)).get(_detail_id(item.url) or "", [])
+                return Detail(files=files)
+            return parse_detail(r.text, item.url)
 
     details = await asyncio.gather(*(detail(i) for i in items))
     infos = [to_informace(i, d) for i, d in zip(items, details)]
     for info, d in zip(infos, details):
         if d is None:
             cache.apply(info)
+    cache.drop_shared_docs(infos, rss_url)
     return {"informace": infos}
