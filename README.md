@@ -16,7 +16,10 @@ GitHub Actions (každou hodinu) – python -m uredni_desky region
      (formát nad A3, málo textu, název) / sken (OCR tesseract) – každá příloha jen jednou
   4. popis: pravidla (téma, lhůty, termíny, parcely, částky) + volitelně shrnutí od Claude
   5. výstup: site/data/region.json → GitHub Pages; stav do větve `data`
-web/ (statická stránka bez buildu): Teď řešit · Nové tento týden · filtr obcí · detail s přílohami
+  6. znaky obcí: web/erby (z webů obcí); ostatní stahuje workflow erby.yml z Wikimedia Commons (při 429 přes
+     záložní proxy) do větve `assets`, sběr je odtud převezme
+web/ (statická stránka bez buildu): Úřední desky · Kalendář akcí · Zpravodaje · Obce (stránka každé obce:
+     oznámení, akce, zpravodaj); znak a barva obce u každé položky, stejné oznámení více obcí jednou
 ```
 
 Web: https://twarr58.github.io/dolnobrezansko/ · návrh designu: https://claude.ai/artifact/7PsxZ3855TvghPqKjtp8g9

@@ -24,7 +24,7 @@ from urllib.parse import urlsplit
 
 import httpx
 
-from . import USER_AGENT, ai, cache, digest, documents, edesky, events, newsletters, webpage
+from . import USER_AGENT, ai, cache, digest, documents, edesky, erby, events, newsletters, webpage
 from .build import load_state, run_build
 from .extra import sources_from_entries
 from .fetch import fetch_all, needs_proxy
@@ -397,14 +397,18 @@ def item_description(it: dict, docs: list[dict], summary: dict | None) -> dict:
 
 
 def build_output(region: dict, members: list[dict], boards: list[dict], items: list[dict],
-                 doc_cache: dict, summaries: dict, now: datetime) -> dict:
+                 doc_cache: dict, summaries: dict, now: datetime, erb_paths: dict[str, str] | None = None) -> dict:
     by_board = {b["id"]: b for b in boards}
     name_of = {m["board"]: m["name"] for m in members if m.get("board")}
+    conf = {m["name"]: m for m in region.get("members", [])}
+    erb_paths = erb_paths if erb_paths is not None else {n: c["erb"] for n, c in conf.items() if c.get("erb")}
     out_members = []
     for m in members:
         b = by_board.get(m.get("board") or "", {})
+        c = conf.get(m["name"], {})
         out_members.append({k: v for k, v in {
-            "name": m["name"], "publisher": m["publisher"], "web": m.get("web"),
+            "name": m["name"], "slug": c.get("slug"), "color": c.get("color"), "erb": erb_paths.get(m["name"]),
+            "publisher": m["publisher"], "web": m.get("web"),
             "board_url": b.get("access_url") or m.get("board_link"), "fmt": b.get("fmt"),
             "ok": bool(b.get("ok")), "count": b.get("count", 0), "error": b.get("error"),
             "status": m.get("status"), "connected": bool(m.get("board")),
@@ -439,7 +443,8 @@ def build_output(region: dict, members: list[dict], boards: list[dict], items: l
     }
 
 
-async def run(out_dir: Path, state_dir: Path, ai_limit: int = 100, concurrency: int = 8) -> dict:
+async def run(out_dir: Path, state_dir: Path, ai_limit: int = 100, concurrency: int = 8,
+              assets_dir: Path | None = None) -> dict:
     now = datetime.now(timezone.utc)
     region = load_region()
     proxy = os.environ.get("HARVEST_FALLBACK_PROXY") or None
@@ -466,7 +471,8 @@ async def run(out_dir: Path, state_dir: Path, ai_limit: int = 100, concurrency: 
         finally:
             if fallback:
                 await fallback.aclose()
-    data = build_output(region, members, boards, items, doc_cache, summaries, now)
+    erb_paths = erby.load(region["members"], assets_dir)  # znaky z větve assets (workflow erby.yml)
+    data = build_output(region, members, boards, items, doc_cache, summaries, now, erb_paths)
     data["newsletters"] = news
     data["events"] = event_data
     out_dir.mkdir(parents=True, exist_ok=True)

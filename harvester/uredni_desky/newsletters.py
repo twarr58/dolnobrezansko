@@ -262,15 +262,24 @@ async def collect(client: httpx.AsyncClient, members: list[dict], state_dir: Pat
                 if cfg.get("detail"):
                     issues = await resolve_details(client, issues, cfg["detail"], resolved, fallback)
                 entry = {"cfg": cfg, "checked": now.isoformat(timespec="seconds"), "issues": issues, "ok": True,
-                         "resolved": resolved, "v": PARSER_VERSION}
+                         "resolved": resolved, "v": PARSER_VERSION,
+                         **({"seen": entry["seen"]} if "seen" in entry else {})}
                 log.info("Zpravodaj %s (%s): %d čísel", m["name"], cfg["name"], len(issues))
             except Exception as exc:  # web obce nejde – nechá se poslední známý seznam čísel
                 log.warning("Zpravodaj %s: %r", m["name"], exc)
                 entry = {**entry, "cfg": cfg, "checked": now.isoformat(timespec="seconds"), "ok": False, "v": PARSER_VERSION}
             cached[m["name"]] = entry
+        # kdy jsme číslo uviděli poprvé (štítek „nové“ na webu); čísla z prvního průchodu mají datum neznámé ("")
+        first = "seen" not in entry
+        seen = entry.setdefault("seen", {})
+        stamp = now.isoformat(timespec="seconds")
+        for i in entry.get("issues", []):
+            seen.setdefault(i["url"], "" if first else stamp)
+        cached[m["name"]] = entry
+        issues = [{**i, "fs": seen[i["url"]]} if seen.get(i["url"]) else i for i in entry.get("issues", [])]
         out.append({k: v for k, v in {
             "obec": m["name"], "name": cfg["name"], "archive": cfg["url"],
-            "issues": entry.get("issues", []), "ok": entry.get("ok", False),
+            "issues": issues, "ok": entry.get("ok", False),
         }.items() if v not in (None, "")})
     state_dir.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(cached, ensure_ascii=False, indent=1), "utf-8")

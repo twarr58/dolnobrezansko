@@ -1,0 +1,65 @@
+name: Znaky obcí
+
+# Stáhne znaky obcí z Wikimedia Commons (přímo, při odmítnutí přes záložní proxy) do větve `assets`.
+# Hodinový sběr (harvest.yml) si je odtud převezme. Znovu se stahuje jen to, co ve větvi chybí nebo se změnilo
+# v harvester/uredni_desky/data/region.json (klíče erb_commons / qid / erb_qid).
+
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Stáhnout znovu i znaky, které už ve větvi assets jsou"
+        type: boolean
+        default: false
+  push:
+    paths:
+      - "harvester/uredni_desky/data/region.json"
+      - "harvester/uredni_desky/erby.py"
+      - ".github/workflows/erby.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: erby
+  cancel-in-progress: false
+
+jobs:
+  erby:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: harvester/pyproject.toml
+      - run: pip install ./harvester
+
+      - name: Načíst větev assets
+        run: |
+          if git fetch --depth 1 origin assets; then
+            git worktree add --detach assets FETCH_HEAD
+          else
+            git worktree add --orphan -b assets-new assets
+          fi
+
+      - name: Stáhnout znaky
+        env:
+          HARVEST_FALLBACK_PROXY: ${{ secrets.HARVEST_FALLBACK_PROXY }}
+        run: python -m uredni_desky erby --out assets ${{ inputs.force && '--force' || '' }}
+
+      - name: Uložit do větve assets
+        run: |
+          cd assets
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Znaky beze změny"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -qm "Znaky obcí $(date -u +%FT%TZ)"
+          git push -q origin HEAD:assets
+          ls -la erby
