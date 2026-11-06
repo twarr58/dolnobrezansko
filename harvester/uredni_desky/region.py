@@ -24,7 +24,7 @@ from urllib.parse import urlsplit
 
 import httpx
 
-from . import USER_AGENT, ai, cache, digest, documents, edesky, erby, events, newsletters, webpage
+from . import USER_AGENT, ai, cache, digest, documents, edesky, erby, events, newsletters, samosprava, webpage
 from .build import load_state, run_build
 from .extra import sources_from_entries
 from .fetch import fetch_all, needs_proxy
@@ -40,6 +40,17 @@ WIKIDATA_SPARQL = "https://query.wikidata.org/sparql"
 
 def load_region() -> dict:
     return json.loads(resources.files(__package__).joinpath("data/region.json").read_text("utf-8"))
+
+
+CONTACT_KEYS = ("office", "address", "phone", "email", "form", "ds", "ico", "hours", "hours_note", "hours_url",
+                "source", "checked")
+
+
+def load_contacts() -> dict[str, dict]:
+    """Kontakty úřadů obcí (data/contacts.json) – jen známé klíče, bez poznámek souboru."""
+    raw = json.loads(resources.files(__package__).joinpath("data/contacts.json").read_text("utf-8"))
+    return {name: {k: v for k, v in c.items() if k in CONTACT_KEYS}
+            for name, c in raw.items() if not name.startswith("_") and isinstance(c, dict)}
 
 
 def _read_json(path: Path, default):
@@ -408,6 +419,7 @@ def build_output(region: dict, members: list[dict], boards: list[dict], items: l
     by_board = {b["id"]: b for b in boards}
     name_of = {m["board"]: m["name"] for m in members if m.get("board")}
     conf = {m["name"]: m for m in region.get("members", [])}
+    contacts = load_contacts()
     erb_paths = erb_paths if erb_paths is not None else {n: c["erb"] for n, c in conf.items() if c.get("erb")}
     out_members = []
     for m in members:
@@ -418,7 +430,7 @@ def build_output(region: dict, members: list[dict], boards: list[dict], items: l
             "publisher": m["publisher"], "web": m.get("web"),
             "board_url": b.get("access_url") or m.get("board_link"), "fmt": b.get("fmt"),
             "ok": bool(b.get("ok")), "count": b.get("count", 0), "error": b.get("error"),
-            "status": m.get("status"), "connected": bool(m.get("board")),
+            "status": m.get("status"), "connected": bool(m.get("board")), "contact": contacts.get(m["name"]),
         }.items() if v not in (None, "")})
     since = (now - timedelta(days=SHOW_REMOVED_DAYS)).isoformat()
     out_items = []
@@ -454,6 +466,29 @@ def build_output(region: dict, members: list[dict], boards: list[dict], items: l
     }
 
 
+async def collect_council(client: httpx.AsyncClient, members: list[dict], state_dir: Path, now: datetime,
+                          fallback: httpx.AsyncClient | None) -> dict:
+    """Usnesení a zápisy rad a zastupitelstev; body shrne Claude (vlastní limit COUNCIL_AI_LIMIT za běh)."""
+    limit = int(os.environ.get("COUNCIL_AI_LIMIT") or "40")
+    summarizer = refresher = None
+    if ai.enabled() and limit > 0:
+        try:
+            refresher = await ai.prepare_github_federation()
+            summarizer = ai.Summarizer(limit)
+        except Exception as exc:  # noqa: BLE001 – bez přihlášení jen odkazy na dokumenty
+            log.warning("Samospráva: přihlášení ke Claude se nepovedlo (%s)", exc)
+    try:
+        out = await samosprava.collect(client, members, state_dir, now, fallback, summarizer)
+    finally:
+        if refresher:
+            refresher.cancel()
+    if summarizer is not None:
+        log.info("Samospráva – Claude: %d shrnutí, tokeny %d vstup / %d výstup", summarizer.used,
+                 summarizer.tokens_in, summarizer.tokens_out)
+    log.info("Samospráva: %d zasedání z %d zdrojů", len(out["meetings"]), len(out["sources"]))
+    return out
+
+
 async def run(out_dir: Path, state_dir: Path, ai_limit: int = 100, concurrency: int = 8,
               assets_dir: Path | None = None) -> dict:
     now = datetime.now(timezone.utc)
@@ -479,6 +514,7 @@ async def run(out_dir: Path, state_dir: Path, ai_limit: int = 100, concurrency: 
             doc_cache, summaries = await enrich(client, items, state_dir, ai_limit, now, fallback, proxy_hosts)
             news = await newsletters.collect(client, region["members"], state_dir, now, fallback)
             event_data = await events.collect(client, region["members"], state_dir, now, fallback)
+            council = await collect_council(client, region["members"], state_dir, now, fallback)
         finally:
             if fallback:
                 await fallback.aclose()
@@ -486,6 +522,7 @@ async def run(out_dir: Path, state_dir: Path, ai_limit: int = 100, concurrency: 
     data = build_output(region, members, boards, items, doc_cache, summaries, now, erb_paths)
     data["newsletters"] = news
     data["events"] = event_data
+    data["council"] = council
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "region.json").write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), "utf-8")
     log.info("region.json: %d oznámení, %d/%d obcí s deskou", len(data["items"]),
@@ -543,6 +580,25 @@ def sample(out_dir: Path) -> dict:
                           "d": day(k * 2 + n % 3).isoformat(), "time": f"{16 + n % 4}:00",
                           "url": "https://example.org/akce"} for n, m in enumerate(readable) for k in range(6)),
                         key=lambda e: (e["d"], e["time"]))}
+    sample_points = [
+        ("schvaluje", "Rozpočtové opatření č. 6/2026: víc peněz na opravu chodníků v ulici Pražská.", "rozpocet",
+         "1 200 000 Kč", "vysoka"),
+        ("bere na vědomí", "Zprávu o hospodaření mateřské školy za první pololetí.", "ostatni", "", "nizka"),
+        ("pověřuje", "Starostu podpisem smlouvy o dílo na rekonstrukci hřiště.", "smlouvy", "", "stredni"),
+        ("schvaluje", "Pronájem sálu obecního domu spolku na taneční kurzy.", "majetek", "", "nizka")]
+    councils = [(m, c) for m in region["members"] for c in m.get("council") or []]
+    data["council"] = {
+        "sources": [{"obec": m["name"], "body": c["body"], "url": c["url"], "ok": True, "n": 3} for m, c in councils],
+        "meetings": sorted(({"id": f"c{n}-{k}", "o": m["name"], "body": c["body"], "kind": "usneseni",
+                             "date": day(-7 * k - n).isoformat(), "no": f"{20 - k}/{today.year}",
+                             "t": f"Usnesení – {'rada' if c['body'] == 'rada' else 'zastupitelstvo'} {20 - k}/{today.year}",
+                             "url": "https://example.org/usneseni.pdf", "x": "pdf",
+                             "tldr": "Ukázka: rada schválila víc peněz na opravu chodníků a pronájem sálu.",
+                             "points": [{"v": v, "t": t, "cat": cat, "amt": amt, "imp": imp}
+                                        for v, t, cat, amt, imp in sample_points[: 2 + k % 3]],
+                             "src": "claude"}
+                            for n, (m, c) in enumerate(councils) for k in range(3)),
+                           key=lambda x: x["date"], reverse=True)}
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "region.json").write_text(json.dumps(data, ensure_ascii=False, indent=1), "utf-8")
     return data

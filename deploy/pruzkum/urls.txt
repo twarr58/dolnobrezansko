@@ -1,0 +1,1 @@
+# Stránky k průzkumu přes workflow pruzkum.yml (změna souboru workflow spustí). Řádek = adresa.

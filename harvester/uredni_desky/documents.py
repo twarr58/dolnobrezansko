@@ -86,6 +86,8 @@ def sniff(content: bytes, url: str = "", content_type: str = "") -> str:
         return "zip"
     if head.startswith(b"{\\rtf"):
         return "rtf"
+    if head.startswith(b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1"):  # OLE2 – starý Word (.doc), případně .xls
+        return "xls" if re.search(r"\.xls(?:$|[?#])", url.lower()) else "doc"
     low = content[:512].lstrip().lower()
     if low.startswith((b"<!doctype html", b"<html")) or b"<html" in low:
         return "html"
@@ -120,6 +122,27 @@ def _xml_text(data: bytes) -> str:
 def _office_text(content: bytes, ext: str) -> str:
     zf = zipfile.ZipFile(io.BytesIO(content))
     return _xml_text(zf.read("word/document.xml" if ext == "docx" else "content.xml"))
+
+
+_DOC_RUN16 = re.compile(r"(?:[\x20-\x7e\xa0-\u024f\r\n\t\u2013\u2014\u2018-\u201e\u2022\u2026]){12,}")
+_DOC_RUN8 = re.compile(rb"[\x20-\x7e\x8a-\xff\r\n\t]{20,}")
+
+
+def _doc_text(content: bytes) -> str:
+    """Text ze starého Wordu (.doc, OLE2) bez externích nástrojů.
+
+    Word 97–2003 ukládá text buď jako UTF-16LE, nebo „komprimovaně“ v jednobajtové kódové stránce (cp1250).
+    Vezmou se souvislé úseky čitelných znaků – stačí na úřední dokumenty (usnesení, zápisy); formátování,
+    tabulky a vložené objekty se ztratí.
+    """
+    utf16 = "\n".join(m.group(0) for m in _DOC_RUN16.finditer(content.decode("utf-16le", errors="ignore")))
+    if len(utf16) >= 200 and sum(c.isalpha() for c in utf16) > len(utf16) * 0.5:
+        text = utf16
+    else:
+        text = "\n".join(m.group(0).decode("cp1250", errors="ignore") for m in _DOC_RUN8.finditer(content))
+    # konec textu dokumentu: za ním bývají názvy stylů, písem a metadata
+    cut = re.search(r"\n(?:Normal|Normální|Default Paragraph Font|Výchozí písmo odstavce|Standardní písmo odstavce|Times New Roman)\b", text)
+    return text[:cut.start()] if cut and cut.start() > 200 else text
 
 
 def _ocr_pdf(content: bytes, pages: int) -> str:
@@ -176,6 +199,8 @@ def analyze(content: bytes, url: str, name: str = "", content_type: str = "") ->
             info.kind, info.pages, text, info.ocr = analyze_pdf(content, f"{name} {url}")
         elif ext in ("docx", "odt"):
             info.kind, text = KIND_TEXT, _clean(_office_text(content, ext))
+        elif ext == "doc":
+            info.kind, text = KIND_TEXT, _clean(_doc_text(content))
         elif ext in ("png", "jpg", "jpeg", "tif", "gif", "webp"):
             info.kind, text = (KIND_MAP if _MAP_NAME.search(f"{name} {url}") else KIND_IMAGE), ""
         elif ext in ("txt", "html", "htm"):

@@ -1,0 +1,48 @@
+name: Průzkum stránek obcí
+
+# Vypíše text a odkazy stránek obcí do logu – přímo, a když web runner nepustí, přes záložní proxy v ČR.
+# Spouští se ručně (adresy v poli) nebo změnou deploy/pruzkum/urls.txt na libovolné větvi.
+
+on:
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: "Adresy oddělené mezerou (prázdné = deploy/pruzkum/urls.txt)"
+        default: ""
+        required: false
+      all_links:
+        description: "Vypsat všechny odkazy (ne jen kontakty, úřad, zápisy)"
+        type: boolean
+        default: false
+  push:
+    paths: ["deploy/pruzkum/**", ".github/workflows/pruzkum.yml", "harvester/uredni_desky/samosprava.py"]
+
+permissions:
+  contents: read
+
+jobs:
+  pruzkum:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ./harvester
+      - name: Průzkum
+        env:
+          HARVEST_FALLBACK_PROXY: ${{ secrets.HARVEST_FALLBACK_PROXY }}
+          URLS: ${{ inputs.urls }}
+          ALL_LINKS: ${{ (github.event_name == 'push' || inputs.all_links) && '1' || '' }}
+        run: |
+          set -f
+          if [ -n "$URLS" ]; then python deploy/pruzkum/pages.py $URLS; else python deploy/pruzkum/pages.py --file deploy/pruzkum/urls.txt; fi
+
+      - name: Samospráva – nalezená usnesení a zápisy
+        if: hashFiles('deploy/pruzkum/samosprava') != ''
+        env:
+          HARVEST_FALLBACK_PROXY: ${{ secrets.HARVEST_FALLBACK_PROXY }}
+        run: python -m uredni_desky samosprava --obec "$(cat deploy/pruzkum/samosprava)"

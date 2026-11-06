@@ -15,6 +15,8 @@ from __future__ import annotations
 import json
 import logging
 import os
+from collections import deque
+from io import BytesIO
 from pathlib import Path
 from urllib.parse import quote, unquote
 
@@ -30,6 +32,41 @@ FILEPATH = "https://commons.wikimedia.org/wiki/Special:FilePath/{name}?width=250
 EXT = {"image/png": "png", "image/jpeg": "jpg", "image/gif": "gif", "image/svg+xml": "svg", "image/webp": "webp"}
 MAX_BYTES = 400_000
 INDEX = "index.json"
+CLEAN_VERSION = 1  # úprava obrázku (průhledné pozadí); zvýšit při změně – znaky se přepočítají
+
+
+def clear_background(content: bytes, light: int = 225, chroma: int = 30) -> bytes:
+    """Rastr znaku → PNG s průhledným pozadím a oříznutý na štít.
+
+    Náhledy z Commons mají často světlé (bílé, šedé) pozadí, které na tmavém webu svítí. Zprůhlední se světlé
+    pixely spojené s okrajem obrázku; bílá uvnitř štítu zůstane, protože ji od okraje dělí obrys štítu.
+    """
+    from PIL import Image
+
+    im = Image.open(BytesIO(content)).convert("RGBA")
+    w, h = im.size
+    px = im.load()
+
+    def background(x: int, y: int) -> bool:
+        r, g, b, a = px[x, y]
+        return a < 20 or (min(r, g, b) >= light and max(r, g, b) - min(r, g, b) <= chroma)
+
+    seen = bytearray(w * h)
+    queue = deque([(x, y) for x in range(w) for y in (0, h - 1)] + [(x, y) for y in range(h) for x in (0, w - 1)])
+    while queue:
+        x, y = queue.popleft()
+        if seen[y * w + x] or not background(x, y):
+            continue
+        seen[y * w + x] = 1
+        px[x, y] = (255, 255, 255, 0)
+        for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+            if 0 <= nx < w and 0 <= ny < h and not seen[ny * w + nx]:
+                queue.append((nx, ny))
+    if bbox := im.getbbox():
+        im = im.crop(bbox)
+    out = BytesIO()
+    im.save(out, "PNG", optimize=True)
+    return out.getvalue()
 
 
 def wikidata_qid(m: dict) -> str | None:
@@ -100,7 +137,8 @@ async def download(client: httpx.AsyncClient, members: list[dict], out_dir: Path
         if not name:
             log.info("Znak %s: ve Wikidatech není", m["name"])
             continue
-        if not force and prev.get("file") == name and (out_dir / prev.get("path", "-")).is_file():
+        if not force and prev.get("file") == name and prev.get("v") == CLEAN_VERSION \
+                and (out_dir / prev.get("path", "-")).is_file():
             continue
         url = FILEPATH.format(name=quote(name))
         try:
@@ -111,13 +149,19 @@ async def download(client: httpx.AsyncClient, members: list[dict], out_dir: Path
         except (httpx.HTTPError, ValueError) as exc:
             log.warning("Znak %s (%s): %r", m["name"], name, exc)
             continue
+        content = r.content
+        if ext != "svg":
+            try:
+                content, ext = clear_background(content), "png"
+            except Exception as exc:  # noqa: BLE001 – nečitelný obrázek: nechá se tak, jak je
+                log.warning("Znak %s: pozadí nejde upravit (%r)", m["name"], exc)
         erby_dir.mkdir(parents=True, exist_ok=True)
         for old in erby_dir.glob(f"{m['slug']}.*"):
             old.unlink()
-        (erby_dir / f"{m['slug']}.{ext}").write_bytes(r.content)
-        index[m["name"]] = {"path": f"erby/{m['slug']}.{ext}", "file": name,
+        (erby_dir / f"{m['slug']}.{ext}").write_bytes(content)
+        index[m["name"]] = {"path": f"erby/{m['slug']}.{ext}", "file": name, "v": CLEAN_VERSION,
                             "source": "https://commons.wikimedia.org/wiki/File:" + quote(name.replace(" ", "_"))}
-        log.info("Znak %s: %s (%d B)", m["name"], name, len(r.content))
+        log.info("Znak %s: %s (%d B)", m["name"], name, len(content))
     if index:
         erby_dir.mkdir(parents=True, exist_ok=True)
         (erby_dir / INDEX).write_text(json.dumps(index, ensure_ascii=False, indent=1, sort_keys=True), "utf-8")

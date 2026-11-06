@@ -121,6 +121,9 @@ def main() -> None:
     z.add_argument("--out", default="assets")
     z.add_argument("--force", action="store_true", help="Stáhnout znovu i znaky, které už jsou")
 
+    sm = sub.add_parser("samosprava", help="Ladění: dokumenty usnesení a zápisů obcí (bez stahování a AI)")
+    sm.add_argument("--obec", default="", help="Jen obce, jejichž název obsahuje tento text")
+
     s = sub.add_parser("sample", help="Ukázková data z fixture (bez sítě)")
     s.add_argument("--out", default="web/data")
 
@@ -130,6 +133,10 @@ def main() -> None:
         from .region import run as region_run
         assets = Path(args.assets)
         asyncio.run(region_run(Path(args.out), Path(args.state), args.ai_limit, assets_dir=assets if assets.is_dir() else None))
+    elif args.cmd == "samosprava":
+        from .region import load_region
+        from .samosprava import list_all
+        asyncio.run(list_all(load_region()["members"], args.obec))
     elif args.cmd == "erby":
         from .erby import run as erby_run
         asyncio.run(erby_run(Path(args.out), args.force))

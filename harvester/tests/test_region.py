@@ -287,3 +287,17 @@ def test_enrich_downloads_attachments_via_proxy_for_blocked_hosts(tmp_path, monk
     docs, _ = asyncio.run(go())
     assert all(docs[f"https://vestec.cz/soubor/{n}.txt"]["kind"] == "text" for n in range(3))
     assert len(proxied) == 3 and len(direct) == 1  # po prvním odmítnutí už rovnou přes proxy
+
+
+def test_contacts_for_every_member_and_in_output():
+    reg = region.load_region()
+    contacts = region.load_contacts()
+    assert set(contacts) == {m["name"] for m in reg["members"]}
+    for name, c in contacts.items():
+        assert c["office"] and c["address"] and c["phone"] and c["ds"] and len(c["ico"]) == 8, name
+        assert c["source"].startswith("https://") and c["checked"], name
+        assert c.get("email") or c.get("form"), name
+        assert c.get("hours") or c.get("hours_url"), name
+    members = [{"name": "Psáry", "publisher": "Obec Psáry", "board": "b1"}]
+    out = region.build_output(reg, members, [{"id": "b1", "ok": True}], [], {}, {}, NOW)
+    assert out["members"][0]["contact"]["ds"] == "rvhbuxe"
