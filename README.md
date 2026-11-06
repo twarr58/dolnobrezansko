@@ -240,6 +240,19 @@ Obec v `harvester/uredni_desky/data/region.json`:
 | `erb` | znak v repozitáři, např. `erby/zvole.svg` (soubor ve `web/erby`) |
 | `erb_commons`, `erb_qid` | soubor znaku na Wikimedia Commons, případně Wikidata ID, podle kterého se znak dohledá (P94); stáhne ho workflow `erby.yml` |
 
+## Nápověda
+
+- **Stránka „Jak to funguje“** (`#/jak-to-funguje`): co web sbírá, co přidá AI, odkazy v textu (parcely, ulice,
+  domy, silnice, hledání místa), značky a barvy, co AI neumí, soukromí a provoz. Počty obcí, oznámení a zasedání
+  bere z aktuálních dat. Vede na ni ikona **?** v navigaci (na telefonech do 440 px schovaná, navigace potřebuje
+  celou šířku) a odkaz v patičce.
+- **Lišta na úvodu**: jedna věta a odkaz, dokud ji návštěvník nezavře (zapamatuje prohlížeč v `localStorage`;
+  bez úložiště se ukáže znovu).
+- **Štítek „✦ AI shrnutí“** v detailu oznámení (jen u shrnutí od Claude): rozbalí, kdo text napsal, z kolika
+  příloh, co znamenají podtržené odkazy a že platí původní znění. Fialová barva (`--ai`) je vyhrazená pro věci od AI.
+- V GoatCounteru se počítá zobrazení stránky `/jak-to-funguje` a události `nápověda: štítek AI shrnutí`
+  a `nápověda: lišta zavřena`.
+
 ## Podpora provozu
 
 Web je nekomerční a neoficiální; provoz stojí AI shrnutí oznámení a server s proxy v ČR. Podpořit ho jde přes

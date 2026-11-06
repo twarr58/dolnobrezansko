@@ -419,6 +419,7 @@ async function renderFooter() {
   foot.replaceChildren(
     h('div', { class: 'sitefoot__in' },
       stats,
+      h('a', { href: HELP_HREF }, 'Jak to funguje'),
       h('a', {
         class: 'sitefoot__sponsor', href: SPONSOR_URL, rel: 'noopener noreferrer', target: '_blank',
         title: 'Web je nekomerční a neoficiální. Příspěvek jde na provoz: AI shrnutí oznámení a server v ČR.',
@@ -468,6 +469,12 @@ function route() {
   if (parts[0] === 'samosprava') {
     onList = false;
     renderCouncil(params);
+    return;
+  }
+  if (parts[0] === 'jak-to-funguje') {
+    onList = false;
+    renderHelp();
+    window.scrollTo(0, 0);
     return;
   }
   if (parts[0] === 'obce') {
@@ -793,6 +800,7 @@ function renderHome() {
         h('h1', {}, 'Co se kdy děje'),
         h('span', { class: 'masthead__meta' }, [d.region?.name || 'Dolnobřežansko', stamp].filter(Boolean).join(' · ')),
         d.sample ? h('div', { class: 'sample' }, 'Ukázková data – nejde o skutečná oznámení.') : null),
+      helpStrip(),
       h('section', { class: 'filters', 'aria-label': 'Výběr' },
         h('div', { class: 'filters__row' },
           searchWrap,
@@ -882,7 +890,10 @@ function siteNav(active) {
     h('div', { class: 'sitenav__tabs' },
       NAV.map(([key, href, long, short, path]) => h('a', { class: 'sitenav__tab', href, 'aria-current': active === key ? 'page' : null },
         icon(path, 18), h('span', { class: 'sitenav__long' }, long), h('span', { class: 'sitenav__short', 'aria-hidden': 'true' }, short)))),
-    themeSwitch());
+    h('div', { class: 'sitenav__end' },
+      h('a', { class: 'sitenav__help', href: HELP_HREF, title: 'Jak to funguje', 'aria-label': 'Jak to funguje',
+        'aria-current': active === 'help' ? 'page' : null }, '?'),
+      themeSwitch()));
 }
 
 const MONTH_RE = /(leden|únor|březen|duben|květen|červen(?:ec)?|srpen|září|říjen|listopad|prosinec)/i;
@@ -1440,6 +1451,7 @@ function renderDetail(id) {
   // oranžová jen pro lhůtu nebo omezení, modrá pro jednání a akce, jinak neutrální
   const tone = !w ? 'todo todo--calm' : w.kind === 'warn' ? 'todo' : w.kind === 'event' ? 'todo todo--event' : 'todo todo--calm';
 
+  const ai = aiInfo(it, s, docs.length, original);
   mount(s.tldr || it.t,
     h('div', { class: 'page' },
       siteNav('desky'),
@@ -1447,7 +1459,8 @@ function renderDetail(id) {
     h('article', { class: 'detail' },
       h('div', {},
         h('div', { class: 'detail__meta' }, h('a', { class: 'obec obec--link', href: obecHref(it.o), style: obecStyle(it.o) }, crest(it.o, 18), it.o),
-          ` · ${label(it)} · vyvěšeno ${dateCz(it.p, { year: true })}`, badges(it)),
+          ` · ${label(it)} · vyvěšeno ${dateCz(it.p, { year: true })}`, badges(it), ai.chip),
+        ai.panel,
         h('h1', {}, withLinks(s.tldr || it.t, it))),
       s.action
         ? h('section', { class: tone, 'aria-label': 'Co můžeš udělat' },
@@ -1506,6 +1519,126 @@ function renderDetail(id) {
             stampCz(s.updated_at) ? `, aktualizováno po změně oznámení${stampCz(s.updated_at)}` : '',
             '. Může se splést – právně platí znění na úřední desce.']
           : 'Shrnutí vzniklo automaticky z textu oznámení. Právně platí znění na úřední desce.')))));
+}
+
+// ---------- nápověda: stránka „Jak to funguje“, lišta na úvodu, štítek „AI shrnutí“ v detailu ----------
+
+const HELP_HREF = '#/jak-to-funguje';
+const HELP_STRIP_KEY = 'help-strip-closed';
+const REPO_URL = 'https://github.com/twarr58/dolnobrezansko';
+
+/** Lišta nad filtrem úvodní stránky – jen dokud ji návštěvník nezavře (zapamatuje prohlížeč; bez úložiště se ukáže znovu). */
+function helpStrip() {
+  try { if (localStorage.getItem(HELP_STRIP_KEY)) return null; } catch { /* bez úložiště lištu ukázat */ }
+  const n = state.data?.members?.length || 11;
+  const strip = h('aside', { class: 'helpstrip', 'aria-label': 'O webu' },
+    h('p', {}, h('strong', {}, `Úřední desky ${n} obcí na jednom místě.`),
+      ' Oznámení každou hodinu shrnuje AI, platí vždy originál na desce obce. ',
+      h('a', { href: HELP_HREF }, 'Jak to funguje →')),
+    h('button', {
+      type: 'button', class: 'helpstrip__x', 'aria-label': 'Zavřít a už neukazovat', title: 'Zavřít a už neukazovat',
+      onclick: () => {
+        try { localStorage.setItem(HELP_STRIP_KEY, '1'); } catch { /* jen pro tuto návštěvu */ }
+        gc({ path: 'nápověda: lišta zavřena', title: 'Lišta na úvodu', event: true });
+        strip.remove();
+      },
+    }, '×'));
+  return strip;
+}
+
+/** Štítek „AI shrnutí“ v detailu oznámení: rozbalí, kdo text napsal, z čeho a co platí. Jen u shrnutí od Claude. */
+function aiInfo(it, s, nDocs, original) {
+  if (s.src !== 'claude') return { chip: null, panel: null };
+  const linksNote = it.pl || it.ul
+    ? h('li', {}, 'Podtržené ', it.ul ? h('span', { class: 'street' }, 'ulice') : null, it.ul && it.pl ? ' a ' : null,
+      it.pl ? h('span', { class: 'parcel' }, 'parcely') : null,
+      ` ${it.ul && it.pl ? 'vedou do mapy a katastru' : it.ul ? 'vedou do mapy' : 'vedou do katastru'} – doplnil je web podle registrů ČÚZK, ne AI.`)
+    : null;
+  const panel = h('div', { class: 'aiinfo', id: 'aiinfo', hidden: true },
+    h('b', {}, `Tenhle text napsala AI (${modelName(s.model)})`),
+    h('ul', {},
+      h('li', {}, `Přečetla oznámení${nDocs ? ` a ${nDocs === 1 ? '1 přílohu' : nDocs < 5 ? `${nDocs} přílohy` : `${nDocs} příloh`}` : ''} z úřední desky obce ${it.o}.`),
+      linksNote,
+      h('li', {}, 'Může se splést. Platí ', original
+        ? h('a', { href: original, rel: 'noopener noreferrer' }, 'původní znění na úřední desce') : 'původní znění na úřední desce', '.')),
+    h('a', { href: HELP_HREF }, 'Jak to funguje →'));
+  const chip = h('button', {
+    type: 'button', class: 'aichip', 'aria-expanded': 'false', 'aria-controls': 'aiinfo', title: 'Kdo napsal tenhle text?',
+    onclick: () => {
+      panel.hidden = !panel.hidden;
+      chip.setAttribute('aria-expanded', String(!panel.hidden));
+      chip.lastChild.textContent = panel.hidden ? '▾' : '▴';
+      if (!panel.hidden) gc({ path: 'nápověda: štítek AI shrnutí', title: it.o, event: true });
+    },
+  }, '✦ AI shrnutí ', h('span', { 'aria-hidden': 'true' }, '▾'));
+  return { chip, panel };
+}
+
+/** Stránka „Jak to funguje“: co web sbírá, co přidá AI, odkazy, značky, limity, soukromí. */
+function renderHelp() {
+  const d = state.data || {};
+  const nObce = (d.members || []).length;
+  const nDesky = (d.members || []).filter((m) => m.connected).length;
+  const nItems = (d.items || []).filter((it) => !it.r).length;
+  const nMeet = (d.council?.meetings || []).length;
+  const row = (dt, ...dd) => h('div', { class: 'help__row' }, h('dt', {}, dt), h('dd', {}, ...dd));
+  const sections = [
+    ['help-zdroje', 'ODKUD JSOU DATA', 'Odkud jsou data', h('dl', { class: 'help__rows' },
+      row('Úřední desky', `${nDesky} z ${nObce} obcí, každou hodinu přímo z webů obcí (u některých přes edesky.cz). Teď ${nItems} oznámení.`),
+      row('Kalendář akcí', 'Akce z kalendářů na webech obcí na příštích 60 dní.'),
+      row('Zpravodaje', 'Nová čísla obecních zpravodajů s odkazem na web obce.'),
+      row('Samospráva', `Usnesení a zápisy rad a zastupitelstev z webů obcí, letošní rok${nMeet ? ` (${nMeet} zasedání)` : ''}.`),
+      row('Obce', 'Kontakty a úřední hodiny úřadů, znaky obcí.'))],
+    ['help-ai', 'CO DĚLÁ AI', 'Co dělá AI', h('dl', { class: 'help__rows' },
+      row(h('span', {}, 'Shrnutí ', h('span', { class: 'badge badge--ai' }, 'Claude')), 'Hlavní věta, co máte udělat, co to znamená a koho se to týká.'),
+      row('Lhůty a data', 'Vytáhne termíny – námitky, uzavírky, zasedání – a web je seřadí podle dní.'),
+      row('Přílohy', 'Popíše každou přílohu. Naskenované dokumenty přečte jako obrázek.'),
+      row('Usnesení', 'Rozloží usnesení rady a zastupitelstva na jednotlivé body a vyznačí důležité.'),
+      row('Témata', 'Zařadí oznámení do tématu (doprava, územní plán, pozemky…) a určí, jestli je důležité.'))],
+    ['help-odkazy', 'ODKAZY V TEXTU', 'Odkazy v textu', h('dl', { class: 'help__rows' },
+      row(h('span', { class: 'parcel' }, '259/13'), 'Parcela – otevře Nahlížení do katastru nemovitostí.'),
+      row(h('span', {}, h('span', { class: 'street' }, 'Nádražní'), ', ', h('span', { class: 'street' }, 'II/101')),
+        'Ulice, dům (když je u ulice číslo) nebo silnice – bod v Google Mapách.'),
+      row(h('span', { class: 'maplink' }, 'Ukázat na mapě'), 'U místa v oddílu KDE – hledání v Google Mapách podle textu.'),
+      row('Původní znění', 'Na konci každého oznámení – odkaz na úřední desku obce.'),
+      h('p', { class: 'help__note', style: 'margin-top:10px' }, 'Odkazy na parcely, ulice a silnice doplňuje web podle veřejných registrů ČÚZK (RÚIAN, ZABAGED), ne AI.'))],
+    ['help-znacky', 'ZNAČKY A BARVY', 'Značky a barvy', h('dl', { class: 'help__rows' },
+      row(h('span', { class: 'badge badge--hot' }, 'důležité'), 'AI oznámení vyhodnotila jako důležité – týká se hodně lidí nebo má lhůtu.'),
+      row(h('span', { class: 'badge' }, 'nové'), `Vyvěšeno za poslední ${NEW_DAYS} dny.`),
+      row(h('span', { class: 'badge badge--hot' }, 'změna'), 'Úřad oznámení upravil (příloha nebo termín).'),
+      row('Oranžová / modrá', 'Oranžová je lhůta nebo omezení, modrá jednání a akce. Fialová vždy znamená věc od AI.'))],
+    ['help-limity', 'CO AI NEUMÍ', 'Co AI neumí', h('p', { class: 'help__note' },
+      'AI se může splést – hlavně u špatně čitelných skenů nebo dlouhých příloh. Shrnutí neplní funkci úřední desky: právně platí ',
+      'jen znění vyvěšené obcí. Web je neoficiální a nekomerční, nejde o stránky obcí.')],
+    ['help-provoz', 'SOUKROMÍ A PROVOZ', 'Soukromí a provoz', h('dl', { class: 'help__rows' },
+      row('Návštěvnost', 'Měří GoatCounter – bez cookies a bez osobních údajů, IP adresy se neukládají.'),
+      row('Zdrojový kód', h('a', { href: REPO_URL, rel: 'noopener noreferrer', target: '_blank' }, 'github.com/twarr58/dolnobrezansko')),
+      row('Podpora', h('a', { href: SPONSOR_URL, rel: 'noopener noreferrer', target: '_blank' }, 'Podpořit provoz'),
+        ' – příspěvek jde na AI shrnutí a server v ČR.'))],
+  ];
+  const toc = h('nav', { class: 'help__toc', 'aria-label': 'Na této stránce' }, h('b', {}, 'NA TÉTO STRÁNCE'),
+    sections.map(([id, , short]) => h('button', {
+      type: 'button', onclick: () => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+    }, short)));
+  mount('Jak to funguje',
+    h('div', { class: 'page' },
+      siteNav('help'),
+      h('div', { class: 'help' },
+        h('div', { class: 'help__main' },
+          h('header', {},
+            h('h1', {}, 'Jak to funguje'),
+            h('p', { class: 'help__lede' }, `Co se děje v ${nObce} obcích mikroregionu ${String(d.region?.name || 'Dolnobřežansko').replace(/^mikroregion\s+/i, '')}, na jednom místě a srozumitelně. `,
+              'Web je neoficiální a nekomerční, závazné je vždy znění na úřední desce obce.')),
+          h('div', { class: 'help__steps' },
+            h('div', { class: 'help__step' }, h('span', { class: 'help__k' }, '1 · sbíráme'),
+              h('p', {}, 'Každou hodinu úřední desky, kalendáře akcí, zpravodaje a usnesení rad a zastupitelstev z webů obcí.')),
+            h('div', { class: 'help__step help__step--ai' }, h('span', { class: 'help__k' }, '2 · přidá AI'),
+              h('p', {}, 'Přečte oznámení i přílohy a napíše jednou větou, o co jde, co máte udělat a do kdy.')),
+            h('div', { class: 'help__step' }, h('span', { class: 'help__k' }, '3 · dostanete'),
+              h('p', {}, 'Přehled podle dní a lhůt, filtr obcí a témat, odkazy do mapy a katastru a vždy odkaz na originál.'))),
+          sections.map(([id, title, , body]) => h('section', { class: 'help__sec', id, 'aria-labelledby': `${id}-h` },
+            h('h2', { id: `${id}-h` }, title), body))),
+        toc)));
 }
 
 // ---------- start ----------
