@@ -76,6 +76,14 @@ jobs:
             echo "Větev assets zatím není – web ukáže jen znaky z repozitáře"
           fi
 
+      - name: Tunel k proxy v ČR
+        continue-on-error: true # proxy je jen záloha – bez ní sběr pokračuje přímo
+        uses: ./.github/actions/proxy-tunnel
+        with:
+          key: ${{ secrets.PROXY_SSH_KEY }}
+          known-hosts: ${{ secrets.PROXY_SSH_KNOWN_HOSTS }}
+          destination: ${{ secrets.PROXY_SSH_DEST }}
+
       - name: Sběr (mikroregion, přílohy, popisy)
         env:
           # Volitelné: proxy v ČR pro servery, které blokují zahraniční IP (viz README).

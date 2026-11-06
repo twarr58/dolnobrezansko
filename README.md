@@ -120,6 +120,7 @@ Settings → Secrets and variables → Actions:
 |---|---|---|
 | `EDESKY_API_KEY` | secret | API edesky.cz (desky Vestce, Jesenice, Březové-Oleška a Okrouhla). Klíč z profilu na edesky.cz; v logu se maskuje. |
 | `HARVEST_FALLBACK_PROXY` | secret | Záložní proxy v ČR pro weby, které z GitHubu nejdou, a pro Wikimedia Commons. Viz [Proxy v ČR](#proxy-v-čr). |
+| `PROXY_SSH_KEY`, `PROXY_SSH_KNOWN_HOSTS`, `PROXY_SSH_DEST` | secret | SSH tunel k proxy (klíč, otisk serveru, cíl). Vypíše je skript proxy. Viz [Proxy v ČR](#proxy-v-čr). |
 | `ANTHROPIC_FEDERATION_RULE_ID`, `ANTHROPIC_ORGANIZATION_ID`, `ANTHROPIC_SERVICE_ACCOUNT_ID`, `ANTHROPIC_WORKSPACE_ID` | variables | Přihlášení ke Claude bez klíče (doporučeno). |
 | `ANTHROPIC_API_KEY` | secret | Alternativa: přihlášení API klíčem; má přednost před federací. |
 | `AI_MODEL`, `AI_LIMIT`, `AI_EFFORT` | variables | Model (výchozí `claude-haiku-5-5`), nejvýš shrnutí za běh (100), hloubka čtení (`medium`). |
@@ -213,11 +214,28 @@ Commons zase sdíleným adresám odpovídá „429 Too many requests“. Harvest
 (`HARVEST_FALLBACK_PROXY`, např. `http://uzivatel:heslo@proxy.example.cz:3128`), kde přímý přístup
 selže; server, který jednou přímo nejde, pak v běhu jede rovnou přes proxy.
 
-Proxy na VPS s českou IP nastaví skript [`deploy/proxy/setup-squid-debian12.sh`](deploy/proxy/setup-squid-debian12.sh):
-squid s heslem, jen weby obcí mikroregionu (žádná otevřená proxy), bez mezipaměti, firewall nftables,
-automatické bezpečnostní aktualizace; na konci vypíše hodnotu secretu. Heslo jde k proxy nešifrovaně
-(HTTP), proto proxy pouští jen vybrané weby. Skript `deploy/proxy/probe-pages.py` na VPS vypíše
-strukturu stránek pro ladění adaptérů.
+Proxy na VPS s českou IP nastaví skript [`deploy/proxy/setup-squid-debian12.sh`](deploy/proxy/setup-squid-debian12.sh)
+(spustit jako root na Debianu 12/13; jde spustit znovu):
+
+- **squid s heslem** poslouchá jen na `127.0.0.1:3128`, pouští jen weby obcí mikroregionu (žádná otevřená
+  proxy) a nic neukládá;
+- **SSH tunel:** z internetu se k proxy dostane jen šifrovaným tunelem. Uživatel `harvest-tunnel` se
+  přihlásí jen klíčem, nemá shell a smí jedině přesměrovat port na `127.0.0.1:3128`;
+- **SSH jen s klíči:** přihlášení heslem se vypne, pokud už root nebo uživatel ze skupiny sudo klíč má
+  (jinak skript varuje a hesla nechá, aby ses nezamkl); fail2ban blokuje opakované pokusy;
+- **firewall nftables:** dovnitř jen SSH; automatické bezpečnostní aktualizace.
+
+Na konci skript vypíše hodnoty secretů `PROXY_SSH_DEST`, `PROXY_SSH_KNOWN_HOSTS`, `PROXY_SSH_KEY` a
+`HARVEST_FALLBACK_PROXY` (`http://harvest:…@127.0.0.1:3128`). Workflow `harvest.yml`, `erby.yml` a
+`pruzkum.yml` si před sběrem otevřou tunel akcí [`.github/actions/proxy-tunnel`](.github/actions/proxy-tunnel/action.yml):
+server ověří podle otisku (podvržený server tunel nedostane) a klíč po připojení smažou z disku.
+Bez `PROXY_SSH_KEY` tunel nedělají a sběr jede bez proxy.
+
+**Přechod ze starého nastavení (proxy na veřejném portu):** spustit nový skript na VPS, v GitHubu přidat
+tři secrety `PROXY_SSH_*` a přepsat `HARVEST_FALLBACK_PROXY` hodnotou s `127.0.0.1`. Do té doby proxy
+nefunguje (port je zavřený), weby, které z GitHubu přímo nejdou, se v tu chvíli nenačtou.
+
+Skript `deploy/proxy/probe-pages.py` na VPS vypíše strukturu stránek pro ladění adaptérů.
 
 Druhá možnost je self-hosted runner v ČR (`runs-on: [self-hosted, linux]` v jobu `harvest`).
 Repozitář je veřejný, proto ho spouštět jen z `main`, ne z pull requestů.
