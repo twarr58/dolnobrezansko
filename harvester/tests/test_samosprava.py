@@ -144,6 +144,7 @@ def test_collect_downloads_once_and_summarizes_once(tmp_path):
         assert meeting["points"][0]["amt"] == "1 200 000 Kč" and meeting["src"] == "claude"
         assert out["sources"] == [{"obec": "Psáry", "body": "rada", "url": "https://obec.cz/rada", "ok": True, "n": 1}]
         assert len(fake.calls) == 1
+        assert meeting["fs"] == NOW.isoformat(timespec="seconds")  # kdy se zasedání poprvé objevilo
         saved = json.loads((tmp_path / "council.json").read_text("utf-8"))
         assert not any(k.startswith("_") for d in saved["docs"].values() for k in d)  # obsah souboru se neukládá
 

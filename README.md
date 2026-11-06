@@ -240,6 +240,30 @@ Obec v `harvester/uredni_desky/data/region.json`:
 | `erb` | znak v repozitáři, např. `erby/zvole.svg` (soubor ve `web/erby`) |
 | `erb_commons`, `erb_qid` | soubor znaku na Wikimedia Commons, případně Wikidata ID, podle kterého se znak dohledá (P94); stáhne ho workflow `erby.yml` |
 
+## Novinky od poslední návštěvy a Moje obce
+
+Jen v úložišti prohlížeče (`localStorage`), žádné cookies, nic se neodesílá, žádné loginy. Na jiném zařízení
+nebo v anonymním okně web novinky nezná a chová se jako při první návštěvě.
+
+- **Návštěva:** `dl-seen-at` = poslední aktivita, `dl-last-visit` = konec předchozí návštěvy (nová návštěva =
+  víc než 30 minut od poslední aktivity). Novinka = položka, jejíž `fs` (kdy se poprvé objevila) je novější.
+- **Kde je vidět:** lišta na úvodu („Od vaší poslední návštěvy … přibylo: 6 oznámení · 1 zpravodaj · 2 akce ·
+  1 zasedání“ s tlačítky *Ukázat jen nové* a *Mám přečteno*), počty u sekcí v hlavičce (na telefonu tečka),
+  štítek „nové pro vás“ a tyrkysová tečka u položek. Tyrkysová (`--fresh`) je jen pro novinky. První návštěva
+  ukazuje dál obecný štítek „nové“ (vyvěšeno za 3 dny).
+- **Moje obce** (`dl-mine`): hvězdička na stránce obce nebo výběr v nápovědě; novinky se pak počítají jen pro
+  vybrané obce a na úvodu přibude přepínač „★ Moje obce“. Nápověda má tlačítko „Zapomenout moje nastavení“.
+- **Čas prvního výskytu (`fs`)** posílá harvester u oznámení (`first_seen`), čísel zpravodajů, zasedání
+  (`found` v `council.json`) a akcí (`_seen` v `events.json`). Akce a zasedání známé před zavedením pole se
+  nepočítají jako nové.
+
+## Hlavička
+
+Logo je vysazené vlevo nahoře (96 px přes spodní linku hlavičky), sekce vpravo. Na počítači se hlavička přichytí
+nahoře a po posunu stránky se logo zmenší na 40 px. Na telefonu je nahoře logo s názvem „Dolnobřežansko“
+a ovládáním, sekce jsou v dolní liště. Logo (`web/logo.png`) má jen 112 px – pro ostré zobrazení na displejích
+s vysokým rozlišením bude potřeba SVG nebo PNG aspoň 512 px.
+
 ## Nápověda
 
 - **Stránka „Jak to funguje“** (`#/jak-to-funguje`): co web sbírá, co přidá AI, odkazy v textu (parcely, ulice,

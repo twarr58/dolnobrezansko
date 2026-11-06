@@ -10,7 +10,7 @@ const WEEKDAYS = ['ne', 'po', 'út', 'st', 'čt', 'pá', 'so'];
 const WEEKDAYS_LONG = ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'];
 const RESTRICTIONS = new Set(['doprava', 'energie', 'voda']); // akce, která omezuje (uzavírka, odstávka)
 
-const state = { data: null, filter: { obec: '', tema: '', q: '', den: '', lhuta: false }, limit: STEP, listScroll: null };
+const state = { data: null, filter: { obec: '', tema: '', q: '', den: '', lhuta: false, nove: false, moje: false }, limit: STEP, listScroll: null };
 
 // ---------- pomocné funkce ----------
 
@@ -139,13 +139,129 @@ function badges(it) {
   const s = it.s || {};
   return [
     s.importance === 'vysoka' ? h('span', { class: 'badge badge--hot', title: s.importance_why || null }, 'důležité') : null,
-    isIso(it.p) && daysTo(it.p) >= -NEW_DAYS && !it.r ? h('span', { class: 'badge' }, 'nové') : null,
+    visit.last ? (isFresh(it.fs) && !it.r ? freshBadge() : null)
+      : isIso(it.p) && daysTo(it.p) >= -NEW_DAYS && !it.r ? h('span', { class: 'badge' }, 'nové') : null,
     (isIso(s.updated) && daysTo(s.updated) >= -7) || s.pending
       ? h('span', { class: 'badge badge--hot', title: 'Úřad oznámení upravil (příloha nebo termín)' }, 'změna') : null,
   ];
 }
 
 const detailHref = (it) => `#/o/${encodeURIComponent(it.id)}`;
+
+// ---------- novinky od poslední návštěvy a „Moje obce“ ----------
+// Jen v úložišti tohoto prohlížeče (localStorage), nic se neodesílá. Na jiném zařízení nebo v anonymním okně
+// web novinky nezná a chová se jako při první návštěvě. Loginy nejsou a nebudou.
+
+const LS_LAST = 'dl-last-visit'; // konec předchozí návštěvy – od něj se počítají novinky
+const LS_SEEN = 'dl-seen-at';    // poslední aktivita; obnovení stránky do 30 min = pořád stejná návštěva
+const LS_MINE = 'dl-mine';       // Moje obce (JSON pole názvů)
+const VISIT_GAP_MS = 30 * 60 * 1000;
+const visit = { last: null };    // ISO konce předchozí návštěvy; null = první návštěva nebo bez úložiště
+
+const lsGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+const lsSet = (k, v) => {
+  try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* bez úložiště jen pro tuto návštěvu */ }
+};
+const touchVisit = () => lsSet(LS_SEEN, new Date().toISOString());
+
+function startVisit() {
+  const seen = Date.parse(lsGet(LS_SEEN) || '');
+  if (Number.isFinite(seen) && Date.now() - seen < VISIT_GAP_MS) visit.last = lsGet(LS_LAST); // pokračuje stejná návštěva
+  else {
+    visit.last = Number.isFinite(seen) ? new Date(seen).toISOString() : null;
+    lsSet(LS_LAST, visit.last);
+  }
+  touchVisit();
+}
+
+/** Přibylo od poslední návštěvy? fs = kdy se položka poprvé objevila (z harvesteru). */
+function isFresh(fs) {
+  if (!visit.last || typeof fs !== 'string') return false;
+  const t = Date.parse(fs);
+  return Number.isFinite(t) && t > Date.parse(visit.last);
+}
+
+function markAllRead() {
+  visit.last = new Date().toISOString();
+  lsSet(LS_LAST, visit.last);
+  touchVisit();
+}
+
+function getMine() {
+  try {
+    const v = JSON.parse(lsGet(LS_MINE) || '[]');
+    return new Set(Array.isArray(v) ? v.filter((x) => typeof x === 'string' && OBCE.has(x)) : []);
+  } catch { return new Set(); }
+}
+
+function toggleMine(name) {
+  const mine = getMine();
+  if (mine.has(name)) mine.delete(name); else mine.add(name);
+  lsSet(LS_MINE, mine.size ? JSON.stringify([...mine]) : null);
+  gc({ path: `moje obce: ${mine.has(name) ? 'přidat' : 'odebrat'}`, title: name, event: true });
+  return mine.has(name);
+}
+
+function forgetMe() {
+  for (const k of [LS_LAST, LS_SEEN, LS_MINE, HELP_STRIP_KEY]) lsSet(k, null);
+  visit.last = null;
+  touchVisit();
+}
+
+/** Co přibylo od poslední návštěvy (v Mých obcích, jsou-li vybrané). null = první návštěva / bez úložiště. */
+function news() {
+  if (!visit.last || !state.data) return null;
+  const mine = getMine();
+  const ok = (o) => !mine.size || mine.has(o);
+  const d = state.data;
+  return {
+    items: d.items.filter((it) => !it.r && ok(it.o) && isFresh(it.fs)).length,
+    events: (d.events?.items || []).filter((e) => ok(e.o) && isFresh(e.fs)).length,
+    issues: (d.newsletters || []).filter((n) => ok(n.obec)).reduce((k, n) => k + (n.issues || []).filter((i) => isFresh(i.fs)).length, 0),
+    meetings: (d.council?.meetings || []).filter((m) => ok(m.o) && isFresh(m.fs)).length,
+    mine,
+  };
+}
+
+const freshBadge = () => h('span', { class: 'badge badge--fresh', title: 'Přibylo od vaší poslední návštěvy' }, 'nové pro vás');
+/** Štítek novinky: vracející se návštěvník „nové pro vás“ podle poslední návštěvy, první návštěva „nové“ podle stáří. */
+const newBadge = () => (visit.last ? freshBadge() : h('span', { class: 'badge' }, 'nové'));
+
+/** Hvězdička „Moje obce“ (na stránce obce). */
+function mineStar(name) {
+  const label = (on) => (on ? '★ Moje obec' : '☆ Přidat do Mých obcí');
+  const btn = h('button', {
+    type: 'button', class: 'band__btn band__star', 'aria-pressed': String(getMine().has(name)),
+    title: 'Moje obce: novinky a přepínač „Moje obce“ na úvodu budou jen pro vybrané obce',
+    onclick: () => { const on = toggleMine(name); btn.setAttribute('aria-pressed', String(on)); btn.textContent = label(on); },
+  }, label(getMine().has(name)));
+  return btn;
+}
+
+/** Lišta na úvodu: co přibylo od poslední návštěvy – jen když něco přibylo. */
+function newsBar(setFilter) {
+  const n = news();
+  if (!n || !(n.items + n.events + n.issues + n.meetings)) return null;
+  const dt = new Date(visit.last);
+  const iso = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+  const time = dt.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+  const when = iso === TODAY ? `dnes ${time}` : `${weekdayLong(iso)} ${dateCz(iso)}`;
+  const pill = (count, words, attrs) => (count ? h(attrs.href ? 'a' : 'button', { class: 'pill', ...attrs },
+    `${count} ${plural(count, ...words)}`) : null);
+  return h('aside', { class: 'newsbar', 'aria-label': 'Novinky od vaší poslední návštěvy' },
+    h('p', {}, 'Od vaší poslední návštěvy ', h('strong', {}, `(${when})`), n.mine.size ? ' ve vašich obcích' : '', ' přibylo:'),
+    h('div', { class: 'newsbar__row' },
+      pill(n.items, ['oznámení', 'oznámení', 'oznámení'], { type: 'button', class: 'pill pill--solid', onclick: () => setFilter({ nove: true }) }),
+      pill(n.issues, ['zpravodaj', 'zpravodaje', 'zpravodajů'], { href: '#/zpravodaje' }),
+      pill(n.events, ['akce', 'akce', 'akcí'], { href: '#/akce' }),
+      pill(n.meetings, ['zasedání', 'zasedání', 'zasedání'], { href: '#/samosprava' }),
+      h('span', { class: 'newsbar__acts' },
+        n.items ? h('button', { type: 'button', class: 'linkish', onclick: () => setFilter({ nove: true }) }, 'Ukázat jen nové') : null,
+        h('button', {
+          type: 'button', class: 'linkish',
+          onclick: () => { markAllRead(); gc({ path: 'novinky: mám přečteno', title: 'Lišta novinek', event: true }); state.filter.nove = false; writeFilter(); route(); },
+        }, 'Mám přečteno'))));
+}
 
 // ---------- obce: znak, barva, odkazy ----------
 
@@ -495,6 +611,8 @@ function route() {
   state.filter.q = params.get('q') || '';
   state.filter.den = isIso(params.get('den')) ? params.get('den') : '';
   state.filter.lhuta = params.get('lhuta') === '1';
+  state.filter.nove = params.get('nove') === '1';
+  state.filter.moje = params.get('moje') === '1';
   onList = true;
   renderHome();
   const y = state.listScroll;
@@ -509,6 +627,8 @@ function writeFilter() {
   if (state.filter.q) p.set('q', state.filter.q);
   if (state.filter.den) p.set('den', state.filter.den);
   if (state.filter.lhuta) p.set('lhuta', '1');
+  if (state.filter.nove) p.set('nove', '1');
+  if (state.filter.moje) p.set('moje', '1');
   const qs = p.toString();
   history.replaceState(null, '', qs ? `#/?${qs}` : '#/');
 }
@@ -533,10 +653,13 @@ function stem(term) {
 }
 
 function filtered() {
-  const { obec, tema, q, lhuta } = state.filter;
+  const { obec, tema, q, lhuta, nove, moje } = state.filter;
   const terms = fold(q).split(/\s+/).filter(Boolean).map(stem);
+  const mine = moje ? getMine() : null;
   return state.data.items.filter((it) => {
     if (obec && it.o !== obec) return false;
+    if (nove && !isFresh(it.fs)) return false;
+    if (mine?.size && !mine.has(it.o)) return false;
     if (tema && it.s?.cat !== tema) return false;
     if (lhuta && !(isIso(it.s?.deadline) && daysTo(it.s.deadline) >= 0 && !it.r)) return false;
     if (!terms.length) return true;
@@ -548,7 +671,7 @@ function filtered() {
 function entry(it, w, also = []) {
   const s = it.s || {};
   const meta = entryMeta(it, w);
-  return h('a', { class: `entry entry--${w.kind}`, href: detailHref(it) },
+  return h('a', { class: `entry entry--${w.kind}${isFresh(it.fs) ? ' is-fresh' : ''}`, href: detailHref(it) },
     h('span', { class: 'entry__meta' }, obecTags([it.o, ...also.map((x) => x.o)]),
       h('span', { class: w.type === 'deadline' ? 'entry__when--warn' : null }, meta ? ` · ${meta}` : ''), ` · ${label(it)}`, badges(it)),
     h('h3', { class: 'entry__title' }, s.tldr || it.t),
@@ -557,7 +680,7 @@ function entry(it, w, also = []) {
 
 function row(it, dateIso, dateNote, datePrefix, also = []) {
   const s = it.s || {};
-  return h('li', {}, h('a', { class: 'row', href: detailHref(it) },
+  return h('li', {}, h('a', { class: `row${isFresh(it.fs) ? ' is-fresh' : ''}`, href: detailHref(it) },
     h('span', { class: 'row__date' }, datePrefix ? h('span', { class: 'row__pre' }, datePrefix) : null, isIso(dateIso) ? dm(dateIso) : '–'),
     h('span', { class: 'row__body' },
       h('span', { class: 'row__title' }, s.tldr || it.t),
@@ -675,9 +798,9 @@ function renderHome() {
     more.addEventListener('click', () => { state.limit += STEP; paintUndated(); });
     paintUndated();
 
-    const { q, obec, tema, lhuta } = state.filter;
+    const { q, obec, tema, lhuta, nove, moje } = state.filter;
     const nothing = !items.length
-      ? h('p', { class: 'empty' }, q || obec || tema || lhuta ? 'Nic nenalezeno. Zkus jiné slovo, obec nebo téma.' : 'Na deskách teď nic nevisí.')
+      ? h('p', { class: 'empty' }, nove ? 'Od vaší poslední návštěvy nic nového.' : q || obec || tema || lhuta || moje ? 'Nic nenalezeno. Zkus jiné slovo, obec nebo téma.' : 'Na deskách teď nic nevisí.')
       : !dayNodes.length ? h('p', { class: 'empty' }, den ? 'Na tento den nic.' : `V příštích ${HORIZON} dnech žádné lhůty ani termíny.`) : null;
 
     const obecBand = obec && OBCE.has(obec) ? h('a', { class: 'band band--link', href: obecHref(obec), style: obecStyle(obec) },
@@ -712,9 +835,11 @@ function renderHome() {
     tokens.replaceChildren(...[
       f.obec ? tok('obec', f.obec, { obec: '' }) : null,
       f.tema ? tok('téma', topicName(f.tema), { tema: '' }) : null,
-      f.den ? tok('den', dateCz(f.den, { wd: true }), { den: '' }) : null].filter(Boolean));
+      f.den ? tok('den', dateCz(f.den, { wd: true }), { den: '' }) : null,
+      f.nove ? tok('jen', 'nové pro vás', { nove: false }) : null].filter(Boolean));
     search.placeholder = f.obec || f.tema || f.den ? 'Upřesnit…' : 'Obec, téma nebo text…';
-    reset.hidden = !(f.obec || f.tema || f.den || f.q || f.lhuta);
+    reset.hidden = !(f.obec || f.tema || f.den || f.q || f.lhuta || f.nove || f.moje);
+    mineBtn?.setAttribute('aria-pressed', String(!!f.moje));
     vilBtn.setAttribute('aria-expanded', String(!vilPanel.hidden));
     lhutaBtn.setAttribute('aria-pressed', String(!!f.lhuta));
     vilPanel.replaceChildren(...['', ...villageNames].map((name) => h('button', {
@@ -771,7 +896,7 @@ function renderHome() {
   reset.addEventListener('click', () => {
     search.value = '';
     sugBox.hidden = true;
-    setFilter({ obec: '', tema: '', q: '', den: '', lhuta: false });
+    setFilter({ obec: '', tema: '', q: '', den: '', lhuta: false, nove: false, moje: false });
   });
   vilBtn = h('button', {
     type: 'button', class: 'fbtn', 'aria-controls': 'vilpanel', 'aria-expanded': 'false',
@@ -781,6 +906,11 @@ function renderHome() {
     type: 'button', class: 'fbtn', 'aria-pressed': 'false',
     onclick: () => setFilter({ lhuta: !state.filter.lhuta }),
   }, 'Jen se lhůtou');
+  const myObce = getMine();
+  const mineBtn = myObce.size ? h('button', {
+    type: 'button', class: 'fbtn fbtn--mine', 'aria-pressed': 'false', title: [...myObce].join(', '),
+    onclick: () => setFilter({ moje: !state.filter.moje }),
+  }, h('span', { class: 'star', 'aria-hidden': 'true' }, '★'), ` Moje obce (${myObce.size})`) : null;
 
   const box = h('div', { class: 'tokenbox' },
     icon('M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-3.5-3.5', 18),
@@ -801,10 +931,11 @@ function renderHome() {
         h('span', { class: 'masthead__meta' }, [d.region?.name || 'Dolnobřežansko', stamp].filter(Boolean).join(' · ')),
         d.sample ? h('div', { class: 'sample' }, 'Ukázková data – nejde o skutečná oznámení.') : null),
       helpStrip(),
+      newsBar(setFilter),
       h('section', { class: 'filters', 'aria-label': 'Výběr' },
         h('div', { class: 'filters__row' },
           searchWrap,
-          vilBtn, lhutaBtn),
+          vilBtn, lhutaBtn, mineBtn),
         vilPanel,
         topicRow,
         daysBox),
@@ -884,12 +1015,19 @@ const NAV = [
 ];
 
 function siteNav(active) {
+  const nw = news();
+  const fresh = { desky: nw?.items, akce: nw?.events, zpravodaje: nw?.issues, samosprava: nw?.meetings };
+  const nObce = state.data?.members?.length || 11;
   return h('nav', { class: 'sitenav', 'aria-label': 'Sekce' },
-    h('a', { class: 'sitenav__logo', href: '#/', title: 'Mikroregion Dolnobřežansko' },
-      h('img', { src: 'logo.png', width: 40, height: 40, alt: 'Dolnobřežansko' })),
+    h('a', { class: 'sitenav__logo', href: '#/', title: 'Mikroregion Dolnobřežansko – úvod' },
+      h('img', { src: 'logo.png', width: 96, height: 96, alt: 'Dolnobřežansko' })),
+    h('a', { class: 'sitenav__brand', href: '#/', 'aria-hidden': 'true', tabindex: '-1' },
+      h('strong', {}, 'Dolnobřežansko'), h('small', {}, `úřední desky · ${nObce} obcí`)),
     h('div', { class: 'sitenav__tabs' },
       NAV.map(([key, href, long, short, path]) => h('a', { class: 'sitenav__tab', href, 'aria-current': active === key ? 'page' : null },
-        icon(path, 18), h('span', { class: 'sitenav__long' }, long), h('span', { class: 'sitenav__short', 'aria-hidden': 'true' }, short)))),
+        icon(path, 18), h('span', { class: 'sitenav__long' }, long), h('span', { class: 'sitenav__short', 'aria-hidden': 'true' }, short),
+        fresh[key] ? h('span', { class: 'sitenav__cnt', title: 'Nové od vaší poslední návštěvy', 'aria-label': `${fresh[key]} nových` },
+          String(fresh[key])) : null))),
     h('div', { class: 'sitenav__end' },
       h('a', { class: 'sitenav__help', href: HELP_HREF, title: 'Jak to funguje', 'aria-label': 'Jak to funguje',
         'aria-current': active === 'help' ? 'page' : null }, '?'),
@@ -914,7 +1052,9 @@ function issueLabel(i, name = '') {
 }
 
 const NEW_ISSUE_DAYS = 31;
-const issueIsNew = (i) => typeof i?.fs === 'string' && i.fs.length >= 10 && daysTo(i.fs.slice(0, 10)) >= -NEW_ISSUE_DAYS;
+// vracející se návštěvník: vyšlo od poslední návštěvy; první návštěva: za posledních NEW_ISSUE_DAYS dní
+const issueIsNew = (i) => (visit.last ? isFresh(i?.fs)
+  : typeof i?.fs === 'string' && i.fs.length >= 10 && daysTo(i.fs.slice(0, 10)) >= -NEW_ISSUE_DAYS);
 
 /** Čísla zpravodaje po ročnících (nejnovější první); číslo bez roku patří k sousednímu ročníku. */
 function issueYears(issues) {
@@ -935,7 +1075,7 @@ function issueArchive(n, issues) {
   const show = (k) => {
     [...yearRow.children].forEach((b, i) => b.setAttribute('aria-pressed', String(i === k)));
     grid.replaceChildren(...years[k].items.map((i) => h('a', { class: 'issue', href: safeUrl(i.url), rel: 'noopener noreferrer', target: '_blank', title: i.t },
-      h('span', { class: 'issue__t' }, issueLabel(i, n.name)), issueIsNew(i) ? h('span', { class: 'badge' }, 'nové') : null)));
+      h('span', { class: 'issue__t' }, issueLabel(i, n.name)), issueIsNew(i) ? newBadge() : null)));
   };
   years.forEach((g, k) => yearRow.append(h('button', { type: 'button', class: 'topic', onclick: () => show(k) },
     String(g.y), h('span', { class: 'topic__n' }, String(g.items.length)))));
@@ -979,7 +1119,7 @@ function renderNewsletters(openSlug = '') {
         latest
           ? h('a', { class: 'nl__latest', href: safeUrl(latest.url), rel: 'noopener noreferrer', target: '_blank', title: latest.t },
             icon(ICON_DOC, 18), h('span', {}, h('span', { class: 'nl__label' }, 'Nejnovější číslo'),
-              h('strong', {}, issueLabel(latest, n.name)), issueIsNew(latest) ? h('span', { class: 'badge' }, 'nové') : null))
+              h('strong', {}, issueLabel(latest, n.name)), issueIsNew(latest) ? newBadge() : null))
           : h('span', { class: 'nl__empty' }, h('a', { href: safeUrl(n.archive), rel: 'noopener noreferrer', target: '_blank' }, 'Čísla jsou v archivu na webu obce ↗')),
         btn),
       slot);
@@ -1017,7 +1157,7 @@ function meetingNode(mt, { compact = false } = {}) {
   const doc = safeUrl(mt.url);
   return h('article', { class: 'meeting' },
     h('span', { class: 'entry__meta' }, obecTag(mt.o), ` · ${BODY[mt.body] || mt.body}`, mt.no ? ` · č. ${mt.no}` : '',
-      mt.kind === 'zapis' ? ' · zápis' : ''),
+      mt.kind === 'zapis' ? ' · zápis' : '', isFresh(mt.fs) ? [' ', freshBadge()] : null),
     h('h3', { class: 'meeting__title' }, mt.tldr ? withLinks(czDates(mt.tldr), mt) : (mt.t || 'Usnesení')),
     shown.length ? h('ul', { class: 'points' }, shown.map(point)) : null,
     rest.length ? h('details', { class: 'more-details' }, h('summary', {}, `Další body (${rest.length})`),
@@ -1209,7 +1349,7 @@ function renderVillage(slug) {
           h('h1', {}, m.name),
           h('span', { class: 'band__sub' }, [m.publisher, `${v.live.length} ${plural(v.live.length, 'oznámení', 'oznámení', 'oznámení')} na desce`,
             v.events.length ? `${v.events.length} ${plural(v.events.length, 'akce', 'akce', 'akcí')}` : null].filter(Boolean).join(' · '))),
-        h('div', { class: 'band__links' }, ext(web, 'Web obce ↗'), ext(board, 'Úřední deska ↗'))),
+        h('div', { class: 'band__links' }, mineStar(m.name), ext(web, 'Web obce ↗'), ext(board, 'Úřední deska ↗'))),
       h('div', { class: 'village' },
         h('div', { class: 'village__main' },
           h('h2', { class: 'section-title section-title--first' }, `TEĎ ŘEŠIT · PŘÍŠTÍCH ${HORIZON} DNÍ`),
@@ -1235,7 +1375,7 @@ function renderVillage(slug) {
           h('h2', { class: 'section-title' }, 'ZPRAVODAJ'),
           v.news && latest ? h('a', { class: 'nl__latest nl__latest--side', href: safeUrl(latest.url), rel: 'noopener noreferrer', target: '_blank', title: latest.t },
             icon(ICON_DOC, 18), h('span', {}, h('span', { class: 'nl__label' }, v.news.name),
-              h('strong', {}, issueLabel(latest, v.news.name)), issueIsNew(latest) ? h('span', { class: 'badge' }, 'nové') : null)) : null,
+              h('strong', {}, issueLabel(latest, v.news.name)), issueIsNew(latest) ? newBadge() : null)) : null,
           v.news ? h('a', { class: 'more-link', href: `#/zpravodaje?obec=${encodeURIComponent(m.slug)}` }, `Starší čísla (${Math.max(0, (v.news.issues || []).length - 1)})`, icon('M9 5l7 7-7 7', 16))
             : h('p', { class: 'empty' }, 'Obec zpravodaj nevydává.')))));
 }
@@ -1309,9 +1449,10 @@ function renderEvents(params) {
   }
   for (const list of byDay.values()) list.sort((a, b) => (a.time || '99').localeCompare(b.time || '99') || a.t.localeCompare(b.t, 'cs'));
 
-  const eventNode = (e, day) => h('a', { class: 'entry entry--event ev', href: safeUrl(e.url) || '#', rel: 'noopener noreferrer', target: '_blank' },
+  const eventNode = (e, day) => h('a', { class: `entry entry--event ev${isFresh(e.fs) ? ' is-fresh' : ''}`, href: safeUrl(e.url) || '#', rel: 'noopener noreferrer', target: '_blank' },
     h('span', { class: 'entry__meta' }, obecTag(e.o),
-      [e.time, e.end && e.end !== e.d ? `${e.d < day ? 'probíhá' : 'až'} do ${dm(e.end)}` : null].filter(Boolean).map((x) => ` · ${x}`).join('')),
+      [e.time, e.end && e.end !== e.d ? `${e.d < day ? 'probíhá' : 'až'} do ${dm(e.end)}` : null].filter(Boolean).map((x) => ` · ${x}`).join(''),
+      isFresh(e.fs) ? [' ', freshBadge()] : null),
     h('h3', { class: 'entry__title' }, e.t),
     e.place || e.tags?.length ? h('span', { class: 'entry__sub' }, [e.place, ...(e.tags || [])].filter(Boolean).join(' · ')) : null);
   const dayGroup = (iso, list) => {
@@ -1574,6 +1715,31 @@ function aiInfo(it, s, nDocs, original) {
   return { chip, panel };
 }
 
+/** Oddíl nápovědy: novinky od poslední návštěvy, výběr Mých obcí, zapomenutí nastavení. */
+function helpSettings() {
+  const names = (state.data?.members || []).map((m) => m.name).sort((x, y) => x.localeCompare(y, 'cs'));
+  const chips = h('div', { class: 'mine-chips', role: 'group', 'aria-label': 'Moje obce' });
+  const paint = () => {
+    const mine = getMine();
+    chips.replaceChildren(...names.map((name) => h('button', {
+      type: 'button', class: 'mine-chip', 'aria-pressed': String(mine.has(name)),
+      onclick: () => { toggleMine(name); paint(); },
+    }, mine.has(name) ? `★ ${name}` : name)));
+  };
+  paint();
+  const done = h('span', { class: 'muted', 'aria-live': 'polite' });
+  return h('div', { style: 'display:grid;gap:12px' },
+    h('p', { style: 'margin:0' }, 'Web si v tomto prohlížeči pamatuje, kdy jste ho naposledy otevřeli, a ukáže, co od té doby přibylo: ',
+      'lištu na úvodu, počty u sekcí a štítek ', freshBadge(), '. Když vyberete Moje obce, novinky se počítají jen pro ně a na úvodu přibude přepínač.'),
+    chips,
+    h('p', { class: 'help__note' }, 'Ukládá se jen v tomto prohlížeči (localStorage), žádné cookies, nic se neodesílá. Na jiném zařízení ',
+      'nebo v anonymním okně web novinky nezná a ukáže se jako při první návštěvě.'),
+    h('div', {}, h('button', {
+      type: 'button', class: 'fbtn',
+      onclick: () => { forgetMe(); paint(); done.textContent = ' Zapomenuto – web se teď chová jako při první návštěvě.'; },
+    }, 'Zapomenout moje nastavení'), done));
+}
+
 /** Stránka „Jak to funguje“: co web sbírá, co přidá AI, odkazy, značky, limity, soukromí. */
 function renderHelp() {
   const d = state.data || {};
@@ -1610,8 +1776,10 @@ function renderHelp() {
     ['help-limity', 'CO AI NEUMÍ', 'Co AI neumí', h('p', { class: 'help__note' },
       'AI se může splést – hlavně u špatně čitelných skenů nebo dlouhých příloh. Shrnutí neplní funkci úřední desky: právně platí ',
       'jen znění vyvěšené obcí. Web je neoficiální a nekomerční, nejde o stránky obcí.')],
+    ['help-nastaveni', 'NOVINKY A VAŠE NASTAVENÍ', 'Novinky a nastavení', helpSettings()],
     ['help-provoz', 'SOUKROMÍ A PROVOZ', 'Soukromí a provoz', h('dl', { class: 'help__rows' },
       row('Návštěvnost', 'Měří GoatCounter – bez cookies a bez osobních údajů, IP adresy se neukládají.'),
+      row('Vaše nastavení', 'Poslední návštěva a Moje obce jen v tomto prohlížeči (localStorage), nikam se neposílají.'),
       row('Zdrojový kód', h('a', { href: REPO_URL, rel: 'noopener noreferrer', target: '_blank' }, 'github.com/twarr58/dolnobrezansko')),
       row('Podpora', h('a', { href: SPONSOR_URL, rel: 'noopener noreferrer', target: '_blank' }, 'Podpořit provoz'),
         ' – příspěvek jde na AI shrnutí a server v ČR.'))],
@@ -1656,7 +1824,12 @@ async function start() {
     mount('Chyba', h('div', { class: 'col pad' }, h('h1', {}, 'Data se nepodařilo načíst'), h('p', {}, String(err.message || err))));
     return;
   }
-  window.addEventListener('hashchange', () => { route(); countView(); });
+  startVisit();
+  window.addEventListener('hashchange', () => { touchVisit(); route(); countView(); });
+  // po posunu stránky se hlavička (na počítači přichycená nahoře) zmenší i s logem
+  const onScroll = () => document.documentElement.classList.toggle('is-scrolled', window.scrollY > 40);
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
   document.addEventListener('click', countOutbound, true);
   document.addEventListener('auxclick', countOutbound, true);
   route();

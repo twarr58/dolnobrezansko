@@ -339,6 +339,10 @@ async def collect(client: httpx.AsyncClient, members: list[dict], state_dir: Pat
     except (OSError, ValueError):
         cached = {}
     today = now.date()
+    # kdy se akce poprvé objevila (web podle toho ukazuje novinky od poslední návštěvy); při prvním běhu
+    # s tímto polem se známé akce označí jako staré („“), jinak by se všechny tvářily jako nové
+    first_run = "_seen" not in cached
+    seen: dict[str, str] = cached.get("_seen") or {}
     sources, items = [], []
     for m in members:
         cfg = m.get("events")
@@ -358,10 +362,16 @@ async def collect(client: httpx.AsyncClient, members: list[dict], state_dir: Pat
                 entry = {**entry, "cfg": cfg, "checked": now.isoformat(timespec="seconds"), "ok": False, "v": PARSER_VERSION}
             cached[m["name"]] = entry
         live = [e for e in entry.get("events", []) if (e.get("end") or e["d"]) >= today.isoformat()]
-        items += [{"o": m["name"], **e} for e in live]
+        for e in live:
+            key = f"{m['name']}|{e.get('url') or e['t']}|{e['d']}"
+            fs = seen.setdefault(key, "" if first_run else now.isoformat(timespec="seconds"))
+            items.append({"o": m["name"], **e, **({"fs": fs} if fs else {})})
         sources.append({k: v for k, v in {
             "obec": m["name"], "url": cfg["url"], "read": cfg.get("fmt") != "link",
             "ok": entry.get("ok", False) if cfg.get("fmt") != "link" else None, "n": len(live)}.items() if v is not None})
+    # proběhlé akce ze seznamu „viděno“ pryč (klíč končí datem akce)
+    cutoff = (today - timedelta(days=7)).isoformat()
+    cached["_seen"] = {k: v for k, v in seen.items() if k.rsplit("|", 1)[-1] >= cutoff}
     state_dir.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(cached, ensure_ascii=False, indent=1), "utf-8")
     items.sort(key=lambda e: (e["d"], e.get("time") or "", e["o"], e["t"]))

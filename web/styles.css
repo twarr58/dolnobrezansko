@@ -14,6 +14,8 @@
   --start: #5c6570;         /* začíná / probíhá */
   --ai: #6b4fbb;            /* jen věci od AI (štítek AI shrnutí, nápověda) */
   --ai-soft: #efeafb;
+  --fresh: #0f766e;          /* jen novinky od poslední návštěvy */
+  --fresh-soft: #e3f4f1;
   --oc-mix: 0%;             /* tmavý režim: barvy obcí zesvětlit, ať jsou na tmavém pozadí čitelné */
   --crest-glow: none;       /* tmavý režim: světlý obrys, aby tmavé štíty nesplynuly s pozadím */
   --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -24,13 +26,13 @@
   :root:not([data-theme="light"]) {
     --bg: #111418; --surface: #1a1e24; --ink: #e8eaed; --muted: #9aa3ad; --rule: #2a3038; --rule-strong: #3a414b;
     --accent: #8fb4f0; --accent-soft: #1c2a42; --warn: #f0894f; --warn-ink: #f6a87a; --warn-soft: #3a2116;
-    --start: #9aa3ad; --ai: #b9a4f2; --ai-soft: #2a2340; --oc-mix: 45%; --crest-glow: drop-shadow(0 0 0.6px rgba(255, 255, 255, 0.85)); color-scheme: dark;
+    --start: #9aa3ad; --ai: #b9a4f2; --ai-soft: #2a2340; --fresh: #5fd0bf; --fresh-soft: #12302c; --oc-mix: 45%; --crest-glow: drop-shadow(0 0 0.6px rgba(255, 255, 255, 0.85)); color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #111418; --surface: #1a1e24; --ink: #e8eaed; --muted: #9aa3ad; --rule: #2a3038; --rule-strong: #3a414b;
   --accent: #8fb4f0; --accent-soft: #1c2a42; --warn: #f0894f; --warn-ink: #f6a87a; --warn-soft: #3a2116;
-  --start: #9aa3ad; --ai: #b9a4f2; --ai-soft: #2a2340; --oc-mix: 45%; --crest-glow: drop-shadow(0 0 0.6px rgba(255, 255, 255, 0.85)); color-scheme: dark;
+  --start: #9aa3ad; --ai: #b9a4f2; --ai-soft: #2a2340; --fresh: #5fd0bf; --fresh-soft: #12302c; --oc-mix: 45%; --crest-glow: drop-shadow(0 0 0.6px rgba(255, 255, 255, 0.85)); color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -66,9 +68,21 @@ svg { flex: 0 0 auto; }
 .legend { display: flex; gap: 6px 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 
-/* Hlavní přepínač sekcí: úřední desky / zpravodaje */
-.sitenav { display: flex; align-items: center; gap: 4px; border-bottom: 1px solid var(--rule); padding-top: 8px; }
-/* záložky se na úzkém displeji posouvají do strany – bez viditelného posuvníku (dřív kreslil šipky vedle navigace) */
+/* Hlavička: velké logo vysazené vlevo nahoře (přes spodní linku), vpravo sekce a ovládání.
+   Počítač: hlavička se přichytí nahoře, po posunu stránky se logo zmenší. Telefon: logo + název nahoře, sekce v dolní liště. */
+.sitenav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; display: flex; align-items: center; gap: 4px;
+  min-height: 52px; padding: 4px 0 0 112px; border-bottom: 1px solid var(--rule); background: var(--bg); transition: padding-left .2s ease; }
+.sitenav__logo { position: absolute; left: 0; top: 6px; z-index: 1; width: 96px; height: 96px; border-radius: 50%; background: var(--bg);
+  box-shadow: 0 0 0 4px var(--bg), 0 6px 18px rgba(0, 0, 0, 0.14); transition: width .2s ease, height .2s ease, top .2s ease, box-shadow .2s ease; }
+.sitenav__logo img { display: block; width: 100%; height: 100%; border-radius: 50%; }
+.sitenav__logo:focus-visible { outline-offset: 4px; }
+html.is-scrolled .sitenav { padding-left: 52px; }
+html.is-scrolled .sitenav__logo { width: 40px; height: 40px; top: 6px; box-shadow: none; }
+.sitenav__brand { display: none; }
+/* obsah pod hlavičkou začíná vpravo od loga, ať ho logo nepřekryje */
+.page > .sitenav + .masthead, .page > .sitenav + .help { padding-left: 112px; }
+.page > .sitenav + .back { margin-left: 112px; min-height: 56px; }
+/* záložky se na užším displeji posouvají do strany – bez viditelného posuvníku */
 .sitenav__tabs { display: flex; gap: 4px; flex: 1 1 auto; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; align-self: stretch; align-items: center; }
 .sitenav__tabs::-webkit-scrollbar { display: none; }
 .theme-wrap { flex: none; }
@@ -82,31 +96,40 @@ svg { flex: 0 0 auto; }
 .theme__btn + .theme__btn { border-left: 1px solid var(--rule); }
 .theme__btn:hover, .theme__cycle:hover { color: var(--ink); }
 .theme__btn[aria-pressed="true"] { background: var(--surface); color: var(--ink); }
-.theme__cycle { display: none; width: 40px; height: 44px; border-radius: 8px; }
-@media (max-width: 760px) { .theme { display: none; } .theme__cycle { display: inline-flex; } }
-.sitenav__logo { flex: none; display: inline-flex; align-items: center; margin-right: 6px; padding: 2px 0; border-radius: 50%; }
-.sitenav__logo img { display: block; width: 40px; height: 40px; }
-@media (max-width: 760px) { .sitenav__logo img { width: 32px; height: 32px; } .sitenav__logo { margin-right: 2px; } }
-.sitenav__tab { flex: none; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; margin-bottom: -1px;
-  border-bottom: 2px solid transparent; color: var(--muted); font-weight: 500; text-decoration: none; white-space: nowrap; }
-.sitenav__tab svg { opacity: 0.8; }
+.theme__cycle { display: none; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--rule-strong); }
+.sitenav__tab { flex: none; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; margin-bottom: -1px;
+  border-bottom: 2px solid transparent; color: var(--muted); font-weight: 500; text-decoration: none; white-space: nowrap; position: relative; }
+.sitenav__tab svg { opacity: 0.8; flex: none; }
 .sitenav__tab:hover { color: var(--ink); }
 .sitenav__tab[aria-current="page"] { color: var(--ink); font-weight: 700; border-bottom-color: var(--ink); }
 .sitenav__tab[aria-current="page"] svg { opacity: 1; }
 .sitenav__short { display: none; }
-/* telefon: čtyři sekce vždy vedle sebe – ikona nad krátkým popiskem, nic se neusekne */
+.sitenav__cnt { font: 600 11px/1 var(--mono); background: var(--fresh); color: var(--bg); border-radius: 999px; padding: 3px 6px; }
+@media (prefers-reduced-motion: reduce) { .sitenav, .sitenav__logo { transition: none; } }
+/* telefon: nahoře logo + název + ovládání, sekce v dolní liště jako v aplikaci */
 @media (max-width: 760px) {
-  .sitenav { gap: 2px; }
-  .sitenav__tabs { overflow: visible; justify-content: space-between; gap: 0; }
-  .sitenav__tab { flex: 1 1 0; min-width: 0; flex-direction: column; justify-content: center; gap: 2px; min-height: 52px; padding: 4px 2px; font-size: 12px; }
+  .sitenav { position: relative; top: 0; min-height: 60px; padding: 4px 0 4px 70px; }
+  .sitenav__logo { width: 58px; height: 58px; top: 4px; box-shadow: 0 0 0 3px var(--bg), 0 4px 12px rgba(0, 0, 0, 0.14); }
+  html.is-scrolled .sitenav { padding-left: 70px; }
+  html.is-scrolled .sitenav__logo { width: 58px; height: 58px; top: 4px; box-shadow: 0 0 0 3px var(--bg), 0 4px 12px rgba(0, 0, 0, 0.14); }
+  .sitenav__brand { display: grid; gap: 1px; min-width: 0; color: var(--ink); text-decoration: none; }
+  .sitenav__brand strong { font-size: 16px; line-height: 1.15; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sitenav__brand small { font-family: var(--mono); font-size: 10.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .page > .sitenav + .masthead, .page > .sitenav + .help { padding-left: 0; }
+  .page > .sitenav + .back { margin-left: 0; min-height: 0; }
+  .sitenav__tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0;
+    overflow: visible; background: var(--bg); border-top: 1px solid var(--rule);
+    padding: 4px max(4px, env(safe-area-inset-right, 0px)) calc(4px + env(safe-area-inset-bottom, 0px)) max(4px, env(safe-area-inset-left, 0px)); }
+  .sitenav__tab { min-width: 0; flex-direction: column; justify-content: center; gap: 2px; min-height: 52px; padding: 2px; margin: 0; font-size: 11.5px;
+    border-bottom: 0; border-top: 2px solid transparent; }
+  .sitenav__tab[aria-current="page"] { border-top-color: var(--ink); }
   .sitenav__long { display: none; }
-  .sitenav__short { display: inline; }
-}
-@media (max-width: 440px) {
-  .sitenav__tab { font-size: 11px; letter-spacing: -0.01em; padding: 4px 0; }
-  .sitenav__logo { display: none; } /* pět sekcí potřebuje celou šířku; domů vede i „Desky“ */
-  .theme__cycle { width: 34px; }
-  .sitenav__help { display: none; } /* pět sekcí potřebuje celou šířku; nápověda je v liště na úvodu, u štítku AI a v patičce */
+  .sitenav__short { display: inline; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .sitenav__cnt { position: absolute; top: 5px; left: calc(50% + 7px); width: 9px; height: 9px; padding: 0; font-size: 0; border: 2px solid var(--bg); }
+  .theme { display: none; }
+  .theme__cycle { display: inline-flex; }
+  .sitenav__end { gap: 6px; }
+  .page { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
 }
 .sitenav + .masthead { padding-top: 16px; }
 
@@ -522,3 +545,24 @@ details.removed summary { cursor: pointer; font-family: var(--mono); font-size: 
 .aiinfo { position: relative; margin-top: 10px; background: var(--bg); border: 1px solid var(--rule-strong); border-radius: 10px; padding: 12px 16px; font-size: 14px; display: grid; gap: 6px; max-width: 560px; }
 .aiinfo b { color: var(--ai); }
 .aiinfo ul { margin: 0; padding-left: 18px; display: grid; gap: 3px; }
+
+/* ---------- novinky od poslední návštěvy a Moje obce ---------- */
+.badge--fresh { background: var(--fresh-soft); color: var(--fresh); }
+.entry.is-fresh, .row.is-fresh { position: relative; }
+.entry.is-fresh::before, .row.is-fresh::before { content: ""; position: absolute; left: -12px; top: 1.05em; width: 7px; height: 7px; border-radius: 50%; background: var(--fresh); }
+.newsbar { display: grid; gap: 10px; margin-top: 16px; padding: 12px 14px; border: 1px solid var(--fresh); background: var(--fresh-soft); border-radius: 10px; }
+.newsbar p { margin: 0; }
+.newsbar strong { color: var(--fresh); }
+.newsbar__row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.newsbar__acts { margin-left: auto; display: flex; gap: 14px; flex-wrap: wrap; }
+.pill { display: inline-flex; align-items: center; font: inherit; font-size: 14px; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--rule-strong);
+  background: var(--bg); color: var(--ink); text-decoration: none; cursor: pointer; white-space: nowrap; }
+.pill:hover { border-color: var(--ink); }
+.pill--solid { background: var(--fresh); color: var(--bg); border-color: transparent; }
+.pill--solid:hover { filter: brightness(1.08); border-color: transparent; }
+.fbtn--mine[aria-pressed="true"] { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+.star { color: #c48a00; }
+.band__star[aria-pressed="true"] { font-weight: 700; }
+.mine-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.mine-chip { font: inherit; font-size: 14px; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--rule-strong); background: var(--bg); color: var(--ink); cursor: pointer; }
+.mine-chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
