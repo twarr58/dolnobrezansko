@@ -235,6 +235,13 @@ Bez `PROXY_SSH_KEY` tunel nedělají a sběr jede bez proxy.
 tři secrety `PROXY_SSH_*` a přepsat `HARVEST_FALLBACK_PROXY` hodnotou s `127.0.0.1`. Do té doby proxy
 nefunguje (port je zavřený), weby, které z GitHubu přímo nejdou, se v tu chvíli nenačtou.
 
+**Přehled stavu na VPS:** [`deploy/proxy/proxy-status.sh`](deploy/proxy/proxy-status.sh) vypíše služby
+(squid, ssh, fail2ban, nftables, automatické aktualizace), na čem proxy poslouchá, požadavky za hodinu a 24 h,
+nejčastější weby, připojení tunelu z GitHubu (poslední a počet za 24 h), stav SSH hesel, firewallu a fail2ban,
+paměť a disk. Jen čte a nezávisí na setup skriptu (nic nepřenastaví). Instalace jednou jako root:
+`bash proxy-status.sh --install` → příkaz `proxy-status` (s testem požadavku přes proxy) a krátký přehled
+po každém přihlášení. Vypnutí: smazat `/etc/profile.d/uredni-desky-status.sh`.
+
 Skript `deploy/proxy/probe-pages.py` na VPS vypíše strukturu stránek pro ladění adaptérů.
 
 Druhá možnost je self-hosted runner v ČR (`runs-on: [self-hosted, linux]` v jobu `harvest`).
