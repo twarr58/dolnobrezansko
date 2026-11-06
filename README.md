@@ -187,7 +187,11 @@ Vestecká, K Jahodárně, Průběžná a Hrnčířská“; neznámá položka v�
 nevznikne („Pražská plynárenská“, „Dolní“ v „Dolní Břežany“). Ulice jsou z obce oznámení, nebo z jiné obce
 regionu, když ji text jmenuje těsně před spouštěčem („Ohrobec (ulice Lipová, …)“); stejný název ve dvou
 obcích jednoho textu odkaz nedostane. Ulice pojmenované jako obec nebo její část („Zdiměřice“) se vynechají.
-Libeř a Okrouhlo pojmenované ulice v RÚIAN nemají. Odkaz vede na bod
+Když za ulicí následuje číslo domu („Nádražní u č. p. 137“, „ul. Vltavská č. o. 5“, „Pražská 12/3“),
+bod je přímo na adresním místě z RÚIAN (vrstva AdresniMisto; číslo bez označení zkusí orientační i popisné,
+přednost má orientační); když dům nenajde, zůstane bod na ulici. Počty, jednotky, data („Březovská 20 čísel
+popisných“, „300 m“, „20. 11.“) a evidenční čísla se za číslo domu neberou. Adresy se pamatují ve `ulice.json`,
+dotazů je nejvýš 80 za běh. Libeř a Okrouhlo pojmenované ulice v RÚIAN nemají. Odkaz vede na bod
 (`google.com/maps/search/?api=1&query=šířka,délka`), ne na hledání podle jména – stejnojmenných obcí
 a ulic je v ČR víc.
 
@@ -305,7 +309,7 @@ Repozitář je veřejný, proto ho spouštět jen z `main`, ne z pull requestů.
 - `council`: `sources[]` (`obec`, `body`, `url`, `ok`, `n`), `meetings[]` (`id`, `o`, `body` rada \| zastupitelstvo,
   `kind` usneseni \| zapis, `date`, `no`, `t`, `url`, `x`, `tldr`, `points[]` (`v` sloveso, `t`, `cat`, `amt`, `imp`), `src`)
 - `items[].pl`, `council.meetings[].pl`: odkazy na parcely `{„259/13“: [ID parcely v RÚIAN, „k. ú.“]}`
-- `items[].ul`, `council.meetings[].ul`: ulice s bodem na mapě `{„Malebná“: [šířka, délka]}`
+- `items[].ul`, `council.meetings[].ul`: ulice s bodem na mapě `{„Malebná“: [šířka, délka]}`, s číslem domu `{„Nádražní“: [šířka, délka, „č. p. 137“]}`
 - `members[].contact`: `office`, `address`, `phone[]`, `email[]` nebo `form`, `ds`, `ico`, `hours[]`, `hours_note`,
   `hours_url`, `source`, `checked`
 

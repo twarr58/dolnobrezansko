@@ -87,3 +87,58 @@ def test_annotate_uses_ruian_and_cache(tmp_path):
     calls.clear()  # další běh: ulice z mezipaměti
     asyncio.run(go())
     assert calls == []
+
+
+def _num(text):
+    i = text.index("|")
+    n = U.house_number(text.replace("|", ""), i)
+    return n and (n["kind"], n["a"], n["b"], n["label"])
+
+
+def test_house_number_after_street():
+    assert _num("v ulici Nádražní| u č.p. 137 v k.ú.") == ("p", 137, None, "č. p. 137")
+    assert _num("ulice 5. Května| (č. p. 32, 33)") == ("p", 32, None, "č. p. 32")
+    assert _num("ul. Vltavská| č. o. 5") == ("o", 5, None, "č. o. 5")
+    assert _num("ulice Pražská| 12/3, Jesenice") == (None, 12, 3, "12/3")
+    assert _num("ulice Pražská| 40, Jesenice") == (None, 40, None, "40")
+    assert _num("v ulici Polní| 999.") == (None, 999, None, "999")  # konec věty, ne datum
+    # počet, jednotka, datum, evidenční číslo, nic – bez čísla domu
+    for t in ["v ulicích Březovská| 20 čísel popisných", "ulice Dlouhá| 7 domů", "ulice Pražská| 20. 11. 2026", "ulice Polní| 5. listopadu",
+              "ulice Polní| 300 m od křižovatky", "ulice Polní| č. ev. 587", "ulice Polní| a Luční"]:
+        assert _num(t) is None, t
+
+
+def test_address_point_and_fallback(tmp_path):
+    queries = []
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        path, where = req.url.path, req.url.params.get("where", "")
+        if path.endswith("/11/query"):
+            return httpx.Response(200, json={"features": []})
+        if path.endswith("/12/query"):
+            return httpx.Response(200, json={"features": [{"attributes": {"kod": 539848, "nazev": "Vrané nad Vltavou", "okres": 3210}}]})
+        if path.endswith("/4/query"):
+            return httpx.Response(200, json={"features": [
+                {"attributes": {"kod": 441503, "nazev": "Nádražní", "obec": 539848}, "geometry": {"paths": [[[14.38, 49.94]]]}},
+                {"attributes": {"kod": 441504, "nazev": "Polní", "obec": 539848}, "geometry": {"paths": [[[14.37, 49.93]]]}}]})
+        assert path.endswith("/1/query")
+        queries.append(where)
+        if where == "ulice=441503 and cislodomovni=137":
+            return httpx.Response(200, json={"features": [{"attributes": {"cislodomovni": 137}, "geometry": {"x": 14.382411, "y": 49.939046}}]})
+        return httpx.Response(200, json={"features": []})  # Polní 999 neexistuje
+
+    data = {"members": [{"name": "Vrané nad Vltavou"}],
+            "items": [{"o": "Vrané nad Vltavou", "s": {"tldr": "Vrak v ulici Nádražní u č.p. 137, další v ulici Polní 999."}}]}
+
+    async def go():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as c:
+            return await U.annotate(c, data, tmp_path, NOW)
+
+    assert asyncio.run(go()) == 2
+    assert data["items"][0]["ul"] == {"Nádražní": [49.939046, 14.382411, "č. p. 137"],  # bod na domě
+                                      "Polní": [49.93, 14.37]}  # dům nenalezen → bod na ulici
+    assert sorted(queries) == ["ulice=441503 and cislodomovni=137",
+                               "ulice=441504 and (cislodomovni=999 or cisloorientacni=999)"]
+    queries.clear()  # další běh: adresy z mezipaměti (i nenalezená, do ADDR_RETRY_DAYS)
+    asyncio.run(go())
+    assert queries == []
