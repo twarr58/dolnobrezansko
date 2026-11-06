@@ -185,6 +185,47 @@ function czTexts(data) {
   }
 }
 
+// ---------- odkazy na parcely do katastru nemovitostí ----------
+
+const KN_URL = (id) => `https://nahlizenidokn.cuzk.gov.cz/ZobrazObjekt.aspx?typ=parcela&id=${encodeURIComponent(id)}`;
+const PARCEL_TRIGGER = /(?:parc(?:ela|ely|elách|ele|elu|elní|\.)?|p\.\s*č\.?|pozem(?:ek|ku|ky|cích|ků)|parcel\w*)/gi;
+const PARCEL_FILLER = /(?<!\p{L})(?:a|i|až|st|parc|č|p|k|ú|kat|parcelní|číslo|čísla|čísel)(?!\p{L})\.?/giu;
+
+/**
+ * Text s odkazy na parcely: pl = {„259/13“: [ID parcely v RÚIAN, „k. ú.“]} z harvesteru. Odkaz jen tam, kde text
+ * o parcele mluví (za „parc. č.“, „pozemky“… ve výčtu), aby se neprolinkovalo třeba „kancelář č. 1“.
+ */
+function withParcels(text, pl) {
+  const str = String(text ?? '');
+  const keys = pl && typeof pl === 'object'
+    ? Object.keys(pl).filter((k) => /^(st\. )?\d{1,5}(\/\d{1,4})?$/.test(k) && Array.isArray(pl[k]) && Number.isFinite(+pl[k][0]))
+    : [];
+  if (!keys.length) return str;
+  const alt = keys.sort((a, b) => b.length - a.length).map((k) => k.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&').replace(/\\\. /, '\\.\\s*'));
+  const rx = new RegExp(`(?<![\\d/])(${alt.join('|')})(?![\\d/]|[.,]\\d)`, 'g');
+  const out = [];
+  let last = 0;
+  for (const m of str.matchAll(rx)) {
+    const before = str.slice(Math.max(0, m.index - 220), m.index);
+    let trig = -1;
+    for (const t of before.matchAll(PARCEL_TRIGGER)) trig = t.index + t[0].length;
+    if (trig < 0) continue;
+    const between = before.slice(trig).replace(/\([^)]*\)/g, ' ').replace(PARCEL_FILLER, ' ');
+    if (!/^[\s\d/,;.:+–-]*$/.test(between)) continue;
+    const key = m[1].replace(/\s+/g, ' ');
+    const [id, ku] = pl[key] || pl[m[1]] || [];
+    if (!id) continue;
+    out.push(str.slice(last, m.index), h('a', {
+      class: 'parcel', href: KN_URL(id), rel: 'noopener noreferrer', target: '_blank',
+      title: `Parcela ${key}${ku ? `, k. ú. ${ku}` : ''} – otevřít v katastru nemovitostí`,
+    }, m[1]));
+    last = m.index + m[0].length;
+  }
+  if (!out.length) return str;
+  out.push(str.slice(last));
+  return out;
+}
+
 // ---------- stejná oznámení více obcí ----------
 
 const STOP = new Set(['obec', 'obce', 'obci', 'mezi', 'kvuli', 'bude', 'jsou', 'pro', 'oznameni', 'dolnimi', 'mesto']);
@@ -794,14 +835,14 @@ function meetingNode(mt, { compact = false } = {}) {
   const points = Array.isArray(mt.points) ? mt.points : [];
   const point = (p) => h('li', { class: `point${p.imp === 'vysoka' ? ' point--hot' : ''}` },
     h('span', { class: 'point__verb' }, p.v || ''),
-    h('span', { class: 'point__text' }, czDates(p.t), p.amt ? h('span', { class: 'point__amt' }, ` · ${p.amt}`) : null));
+    h('span', { class: 'point__text' }, withParcels(czDates(p.t), mt.pl), p.amt ? h('span', { class: 'point__amt' }, ` · ${p.amt}`) : null));
   const shown = compact ? points.filter((p) => p.imp === 'vysoka').slice(0, 2) : points.slice(0, POINTS_SHOWN);
   const rest = compact ? [] : points.slice(POINTS_SHOWN);
   const doc = safeUrl(mt.url);
   return h('article', { class: 'meeting' },
     h('span', { class: 'entry__meta' }, obecTag(mt.o), ` · ${BODY[mt.body] || mt.body}`, mt.no ? ` · č. ${mt.no}` : '',
       mt.kind === 'zapis' ? ' · zápis' : ''),
-    h('h3', { class: 'meeting__title' }, mt.tldr ? czDates(mt.tldr) : (mt.t || 'Usnesení')),
+    h('h3', { class: 'meeting__title' }, mt.tldr ? withParcels(czDates(mt.tldr), mt.pl) : (mt.t || 'Usnesení')),
     shown.length ? h('ul', { class: 'points' }, shown.map(point)) : null,
     rest.length ? h('details', { class: 'more-details' }, h('summary', {}, `Další body (${rest.length})`),
       h('ul', { class: 'points' }, rest.map(point))) : null,
@@ -1242,10 +1283,10 @@ function renderDetail(id) {
       h('div', {},
         h('div', { class: 'detail__meta' }, h('a', { class: 'obec obec--link', href: obecHref(it.o), style: obecStyle(it.o) }, crest(it.o, 18), it.o),
           ` · ${label(it)} · vyvěšeno ${dateCz(it.p, { year: true })}`, badges(it)),
-        h('h1', {}, s.tldr || it.t)),
+        h('h1', {}, withParcels(s.tldr || it.t, it.pl))),
       s.action
         ? h('section', { class: tone, 'aria-label': 'Co můžeš udělat' },
-          h('p', { class: 'todo__main' }, s.action),
+          h('p', { class: 'todo__main' }, withParcels(s.action, it.pl)),
           whenText ? h('p', { class: 'todo__when' }, whenText) : null)
         : h('section', { class: tone === 'todo' ? tone : `${tone} todo--plain`, 'aria-label': 'Co můžeš udělat' },
           h('p', {}, whenText || 'Jen pro informaci, nic dělat nemusíš.')),
@@ -1254,20 +1295,20 @@ function renderDetail(id) {
         twins.map((x, i) => [i ? ', ' : '', h('a', { class: 'obec obec--link', href: detailHref(x), style: obecStyle(x.o) }, crest(x.o, 14), x.o)])) : null,
       s.impact || s.affects ? h('section', { class: 'meaning', 'aria-labelledby': 'h-mean' },
         h('h2', { id: 'h-mean', class: 'h2' }, 'CO TO ZNAMENÁ'),
-        s.impact ? h('p', { class: 'meaning__lead' }, czDates(s.impact)) : null,
-        s.affects ? h('p', { class: 'muted' }, h('strong', {}, 'Týká se: '), s.affects) : null,
+        s.impact ? h('p', { class: 'meaning__lead' }, withParcels(czDates(s.impact), it.pl)) : null,
+        s.affects ? h('p', { class: 'muted' }, h('strong', {}, 'Týká se: '), withParcels(s.affects, it.pl)) : null,
         s.importance === 'vysoka' && s.importance_why ? h('p', { class: 'muted' }, h('strong', {}, 'Proč je to důležité: '), s.importance_why) : null) : null,
       bullets.length ? section('h-gist', s.src === 'claude' ? 'CO PŘESNĚ' : 'VE ZKRATCE',
-        h('ul', { class: 'bullets' }, bullets.slice(0, 5).map((b) => h('li', {}, czDates(b)))),
+        h('ul', { class: 'bullets' }, bullets.slice(0, 5).map((b) => h('li', {}, withParcels(czDates(b), it.pl)))),
         bullets.length > 5 ? h('details', { class: 'more-details' },
           h('summary', {}, `Další podrobnosti (${bullets.length - 5})`),
-          h('ul', { class: 'bullets' }, bullets.slice(5).map((b) => h('li', {}, czDates(b))))) : null) : null,
+          h('ul', { class: 'bullets' }, bullets.slice(5).map((b) => h('li', {}, withParcels(czDates(b), it.pl))))) : null) : null,
       s.facts?.length ? section('h-facts', 'KLÍČOVÉ ÚDAJE',
-        h('dl', { class: 'facts' }, s.facts.map((f) => [h('dt', {}, f.label), h('dd', {}, czDates(f.value))]))) : null,
+        h('dl', { class: 'facts' }, s.facts.map((f) => [h('dt', {}, f.label), h('dd', {}, withParcels(czDates(f.value), it.pl))]))) : null,
       s.dates?.length ? section('h-dates', 'DŮLEŽITÁ DATA',
         h('ul', { class: 'dates' }, s.dates.filter((x) => isIso(x.date)).map((x) => h('li', { class: daysTo(x.date) < 0 ? 'past' : null },
-          h('span', { class: 'mono' }, dateCz(x.date, { wd: true })), h('span', {}, x.what))))) : null,
-      s.where ? section('h-where', 'KDE', h('p', { style: 'margin:0' }, s.where)) : null,
+          h('span', { class: 'mono' }, dateCz(x.date, { wd: true })), h('span', {}, withParcels(x.what, it.pl)))))) : null,
+      s.where ? section('h-where', 'KDE', h('p', { style: 'margin:0' }, withParcels(s.where, it.pl))) : null,
       section('h-docs', docs.length ? `PŘÍLOHY (${docs.length})` : 'BEZ PŘÍLOH',
         h('div', { class: 'docs' }, docs.map((x) => {
           const title = x.w ? x.w.charAt(0).toUpperCase() + x.w.slice(1) : (x.n || 'Příloha');

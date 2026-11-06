@@ -157,6 +157,18 @@ oznámení se znovu neshrnují. Shrnutí jsou ve větvi `data` (`summaries.json.
 
 Změna obsahu shrnutí (prompt, schéma) zvýší `ai.VERSION` a stará shrnutí se pak postupně přepočítají.
 
+### Odkazy na parcely do katastru
+
+Modul `parcely.py` najde v textech shrnutí (oznámení i usnesení) čísla parcel („parc. č. 259/13“, „pozemky
+p. č. 970/5, 970/7 a 983“, „st. 217“) a k nim katastrální území: z textu („k. ú. Oleško u Zvole“, kód k. ú.,
+„v Dolních Břežanech“, „Dolní Břežany: parc. č. …“), z ostatních údajů oznámení, nebo z obce, když má jediné
+k. ú. U obce s víc k. ú. (Dolní Břežany, Jesenice, Psáry, Libeř, Zlatníky-Hodkovice, Březová-Oleško) bez
+údaje o k. ú. vznikne odkaz jen tehdy, když parcela existuje v jediném z nich. Parcely v k. ú. mimo region
+odkaz nedostanou. Číslo parcely převede veřejná služba ČÚZK (RÚIAN, `ags.cuzk.gov.cz`) na ID parcely; web
+z něj udělá odkaz do Nahlížení do KN (`nahlizenidokn.cuzk.gov.cz/ZobrazObjekt.aspx?typ=parcela&id=…`).
+Nalezená ID se pamatují ve stavu (`parcely.json`), dotazů je nejvýš 60 za běh. Odkaz se na webu ukáže jen
+tam, kde text o parcele opravdu mluví (ne např. u „kancelář č. 1“).
+
 ### Usnesení rad a zastupitelstev
 
 Modul `samosprava.py` jednou za 12 hodin projde u každé obce stránky s usneseními a zápisy (zdroje
@@ -221,6 +233,7 @@ Repozitář je veřejný, proto ho spouštět jen z `main`, ne z pull requestů.
 - `events`: `sources[]` (kalendáře obcí), `items[]` (`o`, `t`, `d`, `end`, `time`, `place`, `tags`, `url`)
 - `council`: `sources[]` (`obec`, `body`, `url`, `ok`, `n`), `meetings[]` (`id`, `o`, `body` rada \| zastupitelstvo,
   `kind` usneseni \| zapis, `date`, `no`, `t`, `url`, `x`, `tldr`, `points[]` (`v` sloveso, `t`, `cat`, `amt`, `imp`), `src`)
+- `items[].pl`, `council.meetings[].pl`: odkazy na parcely `{„259/13“: [ID parcely v RÚIAN, „k. ú.“]}`
 - `members[].contact`: `office`, `address`, `phone[]`, `email[]` nebo `form`, `ds`, `ico`, `hours[]`, `hours_note`,
   `hours_url`, `source`, `checked`
 
