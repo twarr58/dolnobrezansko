@@ -1,9 +1,4 @@
 # Stránky k průzkumu přes workflow pruzkum.yml (změna souboru workflow spustí). Řádek = adresa.
-https://www.mujesenice.cz/kontakty/ms-1046/p1=1046
-https://www.mujesenice.cz/vismo/isvs.asp?id_org=5861
-https://mujesenice.cz/rada-mesta/ms-1153/p1=1153
-https://mujesenice.cz/zastupitelstvo-mesta/ms-1183/p1=1183
-https://www.okrouhlo.cz/kontakt/os-10/p1=303
-https://www.okrouhlo.cz/zastupitelstvo/ds-5754/archiv=0
-https://www.brezova-olesko.cz/kontakty/os-10/p1=4181
-https://www.brezova-olesko.cz/zapisy%2Dze%2Dzasedani%2Dzastupitelstva/ds-1094/p1=4739
+https://mujesenice.cz/usneseni%2Drm/ms-5856/p1=5856
+https://mujesenice.cz/usneseni%2Dzm/ms-5855/p1=5855
+https://www.brezova-olesko.cz/zapisy%2Dzastupitelstva%2Drok%2D2026/ds-1207/archiv=0&p1=4739
