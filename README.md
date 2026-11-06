@@ -221,6 +221,11 @@ Skript je v `web/index.html`, počítání v `web/app.js` (oddíl „návštěvn
 
 Když se skript GoatCounteru nenačte (blokátor reklam), web funguje dál, jen se návštěva nezapočítá.
 
+**Počítadlo v patičce** („X návštěvníků tento měsíc · Y celkem“) čte veřejné API GoatCounteru
+(`/counter/TOTAL.json`, tento měsíc s `?start=RRRR-MM-01`). V nastavení GoatCounteru musí být zapnuté
+**Allow adding visitor counts on your website** (výchozí je vypnuté); bez něj, při blokátoru nebo výpadku
+se patička nezobrazí. GoatCounter počty drží v mezipaměti až 4 hodiny, nejsou tedy živé.
+
 ## Proxy v ČR
 
 Runnery GitHub Actions běží v USA a část obecních webů je nepustí (timeout, HTTP 403). Wikimedia
