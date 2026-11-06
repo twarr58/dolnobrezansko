@@ -94,6 +94,32 @@ def test_collect_vismo_window_link_only_and_failure(tmp_path):
         {"obec": "C", "url": "https://c.cz/akce", "read": False, "n": 0},
     ]
     assert "A" in json.loads((tmp_path / "events.json").read_text())
+    # první běh s „viděno“: známé akce bez času prvního výskytu (nejsou „nové“)
+    assert all("fs" not in e for e in out["items"])
+
+
+def test_event_first_seen_after_first_run(tmp_path):
+    rows = {"n": 1}
+
+    def handler(req):
+        if req.url.path.startswith("/api/"):
+            day = {"date": "2026-11-20T00:00:00+01:00", "events": [
+                {"name": f"Akce {i}", "fromTime": "18:00", "isStartDay": True, "isMultiDay": False, "v-id": i,
+                 "v-viewUrl": f"/akce-{i}"} for i in range(rows["n"])]}
+            return httpx.Response(200, json={"result": {"items": [day]}})
+        return httpx.Response(200, text='<meta data-id-object="99">')
+
+    members = [{"name": "A", "events": {"url": "https://obec.cz/kalendar", "fmt": "vismo"}}]
+
+    async def go(now):
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            return await events.collect(client, members, tmp_path, now)
+
+    first = asyncio.run(go(datetime(2026, 11, 7, 8, tzinfo=timezone.utc)))
+    assert [e.get("fs") for e in first["items"]] == [None]
+    rows["n"] = 2  # o den později přibude akce (seznam je starý víc než REFRESH_HOURS)
+    second = asyncio.run(go(datetime(2026, 11, 8, 9, tzinfo=timezone.utc)))
+    assert [(e["t"], e.get("fs")) for e in second["items"]] == [("Akce 0", None), ("Akce 1", "2026-11-08T09:00:00+00:00")]
 
 
 def test_linklist_psary_and_vestec():

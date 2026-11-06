@@ -383,8 +383,13 @@ async def collect(client: httpx.AsyncClient, members: list[dict], state_dir: Pat
     for m, cfg in pairs:
         entry = lists.get(f"{m['name']}|{cfg['body']}|{cfg['url']}") or {}
         for d in entry.get("docs", []):
-            docs.setdefault(_id(d["url"]), {}).update({**d, "o": m["name"], "body": cfg["body"],
-                                                       "browser": bool(cfg.get("browser"))})
+            did = _id(d["url"])
+            # „found“ = kdy se dokument poprvé objevil (web podle něj ukazuje novinky od poslední návštěvy);
+            # u dokumentů z doby před tímto polem čas stažení, jinak by se všechny tvářily jako nové
+            new_doc = did not in docs
+            doc = docs.setdefault(did, {})
+            doc.update({**d, "o": m["name"], "body": cfg["body"], "browser": bool(cfg.get("browser"))})
+            doc.setdefault("found", now.isoformat(timespec="seconds") if new_doc else doc.get("fetched"))
         sources.append({"obec": m["name"], "body": cfg["body"], "url": cfg["url"], "ok": entry.get("ok", False),
                         "n": len(entry.get("docs", []))})
 
@@ -460,6 +465,7 @@ def build_meeting(did: str, d: dict) -> dict:
         "id": did, "o": d["o"], "body": d["body"], "kind": d.get("kind"), "date": d.get("date"),
         "no": a.get("number"), "t": d.get("title"), "url": d["url"], "page": d.get("page"),
         "x": d.get("ext"), "tldr": a.get("tldr"), "points": points, "src": "claude" if a else None,
+        "fs": d.get("found"),
     }.items() if v not in (None, "", [])}
 
 
