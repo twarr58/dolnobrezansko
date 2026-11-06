@@ -1,171 +1,219 @@
 # Úřední deska Dolnobřežansko
 
-Oznámení z úředních desek 11 obcí **Mikroregionu Dolnobřežansko** (Březová-Oleško, Dolní Břežany,
-Jesenice, Libeř, Ohrobec, Okrouhlo, Psáry, Vestec, Vrané nad Vltavou, Zlatníky-Hodkovice, Zvole),
-vysvětlená jednou větou: co se děje, co s tím můžu udělat a do kdy. Harvester čte i přílohy
-oznámení (PDF, mapy a výkresy, skeny, DOCX).
+Web, který na jednom místě ukazuje, co se děje v 11 obcích **Mikroregionu Dolnobřežansko**: oznámení
+z úředních desek vysvětlená jednou větou (co se děje, co s tím můžu udělat a do kdy), kalendář akcí,
+zpravodaje a stránku každé obce.
+
+**Web:** https://twarr58.github.io/dolnobrezansko/
+
+## Obsah
+
+- [Co web ukazuje](#co-web-ukazuje)
+- [Obce a zdroje dat](#obce-a-zdroje-dat)
+- [Jak to funguje](#jak-to-funguje)
+- [Lokální vývoj](#lokální-vývoj)
+- [Nastavení repozitáře](#nastavení-repozitáře)
+- [Shrnutí od Claude](#shrnutí-od-claude)
+- [Úprava obce v konfiguraci](#úprava-obce-v-konfiguraci)
+- [Proxy v ČR](#proxy-v-čr)
+- [Formát dat pro web](#formát-dat-pro-web)
+- [Celostátní režim (vypnutý)](#celostátní-režim-vypnutý)
+- [Známá omezení a nápady](#známá-omezení-a-nápady)
+
+## Co web ukazuje
+
+| Sekce | Adresa | Obsah |
+|---|---|---|
+| Úřední desky | `#/` | Časová osa: co právě platí (uzavírky, odstávky), lhůty a termíny na 14 dní dopředu, pozdější a nová oznámení. Hledání, filtr obce, tématu a dne. Stejné oznámení vyvěšené víc obcemi je jen jednou. |
+| Detail oznámení | `#/o/<id>` | Co můžu udělat a do kdy, co to znamená, klíčové údaje a data, přílohy s popisem obsahu, odkaz na původní znění. |
+| Kalendář akcí | `#/akce` | Akce z kalendářů na webech obcí na 60 dní: měsíc nebo seznam, filtr obcí. |
+| Zpravodaje | `#/zpravodaje` | Nejnovější číslo každého zpravodaje a archiv po ročnících. Jen odkazy na weby obcí, bez AI. |
+| Obce | `#/obce`, `#/obec/<slug>` | Karta každé obce (počty oznámení, lhůt a akcí, nejbližší termín) a stránka obce: deska, akce, zpravodaj, odkaz na web a úřední desku. |
+
+Web je statický (`web/`, bez buildu), umí světlý a tmavý vzhled a funguje na telefonu. U každé položky je
+znak a barva obce.
+
+## Obce a zdroje dat
+
+| Obec | Úřední deska | Kalendář akcí | Zpravodaj | Znak |
+|---|---|---|---|---|
+| Dolní Břežany | iMunis | Vismo | Dolnobřežanský Rozhled | `web/erby` |
+| Vrané nad Vltavou | iMunis | články na webu | Zrcadlo | `web/erby` |
+| Zvole | Galileo | příspěvky Polydomu | Zvolské noviny | `web/erby` |
+| Psáry | RSS (ALIS) | seznam odkazů | Psárský zpravodaj | Commons |
+| Libeř | Vismo | Vismo | nevydává | Commons |
+| Ohrobec | HTML (web obce) | RDC | Ohrobecký zpravodaj | `web/erby` |
+| Vestec | edesky.cz | seznam odkazů | Vestecké listy | Commons |
+| Jesenice | edesky.cz | seznam odkazů | Jesenický kurýr | Commons |
+| Zlatníky-Hodkovice | hledá se automaticky | Munipolis | nevydává | `web/erby` |
+| Březová-Oleško | edesky.cz | seznam odkazů | nevydává | Commons |
+| Okrouhlo | edesky.cz | – | nevydává | bez znaku (štít s písmenem) |
+
+Všechno je nastavené v [`harvester/uredni_desky/data/region.json`](harvester/uredni_desky/data/region.json),
+viz [Úprava obce v konfiguraci](#úprava-obce-v-konfiguraci).
 
 ## Jak to funguje
 
-```
-GitHub Actions (každou hodinu) – python -m uredni_desky region
-  1. desky obcí: známé v harvester/uredni_desky/data/region.json; obce bez známé desky se hledají
-     automaticky (web obce z Wikidat → rozpoznání systému), výsledek v region_sources.json (týden)
-  2. stažení desek adaptéry (iMunis, Galileo, Vismo, RSS/ALIS, obecné HTML), archiv sejmutých
-  3. přílohy aktivních oznámení: stažení, text (pypdf, DOCX/ODT), druh: text / mapa nebo výkres
-     (formát nad A3, málo textu, název) / sken (OCR tesseract) – každá příloha jen jednou
-  4. popis: pravidla (téma, lhůty, termíny, parcely, částky) + volitelně shrnutí od Claude
-  5. výstup: site/data/region.json → GitHub Pages; stav do větve `data`
-  6. znaky obcí: web/erby (z webů obcí); ostatní stahuje workflow erby.yml z Wikimedia Commons (při 429 přes
-     záložní proxy) do větve `assets`, sběr je odtud převezme
-web/ (statická stránka bez buildu): Úřední desky · Kalendář akcí · Zpravodaje · Obce (stránka každé obce:
-     oznámení, akce, zpravodaj); znak a barva obce u každé položky, stejné oznámení více obcí jednou
-```
+Hodinový workflow **Sběr desek mikroregionu a nasazení** (`harvest.yml`) spustí
+`python -m uredni_desky region`:
 
-Web: https://twarr58.github.io/dolnobrezansko/ · návrh designu: https://claude.ai/artifact/7PsxZ3855TvghPqKjtp8g9
+1. **Desky obcí:** zdroje z `region.json`; obce bez známé desky se hledají automaticky (web obce
+   z Wikidat → rozpoznání systému), výsledek se pamatuje týden (`region_sources.json`).
+2. **Stažení desek** adaptéry: iMunis, Galileo, Vismo, RSS/ALIS, obecné HTML a API edesky.cz.
+   Sejmutá oznámení zůstávají v archivu, web je ukazuje ještě 30 dní.
+3. **Přílohy** aktivních oznámení: text z PDF, DOCX a ODT; druh přílohy (text, mapa nebo výkres, sken
+   s OCR přes tesseract). Každá příloha se stahuje jednou a pak se jen jednou za 24 hodin ověří
+   podmíněným dotazem (`ETag` / `Last-Modified`). U desek z edesky.cz se bere rozpoznaný text
+   z veřejného souboru `edesky.cz/dokument/<id>.txt` a odkaz na originál na webu obce.
+4. **Popis oznámení:** pravidla (téma, lhůty, termíny, parcely, částky) a k tomu volitelně
+   [shrnutí od Claude](#shrnutí-od-claude).
+5. **Zpravodaje** (archivy na webech obcí, nejvýš jednou za 12 hodin) a **akce** (kalendáře obcí,
+   nejvýš jednou za 6 hodin). Při chybě zůstane poslední známý stav.
+6. **Výstup:** `site/data/region.json` + web z `web/` + znaky z větve `assets` → GitHub Pages.
+   Stav sběru se ukládá do větve `data`.
+
+### Větve
+
+| Větev | Obsah |
+|---|---|
+| `main` | Kód a web. Sběr a nasazení běží jen odsud. |
+| `data` | Stav sběru (jeden commit bez historie): oznámení, přílohy, shrnutí, zpravodaje, akce. |
+| `assets` | Znaky obcí stažené z Wikimedia Commons (`erby/*.png`, `erby/index.json`). |
+
+### Workflow
+
+| Workflow | Spouštění | Co dělá |
+|---|---|---|
+| `harvest.yml` – Sběr desek mikroregionu a nasazení | každou hodinu, ručně, push do `main` | sběr, shrnutí, nasazení webu |
+| `erby.yml` – Znaky obcí | ručně, změna `region.json` | stáhne chybějící znaky z Commons (při odmítnutí přes proxy) do větve `assets` |
+| `discover.yml` – Hledání desek všech obcí | ručně | celostátní hledání desek (viz níže) |
+| `probe.yml`, `diagnose.yml`, `explore.yml` | ručně | ladění adaptérů, diagnostika nedostupných desek, průzkum NKOD |
 
 ## Lokální vývoj
 
-```bash
-make venv          # .venv + harvester v editable režimu
-make test          # pytest
-make sample        # ukázková data → web/data/region.json (bez sítě)
-make harvest       # skutečný sběr mikroregionu (do .state a web/data)
-make serve         # http://localhost:8000
-```
+| Příkaz | Co dělá |
+|---|---|
+| `make venv` | `.venv` a harvester v editable režimu |
+| `make test` | pytest |
+| `make sample` | ukázková data do `web/data/region.json` (bez sítě) |
+| `make harvest` | skutečný sběr mikroregionu (stav do `.state`, data do `web/data`) |
+| `make serve` | web na http://localhost:8000 |
 
-## Shrnutí od Claude (volitelné)
+Lokálně chybí větev `assets`, takže se zobrazí jen znaky z `web/erby`. Znaky z Commons stáhne
+`python -m uredni_desky erby --out assets`.
 
-Bez přihlášení se popisy dělají jen pravidly. S přihlášením Claude přečte u každého **nového**
-oznámení přílohy (až 10 příloh; PDF včetně map a skenů posílá celé, delší než 100 stran jako
-vytažený text; u oznámení bez příloh v seznamu i přílohy a text ze stránky oznámení) a vrátí dvě vrstvy:
-rychlou (jedna věta, co udělat a do kdy, důležitost) a rozbor příloh (co to znamená, koho se to týká,
-co přesně – parametry, částky, změny, klíčové údaje, data, kontakt, obsah každé přílohy). Hotová shrnutí se ukládají (`summaries.json.gz` ve větvi `data`), znovu se platí
-jen při změně oznámení. Limit shrnutí za běh: proměnná repozitáře `AI_LIMIT` (výchozí 100),
-model: `AI_MODEL` (výchozí `claude-haiku-5-5`; pečlivější `claude-sonnet-5-5`, nejsilnější `claude-opus-5-5`), hloubka čtení: `AI_EFFORT` (výchozí `medium`).
-Změna obsahu shrnutí zvýší `ai.VERSION` – stará shrnutí se pak postupně přepočítají.
+## Nastavení repozitáře
 
-Kdy se shrnutí dělá znovu: každé oznámení má otisk z názvu, data vyvěšení a lhůty z desky a obsahu
-příloh (SHA-256). Přílohy se jednou za 24 hodin ověří podmíněným dotazem (`ETag` / `Last-Modified`,
-nezměněný soubor se nestahuje). Když úřad vymění PDF na stejné adrese, přidá přílohu nebo posune lhůtu,
-otisk se změní a Claude oznámení shrne znovu; web u něj ukáže „změna“ a datum aktualizace. Do té doby
-zůstává předchozí shrnutí s poznámkou, že se připravuje nové. U nezměněných oznámení se Claude znovu
-nevolá. Claude dostane prvních 10 příloh; PDF do 100 stran celé, delší jako text z celého dokumentu.
+Settings → Secrets and variables → Actions:
 
-### Přihlášení bez klíče (doporučeno): Workload Identity Federation
+| Název | Druh | K čemu |
+|---|---|---|
+| `EDESKY_API_KEY` | secret | API edesky.cz (desky Vestce, Jesenice, Březové-Oleška a Okrouhla). Klíč z profilu na edesky.cz; v logu se maskuje. |
+| `HARVEST_FALLBACK_PROXY` | secret | Záložní proxy v ČR pro weby, které z GitHubu nejdou, a pro Wikimedia Commons. Viz [Proxy v ČR](#proxy-v-čr). |
+| `ANTHROPIC_FEDERATION_RULE_ID`, `ANTHROPIC_ORGANIZATION_ID`, `ANTHROPIC_SERVICE_ACCOUNT_ID`, `ANTHROPIC_WORKSPACE_ID` | variables | Přihlášení ke Claude bez klíče (doporučeno). |
+| `ANTHROPIC_API_KEY` | secret | Alternativa: přihlášení API klíčem; má přednost před federací. |
+| `AI_MODEL`, `AI_LIMIT`, `AI_EFFORT` | variables | Model (výchozí `claude-haiku-5-5`), nejvýš shrnutí za běh (100), hloubka čtení (`medium`). |
 
-GitHub Actions se u Claude prokáže svým krátkodobým tokenem (OIDC). V repozitáři není žádný klíč,
-který by mohl uniknout. Pravidlo v Claude Console přijme jen token z repozitáře
-`twarr58/dolnobrezansko` a větve `main`; do `main` může zapisovat jen vlastník repozitáře,
-pull requesty (i z forků) mají jiný ref a neprojdou.
+### Přihlášení ke Claude bez klíče (Workload Identity Federation)
+
+GitHub Actions se u Claude prokáže krátkodobým tokenem (OIDC), v repozitáři není žádný klíč.
+Pravidlo přijme jen token z `twarr58/dolnobrezansko` a větve `main`; pull requesty (i z forků) mají
+jiný ref a neprojdou.
 
 1. **Claude Console:** Settings → Workload identity → **Connect workload** → **GitHub Actions**.
    - Rule name `uredni-desky-main`, organization `twarr58`, repository `dolnobrezansko`
-   - Branch / ref `refs/heads/main` (vypsat, prázdné = jakákoli větev)
-   - Allowed events: ne „Only push“ – sběr běží podle plánu (`schedule`) a ručně (`workflow_dispatch`)
+   - Branch / ref `refs/heads/main`
+   - Allowed events: ne „Only push“ (sběr běží i podle plánu a ručně)
    - Target: nový service account (např. `uredni-desky`), role developer, výchozí workspace
-2. **GitHub:** Settings → Secrets and variables → Actions → záložka **Variables** → přidat ID,
-   která průvodce ukáže (nejsou tajná):
-   - `ANTHROPIC_FEDERATION_RULE_ID` (`fdrl_…`)
-   - `ANTHROPIC_ORGANIZATION_ID` (UUID organizace)
-   - `ANTHROPIC_SERVICE_ACCOUNT_ID` (`svac_…`)
-   - `ANTHROPIC_WORKSPACE_ID` (`wrkspc_…`, jen když pravidlo platí pro víc workspaců)
-3. Actions → *Sběr desek mikroregionu a nasazení* → **Run workflow** (větev `main`). V logu kroku
-   sběru má být „přihlášení přes Workload Identity Federation“ a „Claude: N shrnutí“.
+2. **GitHub:** do **Variables** přidat ID, která průvodce ukáže (nejsou tajná): `ANTHROPIC_FEDERATION_RULE_ID`
+   (`fdrl_…`), `ANTHROPIC_ORGANIZATION_ID`, `ANTHROPIC_SERVICE_ACCOUNT_ID` (`svac_…`) a
+   `ANTHROPIC_WORKSPACE_ID` (`wrkspc_…`, jen když pravidlo platí pro víc workspaců).
+3. Actions → *Sběr desek mikroregionu a nasazení* → **Run workflow**. V logu kroku sběru má být
+   „přihlášení přes Workload Identity Federation“ a „Claude: N shrnutí“.
 
-Harvester si token GitHubu vyžádá sám (workflow má `id-token: write`) a každé 4 minuty ho obnovuje.
+Harvester si token vyžádá sám (workflow má `id-token: write`) a každé 4 minuty ho obnovuje.
 
-### Alternativa: API klíč
+**API klíčem:** Console → Settings → API keys → **Create key** (s expirací) → secret `ANTHROPIC_API_KEY`.
+Útratu omezí limit v Console a `AI_LIMIT`.
 
-Console → Settings → API keys → **Create key** (s expirací) → GitHub: Settings → Secrets and
-variables → Actions → **Secrets** → `ANTHROPIC_API_KEY`. Klíč má přednost před federací.
-Secrety GitHub nedává workflow spuštěným z pull requestů z forků.
+## Shrnutí od Claude
 
-API kredit: předplatné Max obsahuje měsíční kredit na API (organizaci v Claude Console je třeba
-propojit s plánem). Útratu lze omezit limitem v Console; počet shrnutí za běh `AI_LIMIT`.
+Bez přihlášení se popisy dělají jen pravidly. S přihlášením Claude u nového nebo změněného oznámení
+přečte přílohy (prvních 10; PDF do 100 stran celé včetně map a skenů, delší jako text; u oznámení bez
+příloh i text ze stránky oznámení) a vrátí:
 
-## Zpravodaje obcí
+- **rychlou vrstvu:** jedna věta, co udělat a do kdy, důležitost;
+- **rozbor:** co to znamená, koho se to týká, parametry, částky, změny, klíčové údaje, data, kontakt
+  a obsah každé přílohy.
 
-Sekce „Zpravodaje“ na webu (vedle výchozích úředních desek) ukazuje pro každou obec nejnovější číslo
-zpravodaje a archiv po letech. Bez AI – zpravodaj má desítky stran a každého zajímá něco jiného, takže
-jsou to jen odkazy na čísla na webu obce. Nastavení je v `data/region.json` u obce pod klíčem
-`newsletter` (popis polí v `uredni_desky/newsletters.py`); archiv se prochází nejvýš jednou za 12 hodin
-a při chybě zůstává poslední známý seznam. Obce, u kterých zpravodaj zatím nemáme (Psáry, Libeř,
-Jesenice, Zlatníky-Hodkovice, Březová-Oleško, Okrouhlo), mají v sekci jen zmínku.
+**Kdy se shrnuje znovu:** každé oznámení má otisk z názvu, data vyvěšení, lhůty a obsahu příloh
+(SHA-256). Když úřad vymění přílohu na stejné adrese, přidá přílohu nebo posune lhůtu, otisk se změní
+a Claude oznámení shrne znovu; web u něj ukáže „změna“. Do té doby zůstává předchozí shrnutí. Nezměněná
+oznámení se znovu neshrnují. Shrnutí jsou ve větvi `data` (`summaries.json.gz`).
 
-## Kalendář akcí
+Změna obsahu shrnutí (prompt, schéma) zvýší `ai.VERSION` a stará shrnutí se pak postupně přepočítají.
 
-Záložka „Kalendář akcí“ spojuje kalendáře z webů obcí do jednoho (příštích 60 dní, filtr podle obce
-a „dnes / tento týden / víkend“). Bez AI – název, datum, čas, místo a odkaz na akci na webu obce.
-Nastavení v `data/region.json` u obce pod klíčem `events` (`fmt`: `vismo` – JSON API kalendáře
-redakčního systému vismo, `rdc`, `article`, nebo `link` = jen odkaz); popis v `uredni_desky/events.py`.
-Kalendáře se procházejí nejvýš jednou za 6 hodin, při chybě zůstanou naposledy známé akce.
+## Úprava obce v konfiguraci
 
-## Celostátní režim (vypnutý)
+Obec v `harvester/uredni_desky/data/region.json`:
 
-Původní sběr všech desek z NKOD a webů obcí (`python -m uredni_desky harvest`, `discover`,
-`probe`, `diagnose`) zůstává v kódu a slouží jako zdroj adaptérů. Workflow `discover.yml`
-jde spustit ručně; hodinový sběr běží jen pro mikroregion.
+| Klíč | Význam |
+|---|---|
+| `name`, `publisher`, `qid` | název, úřad, Wikidata ID |
+| `slug`, `color` | adresa stránky obce (`#/obec/<slug>`) a barva obce na webu |
+| `web` | web obce |
+| `source` | úřední deska: `{"fmt": "imunis", "subdomain": …}`, `{"fmt": "galileo" \| "vismo" \| "rss" \| "html" \| "edesky", "url": …}`; bez `source` se deska hledá automaticky |
+| `events` | kalendář akcí: `fmt` `vismo`, `rdc`, `article`, `linklist`, `posts`, `munipolis` nebo `link` (jen odkaz); popis v `events.py` |
+| `newsletter` | zpravodaj (`name`, `url`, `match` …; popis v `newsletters.py`), `false` = obec zpravodaj nevydává |
+| `erb` | znak v repozitáři, např. `erby/zvole.svg` (soubor ve `web/erby`) |
+| `erb_commons`, `erb_qid` | soubor znaku na Wikimedia Commons, případně Wikidata ID, podle kterého se znak dohledá (P94); stáhne ho workflow `erby.yml` |
 
-### Adaptéry: obce mimo katalog (iMunis eDeska, Galileo)
+## Proxy v ČR
 
-Do NKOD má desku zapsanou jen zlomek obcí. Obce na službě **iMunis eDeska**
-(`<obec>.imunis.cz/edeska`, např. Dolní Břežany) se načítají z jejího RSS kanálu a stránek
-detailu (data vyvěšení, značka, přílohy). Seznam je v
-`harvester/uredni_desky/data/extra_sources.json` – další obec se přidá řádkem
-`{"subdomain": "…", "publisher": "Obec …"}`.
+Runnery GitHub Actions běží v USA a část obecních webů je nepustí (timeout, HTTP 403). Wikimedia
+Commons zase sdíleným adresám odpovídá „429 Too many requests“. Harvester proto zkusí záložní proxy
+(`HARVEST_FALLBACK_PROXY`, např. `http://uzivatel:heslo@proxy.example.cz:3128`), kde přímý přístup
+selže; server, který jednou přímo nejde, pak v běhu jede rovnou přes proxy.
 
-Weby obcí na systému **Galileo Corporation** (deska na `<web>/urad/uredni-deska/`, např. Semtěš,
-Bílé Podolí) se čtou z HTML seznamu a detailu položek – v sekci `galileo` stejného souboru:
-`{"url": "https://www.obec.cz/urad/uredni-deska/", "publisher": "Obec …"}`.
+Proxy na VPS s českou IP nastaví skript [`deploy/proxy/setup-squid-debian12.sh`](deploy/proxy/setup-squid-debian12.sh):
+squid s heslem, jen weby obcí mikroregionu (žádná otevřená proxy), bez mezipaměti, firewall nftables,
+automatické bezpečnostní aktualizace; na konci vypíše hodnotu secretu. Heslo jde k proxy nešifrovaně
+(HTTP), proto proxy pouští jen vybrané weby. Skript `deploy/proxy/probe-pages.py` na VPS vypíše
+strukturu stránek pro ladění adaptérů.
 
-### Hledání desek všech obcí
-
-Workflow `discover.yml` (týdně a ručně) vezme z Wikidat všechny obce ČR a jejich weby, stáhne
-titulní stránky a rozpozná systém desky: iMunis, Galileo (libovolná cesta …/uredni-deska/),
-Vismo (export OFN nebo HTML deska), RSS/Atom kanál desky (např. `?action=atom`, ALIS). Nalezené zdroje
-uloží do `discovered.json` ve větvi `data`, harvester je přidá ke zdrojům z NKOD. Statistika
-nepodporovaných systémů ukazuje, pro které systémy psát další adaptéry. Detail oznámení se
-u adaptérů stahuje jen u nových položek (mezipaměť ze stavu), aby sběr nezatěžoval weby obcí.
-
-### Desky přes edesky.cz (Vestec, Jesenice, Okrouhlo, Březová-Oleško)
-
-Weby těchto obcí z runneru GitHubu (USA) nejdou. Jejich desky proto harvester bere z API
-[edesky.cz](https://edesky.cz/api), které desky obcí samo stahuje z Česka a přílohy i jejich
-rozpoznaný text hostuje u sebe (adaptér `edesky.py`, zdroj `{"fmt": "edesky", "url": "https://edesky.cz/desky/<id>"}`).
-Potřebuje klíč z profilu na edesky.cz v secretu **`EDESKY_API_KEY`** (v logu se maskuje).
-API neuvádí „vyvěšeno do“ a místo data vyvěšení dává datum načtení na edesky.cz; bere se okno
-posledních 60 dní. Ostatní obce zůstávají na přímém čtení desky (víc údajů).
-
-### Servery blokující zahraniční IP
-
-Runnery GitHub Actions běží v USA a část obecních webů je nepustí: Jesenice a Okrouhlo nepřijmou
-spojení (timeout), Vestec vrací HTTP 403. Z Česka fungují. Dvě řešení:
-
-1. **Záložní proxy v ČR** – secret `HARVEST_FALLBACK_PROXY` (např. `http://uzivatel:heslo@proxy.example.cz:3128`,
-   squid nebo tinyproxy na malém VPS v ČR). Harvester ji použije jen tam, kde přímý přístup selže
-   (timeout, chyba spojení, HTTP 401/403/451) – pro desku, její přílohy i stránky oznámení; server,
-   který jednou přímo nejde, pak v běhu jede rovnou přes proxy.
-   Nastavení na čerstvém Debianu 12 (VPS s českou IP) jedním skriptem
-   `deploy/proxy/setup-squid-debian12.sh`: squid s heslem, jen weby obcí mikroregionu (žádná otevřená
-   proxy), bez mezipaměti, firewall nftables (SSH + port proxy), automatické bezpečnostní aktualizace;
-   na konci vypíše hodnotu secretu. Heslo jde k proxy nešifrovaně (HTTP), proto proxy pouští jen weby obcí.
-2. **Self-hosted runner v ČR** (vlastní server, NAS, OpenShift s actions-runner-controller) a v jobu
-   `harvest` `runs-on: [self-hosted, linux]`. Repozitář je veřejný – sběr se spouští jen z `main`
-   (plán, ruční spuštění, push), ne z pull requestů; ve Settings → Actions nech zapnuté schvalování
-   workflow z forků.
+Druhá možnost je self-hosted runner v ČR (`runs-on: [self-hosted, linux]` v jobu `harvest`).
+Repozitář je veřejný, proto ho spouštět jen z `main`, ne z pull requestů.
 
 ## Formát dat pro web
 
-`region.json`: `region`, `members[]` (obec, odkaz na desku, `connected`, `ok`, `status`),
-`categories`, `items[]`:
-`id`, `o` (obec), `t` (úřední název), `url`, `p` (vyvěšeno), `u` (do), `cj`, `r` (sejmuto),
-`docs[{n, url, k: text|mapa|sken|obrazek, x: přípona, pg: strany, ocr, w: co v ní je}]`,
-`s` (popis): `cat`, `label`, `tldr`, `action`, `deadline`, `event`, `time`, `event_end`, `where`,
-`bullets[]`, `src` (`pravidla` | `claude`).
+`region.json`:
 
-## TODO
+- `generated_at`, `region`, `ai_model`, `categories` (témata)
+- `members[]`: `name`, `slug`, `color`, `erb`, `publisher`, `web`, `board_url`, `fmt`, `ok`, `count`,
+  `connected`, `status`, `error`
+- `items[]`: `id`, `o` (obec), `t` (úřední název), `url` (původní znění), `p` (vyvěšeno), `u` (do),
+  `cj`, `r` (sejmuto), `fs` (poprvé viděno),
+  `docs[]` (`n` název, `url`, `k` text \| mapa \| sken \| obrazek, `x` přípona, `pg` strany, `ocr`,
+  `w` co v ní je, `sum` shrnutí přílohy),
+  `s` (popis: `cat`, `label`, `tldr`, `action`, `deadline`, `event`, `event_end`, `time`, `where`,
+  `impact`, `affects`, `bullets[]`, `facts[]`, `dates[]`, `contact`, `importance`, `src` `pravidla` \| `claude` …)
+- `newsletters[]`: `obec`, `name`, `archive`, `issues[]` (`t`, `url`, `y` rok, `fs` poprvé viděno), `ok`
+  nebo `none` (obec zpravodaj nevydává)
+- `events`: `sources[]` (kalendáře obcí), `items[]` (`o`, `t`, `d`, `end`, `time`, `place`, `tags`, `url`)
 
-- [ ] Ověřit desky Vestce, Jesenice, Zlatníků-Hodkovic, Březové-Oleška a Okrouhla po prvním běhu
-- [ ] Náhled první strany mapy v detailu (obrázek z pdftoppm)
-- [ ] Odběr novinek (RSS / e-mail) pro jednu obec
+## Celostátní režim (vypnutý)
+
+Původní sběr všech desek ČR z NKOD a webů obcí (`python -m uredni_desky harvest`, `discover`, `probe`,
+`diagnose`) zůstává v kódu a slouží jako zdroj adaptérů. Workflow `discover.yml` vezme z Wikidat všechny
+obce, stáhne jejich weby a rozpozná systém desky (iMunis, Galileo, Vismo, RSS/Atom); nalezené zdroje uloží
+do `discovered.json` ve větvi `data`. Statistika nepodporovaných systémů ukazuje, pro které psát další
+adaptéry. Obce na iMunis a Galileo mimo NKOD jdou přidat do `data/extra_sources.json`.
+
+## Známá omezení a nápady
+
+- **Plánované spouštění na GitHubu je nespolehlivé:** `cron: "17 * * * *"` má spouštět sběr každou
+  hodinu, ve skutečnosti GitHub spustí 3–4 běhy denně se zpožděním. Spolehlivější je volat
+  `workflow_dispatch` cronem z VPS.
+- API edesky.cz neuvádí „vyvěšeno do“; místo data vyvěšení dává datum načtení a bere se okno 60 dní.
+- Okrouhlo nemá znak na Wikidatech ani Commons, web ukazuje štít s písmenem.
+- Nápady: náhled první strany mapy v detailu, odběr novinek (RSS / e-mail) pro jednu obec.
