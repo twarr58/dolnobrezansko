@@ -1,0 +1,8 @@
+# Stránky k průzkumu přes workflow pruzkum.yml (změna souboru workflow spustí). Řádek = adresa.
+https://www.mujesenice.cz/
+https://www.mujesenice.cz/povinne-zverejnovane-informace
+https://www.okrouhlo.cz/
+https://www.okrouhlo.cz/povinne-zverejnovane-informace
+https://www.brezova-olesko.cz/
+https://www.brezova-olesko.cz/povinne-zverejnovane-informace
+https://vestec.cz/obec-vestec/urad/
