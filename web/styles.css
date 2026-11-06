@@ -457,10 +457,12 @@ details.removed summary { cursor: pointer; font-family: var(--mono); font-size: 
 .meetings__date { font-family: var(--mono); font-size: 12.5px; color: var(--muted); padding-top: 2px; }
 .meetings .meeting__title { font-size: 15.5px; }
 
-/* odkaz na parcelu do katastru nemovitostí */
-.parcel { color: inherit; text-decoration: underline dotted var(--accent); text-decoration-thickness: 1.5px; text-underline-offset: 3px; white-space: nowrap; }
-.parcel:hover { color: var(--accent); text-decoration-style: solid; }
+/* odkaz na parcelu do katastru nemovitostí a na ulici do Google Map */
+.parcel, .street { color: inherit; text-decoration: underline dotted var(--accent); text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+.parcel { white-space: nowrap; }
+.parcel:hover, .street:hover { color: var(--accent); text-decoration-style: solid; }
 .parcel::after { content: "↗"; font-size: 0.75em; margin-left: 1px; color: var(--accent); vertical-align: 0.15em; }
+.street::after { content: "⌖"; font-size: 0.8em; margin-left: 2px; color: var(--accent); }
 
 /* patička: počítadlo návštěvníků (GoatCounter) */
 .sitefoot { border-top: 1px solid var(--rule); margin-top: 24px; color: var(--muted); font-size: 13px; }
