@@ -38,8 +38,10 @@ from .webpage import BROWSER_HEADERS, HTML_HEADERS
 log = logging.getLogger(__name__)
 
 REFRESH_HOURS = 12
+RETRY_DELAY = 3.0
+_SKIP = re.compile(r"facebook\.com|twitter\.com|x\.com/|linkedin\.com|/AA/index\.asp|mailto:|sharer|intent/tweet", re.I)
 DOC_BUDGET = 80  # nejvýš nově stažených dokumentů za běh
-PARSER_VERSION = 2  # 2: čitelné titulky místo názvů souborů
+PARSER_VERSION = 3  # 3: jeden dokument na stránku zasedání, jen odkazy z webu obce
 VERSION = 1  # verze shrnutí bodů; zvýšení je přepočítá
 BODIES = {"rada": "Rada", "zastupitelstvo": "Zastupitelstvo"}
 _FILE = re.compile(r"(\.(pdf|docx?|odt|rtf)(?:$|[?#])|/file/\d+|File\.ashx|download\.php|admin-storage\.munipolis\.com/.+\.pdf)", re.I)
@@ -170,6 +172,9 @@ class Fetcher:
             return r
         try:
             r = await self.client.get(url, headers=headers, timeout=40)
+            if r.status_code >= 500:  # weby obcí občas krátce padají – jeden pokus navíc
+                await asyncio.sleep(RETRY_DELAY)
+                r = await self.client.get(url, headers=headers, timeout=40)
             r.raise_for_status()
             return r
         except httpx.HTTPError as exc:
@@ -216,9 +221,9 @@ async def list_documents(f: Fetcher, cfg: dict, years: set[int]) -> list[dict]:
         page_text = _text_of(rp.text)
         page_date = _date(ptitle) or _date(re.sub(r"\s+", " ", page_text[:600]))
         extra = page_date and f"{int(page_date[8:])}.{int(page_date[5:7])}.{page_date[:4]}"
-        if files:
-            for href, text in files[:3]:
-                add(href, ptitle or text, page, extra=extra)
+        if files:  # jeden dokument na zasedání: přednostně ten, jehož název odpovídá zdroji (zápis / usnesení)
+            href, text = next(((h, t) for h, t in files if _match(cfg, "", t)), files[0])
+            add(href, ptitle or text, page, extra=extra)
         elif len(page_text) > 300:  # usnesení přímo v textu stránky
             add(page, ptitle, page, extra=extra)
             if docs and docs[-1]["url"] == page:
@@ -227,10 +232,13 @@ async def list_documents(f: Fetcher, cfg: dict, years: set[int]) -> list[dict]:
     async def items(listing: str, html: str, base: str, extra: str = "") -> None:
         """Odkazy seznamu: soubor rovnou, stránka zasedání přes from_page."""
         pages = []
+        host = (urlsplit(listing).hostname or "").removeprefix("www.")
         for href, text in _links(html, base):
-            if href.rstrip("/") == listing.rstrip("/") or not _match(cfg, href, text) \
+            if href.rstrip("/") == listing.rstrip("/") or _SKIP.search(href) or not _match(cfg, href, text) \
                     or re.search(r"příloha|priloha|jednací řád", text, re.I):
                 continue
+            if not _FILE.search(href) and (urlsplit(href).hostname or "").removeprefix("www.") != host:
+                continue  # stránky zasedání jen z webu obce (ne sdílení, přihlášení, cizí weby)
             if _FILE.search(href):
                 add(href, text, listing, extra=extra)
             elif href not in [p for p, _ in pages] and _wanted_year(_date(text), f"{text} {href} {extra}", years):
@@ -251,6 +259,7 @@ async def list_documents(f: Fetcher, cfg: dict, years: set[int]) -> list[dict]:
         links = _links(r.text, str(r.url))
         for year in sorted(years, reverse=True):
             page = next((h for h, t in links if re.search(rf"(?<!\d){year}(?!\d)", t) and not _FILE.search(h)
+                         and not _SKIP.search(h)
                          and h.rstrip("/") != url.rstrip("/") and (not cfg.get("year_match") or re.search(cfg["year_match"], t, re.I))),
                         None)
             if page:
@@ -353,10 +362,9 @@ async def collect(client: httpx.AsyncClient, members: list[dict], state_dir: Pat
                 entry = {"cfg": cfg, "checked": now.isoformat(timespec="seconds"), "ok": True, "v": PARSER_VERSION,
                          "year": now.year, "docs": found}
                 log.info("Samospráva %s (%s): %d dokumentů", m["name"], cfg["body"], len(found))
-            except Exception as exc:  # noqa: BLE001 – web obce nejde: zůstává poslední seznam
+            except Exception as exc:  # noqa: BLE001 – web obce nejde: zůstává poslední seznam, příště znovu
                 log.warning("Samospráva %s (%s): %r", m["name"], cfg["body"], exc)
-                entry = {**entry, "cfg": cfg, "checked": now.isoformat(timespec="seconds"), "ok": False,
-                         "v": PARSER_VERSION, "year": now.year}
+                entry = {**entry, "ok": False, "failed": now.isoformat(timespec="seconds")}
         lists[key] = entry
 
     await asyncio.gather(*(refresh(m, cfg) for m, cfg in pairs))

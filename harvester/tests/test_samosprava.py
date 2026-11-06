@@ -168,3 +168,36 @@ def test_title_from_file():
         "Usnesení zastupitelstva – 22. zasedání"
     assert S._title_from_file("Zapis_c_4_2026.pdf", "zastupitelstvo", "zapis") == "Zápis zastupitelstva č. 4/2026"
     assert S._title_from_file("dokument.pdf", "rada", "usneseni") == "Usnesení rady"
+
+
+def test_pages_skip_share_links_and_take_one_file_per_meeting(monkeypatch):
+    monkeypatch.setattr(S, "RETRY_DELAY", 0)
+    listing = """<html><body><h1>Zápisy 2026</h1>
+      <a href="https://www.facebook.com/sharer.php?u=https://obec.cz/usneseni-2026">Sdílet na Facebooku</a>
+      <a href="http://www.obec.cz/AA/index.asp?ReturnUrl=/usneseni">Přihlásit se</a>
+      <a href="https://jiny-web.cz/zapis-2026">Zápis jinde 2026</a>
+      <a href="https://www.obec.cz/24-9-2026-zapis/d-1">24.9.2026_Zápis ze zasedání zastupitelstva</a></body></html>"""
+    meeting = """<html><body><h1>Zápis</h1>
+      <a href="https://www.obec.cz/assets/File.ashx?id=1">Prezenční listina</a>
+      <a href="https://www.obec.cz/assets/File.ashx?id=2">Zápis ze zasedání 24.9.2026</a>
+      <a href="https://www.obec.cz/assets/File.ashx?id=3">Hlasování</a></body></html>"""
+    calls = {"n": 0}
+
+    def handler(req):
+        if str(req.url) == "https://www.obec.cz/zapisy":
+            calls["n"] += 1
+            if calls["n"] == 1:
+                return httpx.Response(500)  # web krátce spadl – druhý pokus projde
+            return httpx.Response(200, html=listing)
+        if str(req.url) == "https://www.obec.cz/24-9-2026-zapis/d-1":
+            return httpx.Response(200, html=meeting)
+        raise AssertionError(f"neočekávaný dotaz {req.url}")
+
+    async def go():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as c:
+            cfg = {"body": "zastupitelstvo", "fmt": "pages", "url": "https://www.obec.cz/zapisy", "match": "zápis|usnesen"}
+            return await S.list_documents(S.Fetcher(c, None), cfg, {2026})
+
+    docs = asyncio.run(go())
+    assert [d["url"] for d in docs] == ["https://www.obec.cz/assets/File.ashx?id=2"]
+    assert docs[0]["date"] == "2026-09-24"

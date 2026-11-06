@@ -1,1 +1,2 @@
 # Stránky k průzkumu přes workflow pruzkum.yml (změna souboru workflow spustí). Řádek = adresa.
+https://mujesenice.cz/usneseni%2Drm%2D2026/ms-18170/p1=18170
