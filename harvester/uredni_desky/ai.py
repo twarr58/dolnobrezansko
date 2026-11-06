@@ -204,11 +204,11 @@ class Summarizer:
     def available(self) -> bool:
         return not self.stopped and self.used < self.limit
 
-    async def _call(self, content: list[dict]) -> dict | None:
+    async def _call(self, content: list[dict], system: str = SYSTEM, schema: dict = SCHEMA) -> dict | None:
         kwargs: dict = dict(
-            model=MODEL, max_tokens=12000, system=SYSTEM,
+            model=MODEL, max_tokens=12000, system=system,
             messages=[{"role": "user", "content": content}],
-            output_config={"effort": EFFORT, "format": {"type": "json_schema", "schema": SCHEMA}},
+            output_config={"effort": EFFORT, "format": {"type": "json_schema", "schema": schema}},
         )
         if not MODEL.startswith("claude-haiku"):
             # při odmítnutí bezpečnostním filtrem požadavek dokončí jiný model
@@ -223,16 +223,26 @@ class Summarizer:
         return json.loads(text)
 
     async def summarize(self, meta: dict, docs: list[dict]) -> dict | None:
+        return await self._run(lambda: self._call(build_content(meta, docs)),
+                               lambda: self._call(build_content(meta, docs, text_only=True)))
+
+    async def summarize_custom(self, content: list[dict], system: str, schema: dict) -> dict | None:
+        """Shrnutí s vlastním zadáním a schématem (např. body usnesení samosprávy); sdílí limit za běh."""
+        text_only = [b for b in content if b.get("type") == "text"]
+        return await self._run(lambda: self._call(content, system, schema),
+                               lambda: self._call(text_only, system, schema))
+
+    async def _run(self, call, text_only_call) -> dict | None:
         if not self.available():
             return None
         self.used += 1
         a = self._anthropic
         try:
             try:
-                return await self._call(build_content(meta, docs))
+                return await call()
             except a.BadRequestError as exc:  # např. poškozené PDF – zkusit jen s textem
                 log.info("Claude odmítl přílohy (%s), zkouším jen text", exc.message[:200])
-                return await self._call(build_content(meta, docs, text_only=True))
+                return await text_only_call()
         except (a.AuthenticationError, a.PermissionDeniedError) as exc:
             log.warning("Claude: neplatný klíč nebo chybí oprávnění (%s) – shrnutí vypnuta", exc.message[:200])
             self.stopped = True

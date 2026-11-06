@@ -1,4 +1,1 @@
 # Stránky k průzkumu přes workflow pruzkum.yml (změna souboru workflow spustí). Řádek = adresa.
-https://mujesenice.cz/usneseni%2Drm/ms-5856/p1=5856
-https://mujesenice.cz/usneseni%2Dzm/ms-5855/p1=5855
-https://www.brezova-olesko.cz/zapisy%2Dzastupitelstva%2Drok%2D2026/ds-1207/archiv=0&p1=4739

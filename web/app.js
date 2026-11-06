@@ -259,6 +259,11 @@ function route() {
     window.scrollTo(0, 0);
     return;
   }
+  if (parts[0] === 'samosprava') {
+    onList = false;
+    renderCouncil(params);
+    return;
+  }
   if (parts[0] === 'obce') {
     onList = false;
     renderVillages();
@@ -660,6 +665,7 @@ const NAV = [
   ['desky', '#/', 'Úřední desky', 'Desky', 'M5 3h14v18H5zM9 8h6M9 12h6M9 16h4'],
   ['akce', '#/akce', 'Kalendář akcí', 'Akce', 'M4 5h16v15H4zM4 10h16M9 3v4M15 3v4'],
   ['zpravodaje', '#/zpravodaje', 'Zpravodaje', 'Zpravodaje', 'M6 3h9l4 4v14H6zM9 11h7M9 15h7'],
+  ['samosprava', '#/samosprava', 'Samospráva', 'Usnesení', 'M3 21h18M5 21V10M10 21V10M14 21V10M19 21V10M2 10l10-6 10 6'],
   ['obce', '#/obce', 'Obce', 'Obce', 'M5 4h14v7c0 5-3.5 8-7 10-3.5-2-7-5-7-10z'],
 ];
 
@@ -778,6 +784,100 @@ function renderNewsletters(openSlug = '') {
   if (openSlug) requestAnimationFrame(() => document.getElementById(`nl-${openSlug}`)?.scrollIntoView({ block: 'start' }));
 }
 
+// ---------- samospráva: usnesení rad a zastupitelstev ----------
+
+const BODY = { rada: 'Rada', zastupitelstvo: 'Zastupitelstvo' };
+const POINTS_SHOWN = 4;
+
+/** Jedno zasedání: datum vlevo, obec · orgán · číslo, hlavní věta a body usnesení (prvních pár, zbytek rozbalit). */
+function meetingNode(mt, { compact = false } = {}) {
+  const points = Array.isArray(mt.points) ? mt.points : [];
+  const point = (p) => h('li', { class: `point${p.imp === 'vysoka' ? ' point--hot' : ''}` },
+    h('span', { class: 'point__verb' }, p.v || ''),
+    h('span', { class: 'point__text' }, czDates(p.t), p.amt ? h('span', { class: 'point__amt' }, ` · ${p.amt}`) : null));
+  const shown = compact ? points.filter((p) => p.imp === 'vysoka').slice(0, 2) : points.slice(0, POINTS_SHOWN);
+  const rest = compact ? [] : points.slice(POINTS_SHOWN);
+  const doc = safeUrl(mt.url);
+  return h('article', { class: 'meeting' },
+    h('span', { class: 'entry__meta' }, obecTag(mt.o), ` · ${BODY[mt.body] || mt.body}`, mt.no ? ` · č. ${mt.no}` : '',
+      mt.kind === 'zapis' ? ' · zápis' : ''),
+    h('h3', { class: 'meeting__title' }, mt.tldr ? czDates(mt.tldr) : (mt.t || 'Usnesení')),
+    shown.length ? h('ul', { class: 'points' }, shown.map(point)) : null,
+    rest.length ? h('details', { class: 'more-details' }, h('summary', {}, `Další body (${rest.length})`),
+      h('ul', { class: 'points' }, rest.map(point))) : null,
+    !compact && !points.length && !mt.tldr ? h('p', { class: 'muted meeting__none' }, 'Body usnesení zatím nemáme rozepsané – otevři dokument.') : null,
+    doc ? h('a', { class: 'meeting__doc', href: doc, rel: 'noopener noreferrer', target: '_blank' },
+      `${mt.kind === 'zapis' ? 'Zápis' : 'Usnesení'}${mt.x ? ` (${String(mt.x).toUpperCase()})` : ''} ↗`) : null);
+}
+
+function renderCouncil(params) {
+  const c = state.data.council || { sources: [], meetings: [] };
+  const all = (c.meetings || []).filter((m) => m.o);
+  const bySlug = (s) => (state.data.members || []).find((m) => m.slug === s)?.name || '';
+  const f = { obec: bySlug(params.get('obec') || ''), organ: BODY[params.get('organ')] ? params.get('organ') : '',
+    jen: params.get('jen') === 'dulezite' };
+  const go = (patch) => {
+    const n = { ...f, ...patch };
+    const p = new URLSearchParams();
+    if (n.obec) p.set('obec', obecOf(n.obec).slug || n.obec);
+    if (n.organ) p.set('organ', n.organ);
+    if (n.jen) p.set('jen', 'dulezite');
+    history.replaceState(null, '', p.toString() ? `#/samosprava?${p}` : '#/samosprava');
+    renderCouncil(p);
+  };
+  const counts = new Map();
+  for (const m of all) counts.set(m.o, (counts.get(m.o) || 0) + 1);
+  const list = all.filter((m) => (!f.obec || m.o === f.obec) && (!f.organ || m.body === f.organ)
+    && (!f.jen || (m.points || []).some((p) => p.imp === 'vysoka')))
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const months = [];
+  for (const m of list) {
+    const key = (m.date || '').slice(0, 7) || 'bez data';
+    if (!months.length || months[months.length - 1].key !== key) months.push({ key, items: [] });
+    months[months.length - 1].items.push(m);
+  }
+  const monthName = (k) => (/^\d{4}-\d{2}$/.test(k) ? `${MONTHS[+k.slice(5, 7) - 1]} ${k.slice(0, 4)}` : 'Bez data');
+  const names = [...counts.keys()].sort((a, b) => a.localeCompare(b, 'cs'));
+  const sources = c.sources || [];
+  const without = (state.data.members || []).map((m) => m.name).filter((n) => !sources.some((s) => s.obec === n));
+  mount('Samospráva',
+    h('div', { class: 'page' },
+      siteNav('samosprava'),
+      h('header', { class: 'masthead' },
+        h('h1', {}, 'Co rozhodla rada a zastupitelstvo'),
+        h('span', { class: 'masthead__meta' }, 'Usnesení a zápisy z webů obcí · letošní rok')),
+      h('section', { class: 'filters', 'aria-label': 'Výběr' },
+        h('div', { class: 'filters__row filters__row--view' },
+          h('div', { class: 'seg', role: 'group', 'aria-label': 'Orgán' },
+            [['', 'Vše'], ['rada', 'Rada'], ['zastupitelstvo', 'Zastupitelstvo']].map(([k, label]) => h('button', {
+              type: 'button', class: 'seg__btn', 'aria-pressed': String(f.organ === k), onclick: () => go({ organ: k }),
+            }, label))),
+          h('button', { type: 'button', class: 'fbtn', 'aria-pressed': String(f.jen), onclick: () => go({ jen: !f.jen }) }, 'Jen důležité')),
+        h('div', { class: 'topics topics--wrap', role: 'group', 'aria-label': 'Obec' },
+          h('button', { type: 'button', class: 'topic', 'aria-pressed': String(!f.obec), onclick: () => go({ obec: '' }) }, 'Všechny obce'),
+          names.map((n) => h('button', { type: 'button', class: 'topic topic--obec', 'aria-pressed': String(f.obec === n), onclick: () => go({ obec: f.obec === n ? '' : n }) },
+            crest(n, 16), n, h('span', { class: 'topic__n' }, String(counts.get(n))))))),
+      h('div', { class: 'summary' }, h('span', {}, h('strong', {}, String(list.length)), ` ${plural(list.length, 'zasedání', 'zasedání', 'zasedání')}`)),
+      h('div', { class: 'main' },
+        h('div', { class: 'timeline' },
+          months.length ? months.map((g) => [
+            h('h2', { class: 'section-title' }, monthName(g.key).toUpperCase()),
+            g.items.map((m) => h('section', { class: 'daygroup' },
+              h('div', { class: 'daygroup__date' },
+                h('span', { class: 'daygroup__wd' }, isIso(m.date) ? weekday(m.date) : ''),
+                h('span', { class: 'daygroup__d' }, isIso(m.date) ? dm(m.date) : '–')),
+              h('div', { class: 'daygroup__items' }, meetingNode(m))))])
+            : h('p', { class: 'empty' }, all.length ? 'V tomto výběru nic.' : 'Usnesení se zatím načítají – zkus to později.')),
+        h('section', { class: 'villages' },
+          h('h2', {}, 'ODKUD USNESENÍ BEREME'),
+          h('ul', {}, sources.map((s) => h('li', {}, s.ok ? h('span', { class: 'ok' }, '✓') : h('span', { class: 'miss', title: 'Poslední načtení selhalo' }, '!'),
+            h('a', { class: 'villages__obec', href: safeUrl(s.url), rel: 'noopener noreferrer', target: '_blank' }, crest(s.obec, 16), `${s.obec} – ${(BODY[s.body] || s.body).toLowerCase()}`)))),
+          without.length ? h('p', {}, 'Usnesení na webu nezveřejňují: ', obecTags(without)) : null,
+          h('p', {}, all.some((m) => m.src === 'claude')
+            ? 'Body usnesení rozepisuje AI (Claude) z dokumentů obcí a může se splést. Platí znění v dokumentu obce.'
+            : 'Platí znění v dokumentu obce.')))));
+}
+
 // ---------- obce ----------
 
 /** Co je teď u obce: oznámení s termínem (sloučená jako na přehledu), nově vyvěšená, akce, zpravodaj. */
@@ -790,7 +890,9 @@ function villageData(name) {
   const events = (state.data.events?.items || []).filter((e) => e.o === name && isIso(e.d) && (e.end || e.d) >= TODAY);
   const news = (state.data.newsletters || []).find((n) => n.obec === name && n.name);
   const evSource = (state.data.events?.sources || []).find((s) => s.obec === name);
-  return { items, live, dated, undated, events, news, evSource };
+  const council = (state.data.council?.meetings || []).filter((x) => x.o === name)
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  return { items, live, dated, undated, events, news, evSource, council };
 }
 
 function renderVillages() {
@@ -853,7 +955,7 @@ function contactBox(m) {
     Array.isArray(c.hours) && c.hours.length ? [
       h('h3', { class: 'contact__h' }, 'Úřední hodiny'),
       h('table', { class: 'contact__hours' }, h('tbody', {}, c.hours.map(([d, t]) => h('tr', { class: fold(d) === fold(today) ? 'is-today' : null },
-        h('th', { scope: 'row' }, d), h('td', {}, t), h('td', { class: 'contact__now' }, fold(d) === fold(today) ? 'dnes' : ''))))),
+        h('th', { scope: 'row' }, d), h('td', {}, t, fold(d) === fold(today) ? h('span', { class: 'contact__now' }, 'dnes') : null))))),
       c.hours_note ? h('p', { class: 'contact__note' }, c.hours_note) : null,
     ] : safeUrl(c.hours_url) ? h('p', {}, h('a', { href: safeUrl(c.hours_url), rel: 'noopener noreferrer', target: '_blank' }, 'Úřední hodiny na webu obce ↗')) : null,
     safeUrl(c.source) ? h('p', { class: 'contact__src' }, 'Podle ', h('a', { href: safeUrl(c.source), rel: 'noopener noreferrer', target: '_blank' }, 'webu obce'),
@@ -900,7 +1002,13 @@ function renderVillage(slug) {
           later.length ? h('ul', { class: 'rows' }, later.map(({ it, w }) => row(it, w.date, w.type === 'deadline' ? `${deadlineWord(it.s || {})} do ${dateCz(w.date)}` : null))) : null,
           v.undated.length ? h('h2', { class: 'section-title' }, 'NOVĚ VYVĚŠENO') : null,
           v.undated.length ? h('ul', { class: 'rows' }, v.undated.slice(0, 6).map((it) => row(it, it.p, 'vyvěšeno'))) : null,
-          h('a', { class: 'more-link', href: `#/?obec=${encodeURIComponent(m.name)}` }, `Všechna oznámení obce (${v.live.length})`, icon('M9 5l7 7-7 7', 16))),
+          h('a', { class: 'more-link', href: `#/?obec=${encodeURIComponent(m.name)}` }, `Všechna oznámení obce (${v.live.length})`, icon('M9 5l7 7-7 7', 16)),
+          v.council.length ? [
+            h('h2', { class: 'section-title' }, 'CO ROZHODLA RADA A ZASTUPITELSTVO'),
+            h('div', { class: 'meetings' }, v.council.slice(0, 3).map((mt) => h('div', { class: 'meetings__row' },
+              h('span', { class: 'meetings__date' }, isIso(mt.date) ? dateCz(mt.date) : ''), meetingNode(mt, { compact: true })))),
+            h('a', { class: 'more-link', href: `#/samosprava?obec=${encodeURIComponent(m.slug)}` }, `Všechna usnesení obce (${v.council.length})`, icon('M9 5l7 7-7 7', 16)),
+          ] : null),
         h('aside', { class: 'village__side' },
           contactBox(m),
           h('h2', { class: `section-title${m.contact ? '' : ' section-title--first'}` }, 'AKCE'),

@@ -88,6 +88,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           AI_MODEL: ${{ vars.AI_MODEL || 'claude-haiku-5-5' }}
           AI_LIMIT: ${{ vars.AI_LIMIT || '100' }}
+          COUNCIL_AI_LIMIT: ${{ vars.COUNCIL_AI_LIMIT || '40' }}
         run: python -m uredni_desky region --out site/data --state state --assets assets
 
       - name: Sestavit web
@@ -102,7 +103,7 @@ jobs:
           # Větev drží jen poslední stav (jeden commit bez historie), aby repozitář nebobtnal.
           git worktree add --orphan -b data-next out
           cp state/items.json.gz state/boards.json out/
-          for f in docs.json.gz summaries.json.gz region_sources.json discovered.json obce.json newsletters.json events.json; do
+          for f in docs.json.gz summaries.json.gz region_sources.json discovered.json obce.json newsletters.json events.json council.json; do
             [ -f "state/$f" ] && cp "state/$f" out/ || true
           done
           cd out

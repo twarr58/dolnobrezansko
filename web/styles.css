@@ -96,6 +96,11 @@ svg { flex: 0 0 auto; }
   .sitenav__long { display: none; }
   .sitenav__short { display: inline; }
 }
+@media (max-width: 440px) {
+  .sitenav__tab { font-size: 11px; letter-spacing: -0.01em; padding: 4px 0; }
+  .sitenav__logo { display: none; } /* pět sekcí potřebuje celou šířku; domů vede i „Desky“ */
+  .theme__cycle { width: 34px; }
+}
 .sitenav + .masthead { padding-top: 16px; }
 
 /* Stránka: hlavička + panel vlevo + časová osa vpravo (na telefonu pod sebou) */
@@ -428,6 +433,26 @@ details.removed summary { cursor: pointer; font-family: var(--mono); font-size: 
 .contact__hours { align-self: flex-start; border-collapse: collapse; font-size: 14.5px; font-variant-numeric: tabular-nums; }
 .contact__hours th { text-align: left; font-weight: 500; padding: 3px 14px 3px 0; color: var(--muted); }
 .contact__hours td { padding: 3px 0; }
-.contact__hours .contact__now { padding-left: 10px; font-family: var(--mono); font-size: 11px; color: var(--accent); }
+.contact__now { margin-left: 8px; font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--accent); }
 .contact__hours tr.is-today th, .contact__hours tr.is-today td { color: var(--ink); font-weight: 700; }
 .contact__note, .contact__src { font-size: 13px; color: var(--muted); }
+
+/* samospráva: zasedání a body usnesení */
+.meeting { display: flex; flex-direction: column; gap: 6px; padding-left: 12px; border-left: 3px solid var(--rule-strong); min-width: 0; }
+.meeting__title { margin: 0; font-size: 17px; line-height: 1.35; font-weight: 600; }
+.meeting__none { margin: 0; font-size: 14px; }
+.meeting__doc { align-self: flex-start; font-size: 14px; font-weight: 600; padding: 4px 0; }
+.points { list-style: none; margin: 2px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.point { display: grid; grid-template-columns: 8.5em minmax(0, 1fr); gap: 2px 10px; font-size: 15px; line-height: 1.45; }
+.point__verb { font-family: var(--mono); font-size: 11.5px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase;
+  color: var(--muted); padding-top: 3px; }
+.point__amt { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+.point--hot .point__verb { color: var(--warn-ink); }
+.point--hot .point__text { font-weight: 500; }
+@media (max-width: 520px) { .point { grid-template-columns: minmax(0, 1fr); } .point__verb { padding-top: 0; } }
+.topics--wrap { flex-wrap: wrap; overflow: visible; -webkit-mask-image: none; mask-image: none; padding-right: 0; }
+.topic--obec { gap: 6px; }
+.meetings { display: flex; flex-direction: column; gap: 14px; padding-top: 6px; }
+.meetings__row { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 12px; }
+.meetings__date { font-family: var(--mono); font-size: 12.5px; color: var(--muted); padding-top: 2px; }
+.meetings .meeting__title { font-size: 15.5px; }

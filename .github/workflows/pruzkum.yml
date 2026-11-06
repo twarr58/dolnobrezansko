@@ -15,7 +15,7 @@ on:
         type: boolean
         default: false
   push:
-    paths: ["deploy/pruzkum/**", ".github/workflows/pruzkum.yml"]
+    paths: ["deploy/pruzkum/**", ".github/workflows/pruzkum.yml", "harvester/uredni_desky/samosprava.py"]
 
 permissions:
   contents: read
@@ -31,7 +31,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install httpx lxml
+      - run: pip install ./harvester
       - name: Průzkum
         env:
           HARVEST_FALLBACK_PROXY: ${{ secrets.HARVEST_FALLBACK_PROXY }}
@@ -40,3 +40,9 @@ jobs:
         run: |
           set -f
           if [ -n "$URLS" ]; then python deploy/pruzkum/pages.py $URLS; else python deploy/pruzkum/pages.py --file deploy/pruzkum/urls.txt; fi
+
+      - name: Samospráva – nalezená usnesení a zápisy
+        if: hashFiles('deploy/pruzkum/samosprava') != ''
+        env:
+          HARVEST_FALLBACK_PROXY: ${{ secrets.HARVEST_FALLBACK_PROXY }}
+        run: python -m uredni_desky samosprava --obec "$(cat deploy/pruzkum/samosprava)"
