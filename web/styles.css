@@ -566,3 +566,35 @@ details.removed summary { cursor: pointer; font-family: var(--mono); font-size: 
 .mine-chips { display: flex; gap: 6px; flex-wrap: wrap; }
 .mine-chip { font: inherit; font-size: 14px; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--rule-strong); background: var(--bg); color: var(--ink); cursor: pointer; }
 .mine-chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+/* ---------- kalendář: přidat akci, odebírat ---------- */
+.ev-wrap { position: relative; }
+.ev-wrap > .entry { padding-right: 52px; }
+.ev-wrap > .addcal { position: absolute; top: -4px; right: 0; }
+.addcal { position: relative; display: inline-block; }
+.addcal > summary { list-style: none; }
+.addcal > summary::-webkit-details-marker { display: none; }
+.addcal__btn { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; border: 1px solid var(--rule-strong);
+  border-radius: 8px; background: var(--bg); color: var(--accent); font-size: 14px; font-weight: 600; cursor: pointer; }
+.addcal__btn:hover, .addcal[open] > .addcal__btn { border-color: var(--accent); background: var(--accent-soft); }
+.addcal--icon .addcal__btn { width: 44px; height: 44px; padding: 0; justify-content: center; border-color: transparent; background: none; color: var(--muted); }
+.addcal--icon .addcal__btn:hover, .addcal--icon[open] > .addcal__btn { color: var(--accent); border-color: var(--rule-strong); background: var(--bg); }
+.addcal__menu { position: absolute; z-index: 30; top: calc(100% + 4px); right: 0; min-width: 240px; display: flex; flex-direction: column;
+  padding: 6px; border: 1px solid var(--rule-strong); border-radius: 10px; background: var(--bg); box-shadow: 0 8px 24px rgb(0 0 0 / 0.16); }
+.todo .addcal__menu, .todo__cal .addcal__menu { left: 0; right: auto; }
+.addcal__menu a { display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 6px; color: var(--ink); text-decoration: none; font-size: 15px; }
+.addcal__menu a:hover, .addcal__menu a:focus-visible { background: var(--accent-soft); color: var(--accent); }
+.todo__cal { margin-top: 10px; }
+.subcal { display: flex; flex-direction: column; gap: 8px; }
+.subcal__pick { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: var(--ink); }
+.subcal__pick select { min-height: 40px; max-width: 100%; padding: 0 8px; border: 1px solid var(--rule-strong); border-radius: 8px; background: var(--bg); color: var(--ink); font: inherit; }
+.subcal__links { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.subcal__link { display: inline-flex; align-items: center; min-height: 40px; padding: 0 12px; border: 1px solid var(--rule-strong); border-radius: 8px;
+  color: var(--accent); font-weight: 600; text-decoration: none; }
+.subcal__link:hover { border-color: var(--accent); background: var(--accent-soft); }
+.subcal__status { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+.subcal__hint { font-size: 13px; }
+.subcal-more { margin: 4px 0 8px; font-size: 14px; color: var(--muted); }
+.subcal-more > summary { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; cursor: pointer; color: var(--accent); font-weight: 600; }
+.subcal-more[open] > summary { margin-bottom: 6px; }
+.summary__sub { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; }

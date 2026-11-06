@@ -15,6 +15,7 @@ zpravodaje a stránku každé obce.
 - [Nastavení repozitáře](#nastavení-repozitáře)
 - [Shrnutí od Claude](#shrnutí-od-claude)
 - [Úprava obce v konfiguraci](#úprava-obce-v-konfiguraci)
+- [Akce do kalendáře](#akce-do-kalendáře)
 - [Proxy v ČR](#proxy-v-čr)
 - [Formát dat pro web](#formát-dat-pro-web)
 - [Celostátní režim (vypnutý)](#celostátní-režim-vypnutý)
@@ -240,6 +241,23 @@ Obec v `harvester/uredni_desky/data/region.json`:
 | `erb` | znak v repozitáři, např. `erby/zvole.svg` (soubor ve `web/erby`) |
 | `erb_commons`, `erb_qid` | soubor znaku na Wikimedia Commons, případně Wikidata ID, podle kterého se znak dohledá (P94); stáhne ho workflow `erby.yml` |
 
+## Akce do kalendáře
+
+- **Jedna akce:** u každé akce v kalendáři akcí a u oznámení s termínem (zasedání, odstávka, uzavírka) je tlačítko
+  s ikonou kalendáře a nabídkou:
+  - **Apple, iPhone (.ics):** soubor `data/kalendar/u/<uid>.ics`, Safari rovnou nabídne přidání.
+  - **Google Kalendář:** odkaz `calendar.google.com/calendar/render?action=TEMPLATE…`.
+  - **Outlook.com** a **Microsoft 365:** odkaz `…/calendar/0/action/compose…`.
+- **Odběr:** box „Odebírat kalendář“ na stránce akcí (celý region nebo jedna obec) a na stránce obce.
+  - Odkaz `webcal://…/data/kalendar/<slug>.ics` (celý region `vse.ics`) funguje pro Apple a Outlook v PC.
+  - Google se přidává přes `?cid=webcal://…`, Outlook.com přes `addfromweb`.
+  - Kalendář si aplikace obnovuje sama (`REFRESH-INTERVAL` 6 h); Google odebírané kalendáře obnovuje pomaleji, až za den.
+- **Generování:** `.ics` vytváří sběr (`harvester/uredni_desky/kalendar.py`) při každém běhu, do `site/data/kalendar/`.
+  - Obsah: akce z kalendářů obcí a oznámení s termínem akce (`s.event`). Nevisí tam sejmutá oznámení ani akce starší než 7 dní.
+  - Akce s časem trvá 2 h (zdroje konec neuvádějí), v zóně `Europe/Prague`.
+  - Akce bez času nebo vícedenní jsou celodenní; čas začátku je pak v popisu.
+  - `UID` je stálé (akce: obec + odkaz + datum, oznámení: id), takže změna akci v kalendáři přepíše a nezdvojí.
+
 ## Novinky od poslední návštěvy a Moje obce
 
 Jen v úložišti prohlížeče (`localStorage`), žádné cookies, nic se neodesílá, žádné loginy. Na jiném zařízení
@@ -357,7 +375,8 @@ Repozitář je veřejný, proto ho spouštět jen z `main`, ne z pull requestů.
   `impact`, `affects`, `bullets[]`, `facts[]`, `dates[]`, `contact`, `importance`, `src` `pravidla` \| `claude` …)
 - `newsletters[]`: `obec`, `name`, `archive`, `issues[]` (`t`, `url`, `y` rok, `fs` poprvé viděno), `ok`
   nebo `none` (obec zpravodaj nevydává)
-- `events`: `sources[]` (kalendáře obcí), `items[]` (`o`, `t`, `d`, `end`, `time`, `place`, `tags`, `url`)
+- `events`: `sources[]` (kalendáře obcí), `items[]` (`o`, `t`, `d`, `end`, `time`, `place`, `tags`, `url`, `cal`)
+- `items[].cal`, `events.items[].cal`: uid souboru `data/kalendar/u/<uid>.ics` (jen u akcí, které jsou v kalendáři)
 - `council`: `sources[]` (`obec`, `body`, `url`, `ok`, `n`), `meetings[]` (`id`, `o`, `body` rada \| zastupitelstvo,
   `kind` usneseni \| zapis, `date`, `no`, `t`, `url`, `x`, `tldr`, `points[]` (`v` sloveso, `t`, `cat`, `amt`, `imp`), `src`)
 - `items[].pl`, `council.meetings[].pl`: odkazy na parcely `{„259/13“: [ID parcely v RÚIAN, „k. ú.“]}`

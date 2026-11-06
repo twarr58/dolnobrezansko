@@ -1372,6 +1372,7 @@ function renderVillage(slug) {
           v.events.length ? h('ul', { class: 'rows' }, v.events.slice(0, 6).map(evRow))
             : h('p', { class: 'empty' }, v.evSource ? 'V příštích dnech žádné akce.' : 'Kalendář akcí obce zatím nečteme.'),
           v.events.length ? h('a', { class: 'more-link', href: `#/akce?pohled=seznam&skryt=${encodeURIComponent(others.join(','))}` }, `Všechny akce obce (${v.events.length})`, icon('M9 5l7 7-7 7', 16)) : null,
+          h('details', { class: 'subcal-more' }, h('summary', {}, icon(ICON_CAL_ADD, 16), 'Odebírat akce obce v kalendáři'), subscribeBox(m.slug)),
           h('h2', { class: 'section-title' }, 'ZPRAVODAJ'),
           v.news && latest ? h('a', { class: 'nl__latest nl__latest--side', href: safeUrl(latest.url), rel: 'noopener noreferrer', target: '_blank', title: latest.t },
             icon(ICON_DOC, 18), h('span', {}, h('span', { class: 'nl__label' }, v.news.name),
@@ -1397,6 +1398,111 @@ function kdyRange(kdy) {
 }
 
 const MONTHS = ['leden', 'únor', 'březen', 'duben', 'květen', 'červen', 'červenec', 'srpen', 'září', 'říjen', 'listopad', 'prosinec'];
+// ---------- kalendář: přidat akci, odebírat kalendář ----------
+
+const CAL_DIR = 'data/kalendar/';
+const ICON_CAL_ADD = 'M4 5h16v15H4zM4 10h16M9 3v4M15 3v4M12 13v5M9.5 15.5h5';
+const calAbs = (file) => new URL(CAL_DIR + file, location.href).href;
+const pad2 = (n) => String(n).padStart(2, '0');
+
+/** Posun pražského času o UTC (např. „+01:00“) – Outlook bez něj bere čas v zóně počítače. */
+function pragueOffset(d, time) {
+  try {
+    const part = new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Prague', timeZoneName: 'longOffset' })
+      .formatToParts(new Date(`${d}T${time}:00Z`)).find((p) => p.type === 'timeZoneName');
+    return /[+-]\d{2}:\d{2}/.exec(part?.value || '')?.[0] || '+01:00';
+  } catch { return '+01:00'; }
+}
+
+/**
+ * Odkazy „přidat do kalendáře“ pro jednu akci {t, d, end?, time?, place?, desc?, cal?}.
+ * Jako .ics na webu: s časem 2 h v pražském čase, bez času nebo vícedenní celodenně.
+ */
+function calLinks(o) {
+  const multi = isIso(o.end) && o.end > o.d;
+  const hm = !multi && /^(\d{1,2}):(\d{2})$/.exec(o.time || '');
+  const q = (obj) => Object.entries(obj).filter(([, v]) => v != null && v !== '').map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+  const desc = o.desc || '';
+  let google; let outlook;
+  if (hm) {
+    const [y, mo, da] = o.d.split('-').map(Number);
+    const b = new Date(Date.UTC(y, mo - 1, da, +hm[1], +hm[2]));
+    const e = new Date(b.getTime() + 2 * 3600e3);
+    const fmt = (x, sep) => `${x.getUTCFullYear()}${sep}${pad2(x.getUTCMonth() + 1)}${sep}${pad2(x.getUTCDate())}`;
+    const tm = (x, sep) => `${pad2(x.getUTCHours())}${sep}${pad2(x.getUTCMinutes())}${sep}00`;
+    google = { dates: `${fmt(b, '')}T${tm(b, '')}/${fmt(e, '')}T${tm(e, '')}`, ctz: 'Europe/Prague' };
+    outlook = { startdt: `${fmt(b, '-')}T${tm(b, ':')}${pragueOffset(o.d, `${pad2(+hm[1])}:${hm[2]}`)}`,
+      enddt: `${fmt(e, '-')}T${tm(e, ':')}${pragueOffset(fmt(e, '-'), tm(e, ':').slice(0, 5))}` };
+  } else {
+    const after = addDays(multi ? o.end : o.d, 1); // konec celodenní akce je výhradně den po ní
+    google = { dates: `${o.d.replaceAll('-', '')}/${after.replaceAll('-', '')}` };
+    outlook = { startdt: o.d, enddt: after, allday: 'true' };
+  }
+  const ms = (host) => `https://${host}/calendar/0/action/compose?${q({ rru: 'addevent', subject: o.t, ...outlook, location: o.place, body: desc })}`;
+  return [
+    o.cal ? ['Apple, iPhone (.ics)', `${CAL_DIR}u/${o.cal}.ics`, true] : null,
+    ['Google Kalendář', `https://calendar.google.com/calendar/render?${q({ action: 'TEMPLATE', text: o.t, ...google, location: o.place, details: desc })}`],
+    ['Outlook.com', ms('outlook.live.com')],
+    ['Outlook – práce, škola (Microsoft 365)', ms('outlook.office.com')],
+  ].filter(Boolean);
+}
+
+/** Tlačítko s nabídkou kalendářů; compact = jen ikona (u akce v seznamu). */
+function addToCalendar(o, { compact = false } = {}) {
+  return h('details', { class: `addcal${compact ? ' addcal--icon' : ''}` },
+    h('summary', { class: 'addcal__btn', title: 'Přidat do kalendáře', 'aria-label': compact ? `Přidat do kalendáře: ${o.t}` : null },
+      icon(ICON_CAL_ADD, compact ? 18 : 16), compact ? null : 'Přidat do kalendáře'),
+    h('div', { class: 'addcal__menu' },
+      calLinks(o).map(([label, href, file]) => h('a', file ? { href, download: '' }
+        : { href, rel: 'noopener noreferrer', target: '_blank' }, label))));
+}
+
+// otevřená nabídka se zavře klikem jinam nebo otevřením jiné
+document.addEventListener('click', (e) => {
+  for (const d of document.querySelectorAll('details.addcal[open], details.subcal[open]')) if (!d.contains(e.target)) d.open = false;
+});
+
+/** Odběr kalendáře obce (slug) nebo celého regionu: aplikace kalendáře si ho sama obnovuje. */
+function subscribeLinks(slug, name) {
+  const https = calAbs(`${slug || 'vse'}.ics`);
+  const webcal = https.replace(/^https?:/, 'webcal:');
+  const title = `${name} – akce a termíny`;
+  return [
+    ['Apple, iPhone, Outlook v PC', webcal],
+    ['Google Kalendář', `https://calendar.google.com/calendar/render?cid=${encodeURIComponent(webcal)}`],
+    ['Outlook.com', `https://outlook.live.com/calendar/0/addfromweb?url=${encodeURIComponent(https)}&name=${encodeURIComponent(title)}`],
+  ].map(([label, href]) => ({ label, href, https }));
+}
+
+function subscribeBox(fixedSlug) {
+  const members = (state.data.members || []).filter((m) => m.slug);
+  const regionName = state.data.region?.name || 'Celý region';
+  let slug = fixedSlug || '';
+  const nameOf = (s) => members.find((m) => m.slug === s)?.name || regionName;
+  const links = h('div', { class: 'subcal__links' });
+  const status = h('span', { class: 'subcal__status', role: 'status' });
+  const fill = () => {
+    const list = subscribeLinks(slug, nameOf(slug));
+    links.replaceChildren(
+      ...list.map((x) => h('a', { class: 'subcal__link', href: x.href, rel: 'noopener noreferrer', target: x.href.startsWith('webcal:') ? null : '_blank' }, x.label)),
+      h('button', { type: 'button', class: 'linkish', onclick: async () => {
+        try { await navigator.clipboard.writeText(list[0].https); status.textContent = 'Adresa zkopírována.'; } catch { status.textContent = list[0].https; }
+      } }, 'Kopírovat adresu'), status);
+  };
+  fill();
+  return h('div', { class: 'subcal' },
+    fixedSlug ? null : h('label', { class: 'subcal__pick' }, 'Kalendář: ',
+      h('select', { onchange: (e) => { slug = e.target.value; status.textContent = ''; fill(); } },
+        h('option', { value: '' }, `${regionName} (všechny obce)`),
+        members.map((m) => h('option', { value: m.slug }, m.name)))),
+    links,
+    h('p', { class: 'subcal__hint' }, 'Nové akce a termíny z oznámení (zasedání, odstávky, uzavírky) se ti v kalendáři objeví samy. Google obnovuje odebírané kalendáře pomaleji, klidně až za den.'));
+}
+
+/** Akce z kalendáře obce → údaje pro „přidat do kalendáře“. */
+const calOfEvent = (e) => ({ t: e.t, d: e.d, end: e.end, time: e.time, place: e.place, cal: e.cal,
+  desc: [`Akce obce ${e.o}.`, safeUrl(e.url) ? `Podrobnosti: ${e.url}` : null].filter(Boolean).join('\n') });
+
 const WD_HEAD = ['po', 'út', 'st', 'čt', 'pá', 'so', 'ne'];
 
 /** Posun měsíce „YYYY-MM“ o n. */
@@ -1449,12 +1555,13 @@ function renderEvents(params) {
   }
   for (const list of byDay.values()) list.sort((a, b) => (a.time || '99').localeCompare(b.time || '99') || a.t.localeCompare(b.t, 'cs'));
 
-  const eventNode = (e, day) => h('a', { class: `entry entry--event ev${isFresh(e.fs) ? ' is-fresh' : ''}`, href: safeUrl(e.url) || '#', rel: 'noopener noreferrer', target: '_blank' },
+  const eventNode = (e, day) => h('div', { class: 'ev-wrap' }, h('a', { class: `entry entry--event ev${isFresh(e.fs) ? ' is-fresh' : ''}`, href: safeUrl(e.url) || '#', rel: 'noopener noreferrer', target: '_blank' },
     h('span', { class: 'entry__meta' }, obecTag(e.o),
       [e.time, e.end && e.end !== e.d ? `${e.d < day ? 'probíhá' : 'až'} do ${dm(e.end)}` : null].filter(Boolean).map((x) => ` · ${x}`).join(''),
       isFresh(e.fs) ? [' ', freshBadge()] : null),
     h('h3', { class: 'entry__title' }, e.t),
-    e.place || e.tags?.length ? h('span', { class: 'entry__sub' }, [e.place, ...(e.tags || [])].filter(Boolean).join(' · ')) : null);
+    e.place || e.tags?.length ? h('span', { class: 'entry__sub' }, [e.place, ...(e.tags || [])].filter(Boolean).join(' · ')) : null),
+    addToCalendar(calOfEvent(e), { compact: true }));
   const dayGroup = (iso, list) => {
     const n = daysTo(iso);
     return h('section', { class: 'daygroup', 'aria-label': `${weekdayLong(iso)} ${dateCz(iso)}` },
@@ -1550,9 +1657,14 @@ function renderEvents(params) {
             }, h('span', { class: 'chip__mark', 'aria-hidden': 'true' }, hidden.has(name) ? null : icon('M5 12l5 5 9-10', 12)), crest(name, 16), name, h('span', { class: 'topic__n' }, String(counts.get(name)))),
             h('button', { type: 'button', class: 'chip__only', onclick: () => only(name), 'aria-label': `Jen ${name}` }, 'jen')))))),
       h('div', { class: 'summary' }, h('span', {}, h('strong', {}, String(shown)), ` ${plural(shown, 'akce', 'akce', 'akcí')}`,
-        f.pohled === 'mesic' ? ` v měsíci ${MONTHS[+f.mesic.slice(5, 7) - 1]}` : '')),
+        f.pohled === 'mesic' ? ` v měsíci ${MONTHS[+f.mesic.slice(5, 7) - 1]}` : ''),
+        h('button', { type: 'button', class: 'linkish summary__sub', onclick: () => document.getElementById('h-sub')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) },
+          icon(ICON_CAL_ADD, 16), 'Odebírat v kalendáři')),
       h('div', { class: f.pohled === 'mesic' ? 'main main--wide' : 'main' },
         content,
+        h('section', { class: 'villages', 'aria-labelledby': 'h-sub' },
+          h('h2', { id: 'h-sub' }, 'ODEBÍRAT KALENDÁŘ'),
+          subscribeBox()),
         h('section', { class: 'villages', 'aria-labelledby': 'h-cal' },
           h('h2', { id: 'h-cal' }, 'KALENDÁŘE NA WEBECH OBCÍ'),
           h('ul', {}, sources.map((s) => h('li', {}, h('a', { class: 'villages__obec', href: safeUrl(s.url), rel: 'noopener noreferrer', target: '_blank' }, crest(s.obec, 16), s.obec)))),
@@ -1593,6 +1705,10 @@ function renderDetail(id) {
   const tone = !w ? 'todo todo--calm' : w.kind === 'warn' ? 'todo' : w.kind === 'event' ? 'todo todo--event' : 'todo todo--calm';
 
   const ai = aiInfo(it, s, docs.length, original);
+  // budoucí nebo probíhající akce/jednání z oznámení → přidat do kalendáře
+  const calBtn = it.cal && w && (w.type === 'event' || w.type === 'running') && isIso(s.event)
+    ? h('div', { class: 'todo__cal' }, addToCalendar({ t: `${it.t} (${it.o})`, d: s.event, end: s.event_end, time: s.time, place: s.where, cal: it.cal,
+      desc: [s.tldr, s.action, `Oznámení: ${new URL(detailHref(it), location.href).href}`].filter(Boolean).join('\n') })) : null;
   mount(s.tldr || it.t,
     h('div', { class: 'page' },
       siteNav('desky'),
@@ -1606,9 +1722,9 @@ function renderDetail(id) {
       s.action
         ? h('section', { class: tone, 'aria-label': 'Co můžeš udělat' },
           h('p', { class: 'todo__main' }, withLinks(s.action, it)),
-          whenText ? h('p', { class: 'todo__when' }, whenText) : null)
+          whenText ? h('p', { class: 'todo__when' }, whenText) : null, calBtn)
         : h('section', { class: tone === 'todo' ? tone : `${tone} todo--plain`, 'aria-label': 'Co můžeš udělat' },
-          h('p', {}, whenText || 'Jen pro informaci, nic dělat nemusíš.')),
+          h('p', {}, whenText || 'Jen pro informaci, nic dělat nemusíš.'), calBtn),
       twins.length ? h('section', { class: 'twins', 'aria-label': 'Stejné oznámení u dalších obcí' },
         h('span', {}, 'Totéž vyvěsily i: '),
         twins.map((x, i) => [i ? ', ' : '', h('a', { class: 'obec obec--link', href: detailHref(x), style: obecStyle(x.o) }, crest(x.o, 14), x.o)])) : null,
@@ -1751,7 +1867,7 @@ function renderHelp() {
   const sections = [
     ['help-zdroje', 'ODKUD JSOU DATA', 'Odkud jsou data', h('dl', { class: 'help__rows' },
       row('Úřední desky', `${nDesky} z ${nObce} obcí, každou hodinu přímo z webů obcí (u některých přes edesky.cz). Teď ${nItems} oznámení.`),
-      row('Kalendář akcí', 'Akce z kalendářů na webech obcí na příštích 60 dní.'),
+      row('Kalendář akcí', 'Akce z kalendářů na webech obcí na příštích 60 dní. Akci si přidáš do svého kalendáře (Apple, Google, Outlook), nebo kalendář obce rovnou odebíráš.'),
       row('Zpravodaje', 'Nová čísla obecních zpravodajů s odkazem na web obce.'),
       row('Samospráva', `Usnesení a zápisy rad a zastupitelstev z webů obcí, letošní rok${nMeet ? ` (${nMeet} zasedání)` : ''}.`),
       row('Obce', 'Kontakty a úřední hodiny úřadů, znaky obcí.'))],
