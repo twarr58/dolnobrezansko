@@ -466,5 +466,11 @@ details.removed summary { cursor: pointer; font-family: var(--mono); font-size: 
 
 /* patička: počítadlo návštěvníků (GoatCounter) */
 .sitefoot { border-top: 1px solid var(--rule); margin-top: 24px; color: var(--muted); font-size: 13px; }
-.sitefoot__in { max-width: 1200px; margin: 0 auto; padding: 14px 16px 20px; display: flex; flex-wrap: wrap; gap: 4px 16px; justify-content: center; text-align: center; }
+.sitefoot__in { max-width: 1200px; margin: 0 auto; padding: 14px 16px 12px; display: flex; flex-wrap: wrap; gap: 4px 16px; justify-content: center; text-align: center; }
 .sitefoot__in a { color: inherit; }
+.sitefoot__in + .sitefoot__in { padding-top: 0; }
+.sitefoot__in:last-child { padding-bottom: 20px; }
+.sitefoot__in--small { font-size: 12px; }
+.sitefoot__in a.sitefoot__sponsor { color: var(--accent); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.sitefoot__in a.sitefoot__sponsor:hover { text-decoration: underline; }
+.sitefoot__heart { color: #db61a2; }
