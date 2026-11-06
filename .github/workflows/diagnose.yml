@@ -27,4 +27,7 @@ jobs:
         run: |
           git fetch --depth 1 origin data
           git worktree add --detach state FETCH_HEAD
-      - run: python -m uredni_desky diagnose --boards state/boards.json --kinds "${{ inputs.kinds }}"
+      - name: Diagnostika
+        env:
+          KINDS: ${{ inputs.kinds }} # vstup jen přes proměnnou, ne přímo do příkazu (shell injection)
+        run: python -m uredni_desky diagnose --boards state/boards.json --kinds "$KINDS"

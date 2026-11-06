@@ -167,14 +167,12 @@ class Fetcher:
         headers = BROWSER_HEADERS if browser else HTML_HEADERS
         host = urlsplit(url).hostname or ""
         if self.fallback is not None and host in self.proxy_hosts:
-            r = await self.fallback.get(url, headers=headers, timeout=40)
-            r.raise_for_status()
-            return r
+            return await _get_limited(self.fallback, url, headers)
         try:
-            r = await self.client.get(url, headers=headers, timeout=40)
+            r = await _get_limited(self.client, url, headers, raise_status=False)
             if r.status_code >= 500:  # weby obcí občas krátce padají – jeden pokus navíc
                 await asyncio.sleep(RETRY_DELAY)
-                r = await self.client.get(url, headers=headers, timeout=40)
+                r = await _get_limited(self.client, url, headers, raise_status=False)
             r.raise_for_status()
             return r
         except httpx.HTTPError as exc:
@@ -182,9 +180,22 @@ class Fetcher:
                                              and exc.response.status_code >= 500):
                 raise
             self.proxy_hosts.add(host)
-            r = await self.fallback.get(url, headers=headers, timeout=40)
+            return await _get_limited(self.fallback, url, headers)
+
+
+async def _get_limited(client: httpx.AsyncClient, url: str, headers: dict, raise_status: bool = True) -> httpx.Response:
+    """GET s limitem velikosti (documents.MAX_BYTES) – čte se po částech, obří odpověď se nenačte celá do paměti."""
+    async with client.stream("GET", url, headers=headers, timeout=40) as r:
+        if raise_status:
             r.raise_for_status()
-            return r
+        buf = bytearray()
+        async for chunk in r.aiter_bytes():
+            buf.extend(chunk)
+            if len(buf) > documents.MAX_BYTES:
+                raise ValueError(f"odpověď je větší než {documents.MAX_BYTES // 2**20} MB")
+        # hlavičky bez Content-Encoding/Length – obsah už je rozbalený
+        hdrs = [(k, v) for k, v in r.headers.multi_items() if k.lower() not in ("content-encoding", "content-length")]
+        return httpx.Response(r.status_code, headers=hdrs, content=bytes(buf), request=r.request)
 
 
 async def list_documents(f: Fetcher, cfg: dict, years: set[int]) -> list[dict]:

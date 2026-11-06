@@ -217,3 +217,36 @@ def test_year_page_does_not_open_other_years():
 
     docs = asyncio.run(go())
     assert [d["date"] for d in docs] == ["2026-01-14"] and "https://m.cz/rm-2025" not in hits
+
+
+def test_fetcher_refuses_oversized_response(monkeypatch):
+    monkeypatch.setattr(documents, "MAX_BYTES", 1000)
+    handler = lambda req: httpx.Response(200, content=b"x" * 5000 if req.url.path == "/velky" else b"ok")  # noqa: E731
+
+    async def go(path):
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as c:
+            return await S.Fetcher(c, None).get(f"https://obec.cz{path}")
+
+    assert asyncio.run(go("/maly")).content == b"ok"
+    try:
+        asyncio.run(go("/velky"))
+        raise AssertionError("velká odpověď měla skončit chybou")
+    except ValueError as exc:
+        assert "větší než" in str(exc)
+
+
+def test_zip_bomb_is_refused(monkeypatch):
+    import io
+    import zipfile
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("word/document.xml", b"<w:document>" + b" " * 5_000_000 + b"</w:document>")
+    monkeypatch.setattr(documents, "MAX_UNZIPPED", 1_000_000)
+    with zipfile.ZipFile(io.BytesIO(buf.getvalue())) as zf:
+        try:
+            documents.read_zip_member(zf, "word/document.xml")
+            raise AssertionError("zip bomba měla skončit chybou")
+        except ValueError as exc:
+            assert "po rozbalení" in str(exc)
+    assert len(buf.getvalue()) < 100_000  # 5 MB textu se zabalí do pár kB

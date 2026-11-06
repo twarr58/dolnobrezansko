@@ -92,6 +92,13 @@ Hodinový workflow **Sběr desek mikroregionu a nasazení** (`harvest.yml`) spus
 | `pruzkum.yml` – Průzkum stránek obcí | ručně, změna `deploy/pruzkum/**` | vypíše text a odkazy stránek obcí (při odmítnutí přes proxy) a nalezená usnesení |
 | `probe.yml`, `diagnose.yml`, `explore.yml` | ručně | ladění adaptérů, diagnostika nedostupných desek, průzkum NKOD |
 
+**Práva workflow:** kód, který zpracovává cizí soubory (PDF, obrázky, Word, OCR), běží jen s právem čtení
+repozitáře. Do větví `data` a `assets` zapisuje samostatný úkol (`save-state`, `save`), který dostane hotový
+výstup jako artefakt a nic cizího nespouští; web nasazuje úkol `deploy`.
+
+**Aktualizace závislostí:** Dependabot (`.github/dependabot.yml`) otevírá každé pondělí PR s aktualizacemi
+balíčků harvesteru a akcí GitHubu; testy v PR je ověří.
+
 ## Lokální vývoj
 
 | Příkaz | Co dělá |

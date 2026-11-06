@@ -28,6 +28,7 @@ logging.getLogger("pypdf").setLevel(logging.ERROR)  # stovky varování o fontec
 _OCR_ENV = {**os.environ, "OMP_THREAD_LIMIT": "1"}
 
 MAX_BYTES = 30 * 1024 * 1024
+MAX_UNZIPPED = 100 * 1024 * 1024  # rozbalený soubor z DOCX/ODT/ZIP – ochrana proti „zip bombě“
 TEXT_PAGES = 400  # text z PDF (dlouhé dokumenty jdou Claude jako text – musí být celé)
 OCR_PAGES = 3
 EXCERPT = 8000  # kolik textu se ukládá do mezipaměti (pro pravidla a hledání)
@@ -119,9 +120,23 @@ def _xml_text(data: bytes) -> str:
     return "\n".join(out)
 
 
+def read_zip_member(zf: zipfile.ZipFile, name: str, limit: int | None = None) -> bytes:
+    """Soubor z archivu s limitem rozbalené velikosti. Velikost v hlavičce může lhát, proto se čte po částech."""
+    limit = limit or MAX_UNZIPPED
+    if zf.getinfo(name).file_size > limit:
+        raise ValueError(f"{name} je po rozbalení větší než {limit // 2**20} MB")
+    buf = bytearray()
+    with zf.open(name) as f:
+        while chunk := f.read(1 << 20):
+            buf.extend(chunk)
+            if len(buf) > limit:
+                raise ValueError(f"{name} je po rozbalení větší než {limit // 2**20} MB")
+    return bytes(buf)
+
+
 def _office_text(content: bytes, ext: str) -> str:
-    zf = zipfile.ZipFile(io.BytesIO(content))
-    return _xml_text(zf.read("word/document.xml" if ext == "docx" else "content.xml"))
+    with zipfile.ZipFile(io.BytesIO(content)) as zf:
+        return _xml_text(read_zip_member(zf, "word/document.xml" if ext == "docx" else "content.xml"))
 
 
 _DOC_RUN16 = re.compile(r"(?:[\x20-\x7e\xa0-\u024f\r\n\t\u2013\u2014\u2018-\u201e\u2022\u2026]){12,}")
