@@ -12,6 +12,8 @@ from typing import Any
 
 import json_repair
 
+from . import documents
+
 _ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}")
 
 
@@ -100,7 +102,7 @@ def _unzip(content: bytes, warnings: list[str]) -> bytes:
         if not json_names:
             raise BoardFormatError("ZIP archiv neobsahuje žádný soubor")
         warnings.append("data jsou v ZIP archivu")
-        return zf.read(json_names[0])
+        return documents.read_zip_member(zf, json_names[0])
 
 
 def _as_board(data: Any, warnings: list[str]) -> dict:
@@ -132,6 +134,8 @@ def decode_board(content: bytes) -> tuple[dict, list[str]]:
             content = _unzip(content, warnings)
         except zipfile.BadZipFile as exc:
             raise BoardFormatError(f"Poškozený ZIP archiv: {exc}") from exc
+        except ValueError as exc:  # příliš velký po rozbalení
+            raise BoardFormatError(str(exc)) from exc
     try:
         text = content.decode("utf-8-sig")
     except UnicodeDecodeError:

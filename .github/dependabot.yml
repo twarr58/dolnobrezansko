@@ -1,0 +1,36 @@
+# Dependabot: jednou týdně PR s aktualizacemi závislostí harvesteru (pip) a akcí GitHubu.
+# Bezpečnostní opravy (Dependabot security updates) chodí hned, nezávisle na tomto rozvrhu –
+# zapínají se v Settings → Code security → Dependabot security updates.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /harvester
+    # pyproject má jen spodní hranice (>=) a CI instaluje vždy nejnovější verze; „increase“ zvedá spodní
+    # hranici na otestovanou verzi – PR tak spustí testy proti nové verzi a hranice nezůstane zastaralá.
+    versioning-strategy: increase
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:23"
+      timezone: Europe/Prague
+    open-pull-requests-limit: 5
+    groups:
+      # drobné aktualizace v jednom PR, ať se nehromadí
+      python-minor:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: "deps"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:23"
+      timezone: Europe/Prague
+    open-pull-requests-limit: 5
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: "ci"

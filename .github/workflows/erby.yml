@@ -17,8 +17,9 @@ on:
       - "harvester/uredni_desky/erby.py"
       - ".github/workflows/erby.yml"
 
+# Stahování a úprava obrázků (cizí data) běží jen s právem čtení; do větve assets zapisuje úkol save.
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: erby
@@ -50,6 +51,33 @@ jobs:
           HARVEST_FALLBACK_PROXY: ${{ secrets.HARVEST_FALLBACK_PROXY }}
         run: python -m uredni_desky erby --out assets ${{ inputs.force && '--force' || '' }}
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: erby
+          path: assets/erby
+          retention-days: 1
+
+  save:
+    needs: erby
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: README.md
+      - name: Načíst větev assets
+        run: |
+          if git fetch --depth 1 origin assets; then
+            git worktree add -B assets-next assets FETCH_HEAD
+          else
+            git worktree add --orphan -b assets-next assets
+          fi
+          rm -rf assets/erby # obsah přesně podle úkolu erby (i smazané znaky)
+      - uses: actions/download-artifact@v4
+        with:
+          name: erby
+          path: assets/erby
       - name: Uložit do větve assets
         run: |
           cd assets

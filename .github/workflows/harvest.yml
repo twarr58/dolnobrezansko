@@ -8,10 +8,11 @@ on:
     branches: [main]
     paths: ["web/**", "harvester/**", ".github/workflows/harvest.yml"]
 
+# Výchozí práva jen ke čtení. Kód, který zpracovává cizí soubory (PDF, obrázky, Word, OCR), běží v úkolu
+# harvest bez práva zápisu do repozitáře; stav do větve `data` ukládá samostatný úkol save-state a web
+# nasazuje úkol deploy – ani jeden nic cizího nespouští.
 permissions:
-  contents: write # plný stav (items.json) se ukládá do větve `data`
-  pages: write
-  id-token: write
+  contents: read
 
 concurrency:
   group: harvest
@@ -34,6 +35,9 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 55
+    permissions:
+      contents: read
+      id-token: write # jen pro přihlášení ke Claude (Workload Identity Federation)
     # Claude: přihlášení bez klíče přes Workload Identity Federation (viz README). Pravidlo v Claude Console
     # přijímá jen token GitHubu z repo:twarr58/dolnobrezansko:ref:refs/heads/main.
     steps:
@@ -96,28 +100,55 @@ jobs:
           rsync -a --exclude data web/ site/
           if [ -d assets/erby ]; then rsync -a --exclude index.json assets/erby/ site/erby/; fi
 
+      - name: Připravit stav k uložení
+        run: |
+          mkdir -p state-out
+          cp state/items.json.gz state/boards.json state-out/
+          for f in docs.json.gz summaries.json.gz region_sources.json discovered.json obce.json newsletters.json events.json council.json parcely.json; do
+            [ -f "state/$f" ] && cp "state/$f" state-out/ || true
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: state
+          path: state-out
+          retention-days: 1
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  save-state:
+    needs: harvest
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # plný stav (items.json…) se ukládá do větve `data`
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: README.md
+      - uses: actions/download-artifact@v4
+        with:
+          name: state
+          path: state-out
       - name: Uložit stav do větve data
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # Větev drží jen poslední stav (jeden commit bez historie), aby repozitář nebobtnal.
           git worktree add --orphan -b data-next out
-          cp state/items.json.gz state/boards.json out/
-          for f in docs.json.gz summaries.json.gz region_sources.json discovered.json obce.json newsletters.json events.json council.json parcely.json; do
-            [ -f "state/$f" ] && cp "state/$f" out/ || true
-          done
+          cp state-out/* out/
           cd out
           git add -A
           git commit -qm "Stav sběru $(date -u +%FT%TZ)"
           git push -fq origin HEAD:data
 
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
-
   deploy:
     needs: harvest
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

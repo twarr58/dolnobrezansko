@@ -10,8 +10,9 @@ on:
         type: boolean
         default: false
 
+# Hledání (cizí weby) běží jen s právem čtení; do větve data zapisuje úkol save.
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: harvest # sdílí větev data se sběrem
@@ -37,12 +38,35 @@ jobs:
         env:
           RECHECK: ${{ inputs.recheck && '--recheck' || '' }}
         run: python -m uredni_desky discover --out state/discovered.json --nkod state/boards.json $RECHECK
+      - name: Připravit stav k uložení
+        run: |
+          mkdir -p state-out
+          cp state/*.json state/*.gz state-out/ 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: state
+          path: state-out
+          retention-days: 1
+
+  save:
+    needs: discover
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: README.md
+      - uses: actions/download-artifact@v4
+        with:
+          name: state
+          path: state-out
       - name: Uložit do větve data
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git worktree add --orphan -b data-next out
-          cp state/*.json state/*.gz out/ 2>/dev/null || true
+          cp state-out/* out/
           cd out
           git add -A
           git commit -qm "Hledání desek obcí $(date -u +%FT%TZ)"
