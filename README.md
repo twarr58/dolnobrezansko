@@ -264,7 +264,12 @@ Jen v úložišti prohlížeče (`localStorage`), žádné cookies, nic se neode
 nebo v anonymním okně web novinky nezná a chová se jako při první návštěvě.
 
 - **Návštěva:** `dl-seen-at` = poslední aktivita, `dl-last-visit` = konec předchozí návštěvy (nová návštěva =
-  víc než 30 minut od poslední aktivity). Novinka = položka, jejíž `fs` (kdy se poprvé objevila) je novější.
+  víc než 30 minut od poslední aktivity). Novinka = položka, jejíž `fs` (kdy ji sběr poprvé uviděl) je novější.
+- **Dohánění není novinka:** sběr občas uvidí poprvé i staré věci (deska obce začne ukazovat starší
+  oznámení, dávka starších usnesení). Oznámení je proto novinkou jen s vyvěšením nejvýš 7 dní před `fs`
+  a zasedání s datem nejvýš 30 dní před `fs` (`FRESH_ITEM_DAYS`, `FRESH_MEETING_DAYS` v `web/app.js`).
+- **Tlačítka v liště** vedou rovnou na nové položky: oznámení filtr `?nove=1` na úvodu, akce
+  `#/akce?pohled=seznam&nove=1`, zasedání `#/samosprava?nove=1` (štítek „jen nové pro vás ×“ filtr vypne).
 - **Kde je vidět:** lišta na úvodu („Od vaší poslední návštěvy … přibylo: 6 oznámení · 1 zpravodaj · 2 akce ·
   1 zasedání“ s tlačítky *Ukázat jen nové* a *Mám přečteno*), počty u sekcí v hlavičce (na telefonu tečka),
   štítek „nové pro vás“ a tyrkysová tečka u položek. Tyrkysová (`--fresh`) je jen pro novinky. První návštěva

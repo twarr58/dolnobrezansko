@@ -598,3 +598,6 @@ details.removed summary { cursor: pointer; font-family: var(--mono); font-size: 
 .subcal-more > summary { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; cursor: pointer; color: var(--accent); font-weight: 600; }
 .subcal-more[open] > summary { margin-bottom: 6px; }
 .summary__sub { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; }
+.fresh-filter { display: inline-flex; align-items: center; min-height: 32px; padding: 0 10px; border: 1px solid var(--fresh); border-radius: 999px;
+  background: var(--fresh-soft); color: var(--fresh); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.fresh-filter:hover { text-decoration: line-through; }
