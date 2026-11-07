@@ -1,0 +1,40 @@
+{
+ "Vestec": {
+  "checked": "2026-11-05T11:23:45+00:00",
+  "entry": null,
+  "web": "http://www.obecvestec.cz/",
+  "status": "systém desky zatím neumíme číst",
+  "board_link": "http://www.obecvestec.cz/edeska"
+ },
+ "Zlatníky-Hodkovice": {
+  "checked": "2026-11-05T11:23:45+00:00",
+  "entry": {
+   "fmt": "html",
+   "url": "https://zlatniky-hodkovice.cz/uredni-deska"
+  },
+  "web": "http://www.zlatniky-hodkovice.cz/",
+  "status": "deska nalezena automaticky",
+  "board_link": ""
+ },
+ "Březová-Oleško": {
+  "checked": "2026-11-05T13:37:42+00:00",
+  "entry": null,
+  "web": "https://www.brezova-olesko.cz/",
+  "status": "web nedostupný (timeout)",
+  "board_link": ""
+ },
+ "Jesenice": {
+  "checked": "2026-11-05T13:15:04+00:00",
+  "entry": null,
+  "web": "http://www.mujesenice.cz",
+  "status": "web nedostupný (timeout)",
+  "board_link": ""
+ },
+ "Okrouhlo": {
+  "checked": "2026-11-05T13:15:04+00:00",
+  "entry": null,
+  "web": "http://www.okrouhlo.cz/",
+  "status": "web nedostupný (timeout)",
+  "board_link": ""
+ }
+}
