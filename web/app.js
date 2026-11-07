@@ -139,7 +139,7 @@ function badges(it) {
   const s = it.s || {};
   return [
     s.importance === 'vysoka' ? h('span', { class: 'badge badge--hot', title: s.importance_why || null }, 'důležité') : null,
-    visit.last ? (isFresh(it.fs) && !it.r ? freshBadge() : null)
+    visit.last ? (itemFresh(it) ? freshBadge() : null)
       : isIso(it.p) && daysTo(it.p) >= -NEW_DAYS && !it.r ? h('span', { class: 'badge' }, 'nové') : null,
     (isIso(s.updated) && daysTo(s.updated) >= -7) || s.pending
       ? h('span', { class: 'badge badge--hot', title: 'Úřad oznámení upravil (příloha nebo termín)' }, 'změna') : null,
@@ -181,6 +181,20 @@ function isFresh(fs) {
   return Number.isFinite(t) && t > Date.parse(visit.last);
 }
 
+// Sběr občas dožene starší věci: nově zprovozněná nebo změněná deska obce, dávka starších usnesení.
+// Ty se poprvé objeví teď, ale novinky to nejsou – novinkou je jen věc, která je čerstvá i sama o sobě.
+const FRESH_ITEM_DAYS = 7;     // oznámení: vyvěšeno nejvýš týden před tím, než ho sběr uviděl
+const FRESH_MEETING_DAYS = 30; // usnesení vychází i několik týdnů po zasedání
+
+/** Novinka pro vracejícího se návštěvníka: poprvé viděno po minulé návštěvě a datum (vyvěšení, zasedání) blízko. */
+function isNewFor(fs, date, days) {
+  if (!isFresh(fs)) return false;
+  return !isIso(date) || Date.parse(fs) - Date.parse(date) <= days * 86400e3;
+}
+const itemFresh = (it) => !it.r && isNewFor(it.fs, it.p, FRESH_ITEM_DAYS);
+const meetingFresh = (m) => isNewFor(m.fs, m.date, FRESH_MEETING_DAYS);
+const inMine = (o) => { const mine = getMine(); return !mine.size || mine.has(o); };
+
 function markAllRead() {
   visit.last = new Date().toISOString();
   lsSet(LS_LAST, visit.last);
@@ -215,13 +229,17 @@ function news() {
   const ok = (o) => !mine.size || mine.has(o);
   const d = state.data;
   return {
-    items: d.items.filter((it) => !it.r && ok(it.o) && isFresh(it.fs)).length,
+    items: d.items.filter((it) => ok(it.o) && itemFresh(it)).length,
     events: (d.events?.items || []).filter((e) => ok(e.o) && isFresh(e.fs)).length,
     issues: (d.newsletters || []).filter((n) => ok(n.obec)).reduce((k, n) => k + (n.issues || []).filter((i) => isFresh(i.fs)).length, 0),
-    meetings: (d.council?.meetings || []).filter((m) => ok(m.o) && isFresh(m.fs)).length,
+    meetings: (d.council?.meetings || []).filter((m) => ok(m.o) && meetingFresh(m)).length,
     mine,
   };
 }
+
+/** Štítek zapnutého filtru „jen nové pro vás“ s křížkem (akce, samospráva). */
+const freshFilterChip = (off) => h('button', { type: 'button', class: 'fresh-filter', onclick: off, title: 'Zobrazit vše' },
+  'jen nové pro vás', getMine().size ? ' · moje obce' : '', h('span', { 'aria-hidden': 'true' }, ' ×'));
 
 const freshBadge = () => h('span', { class: 'badge badge--fresh', title: 'Přibylo od vaší poslední návštěvy' }, 'nové pro vás');
 /** Štítek novinky: vracející se návštěvník „nové pro vás“ podle poslední návštěvy, první návštěva „nové“ podle stáří. */
@@ -253,8 +271,8 @@ function newsBar(setFilter) {
     h('div', { class: 'newsbar__row' },
       pill(n.items, ['oznámení', 'oznámení', 'oznámení'], { type: 'button', class: 'pill pill--solid', onclick: () => setFilter({ nove: true }) }),
       pill(n.issues, ['zpravodaj', 'zpravodaje', 'zpravodajů'], { href: '#/zpravodaje' }),
-      pill(n.events, ['akce', 'akce', 'akcí'], { href: '#/akce' }),
-      pill(n.meetings, ['zasedání', 'zasedání', 'zasedání'], { href: '#/samosprava' }),
+      pill(n.events, ['akce', 'akce', 'akcí'], { href: '#/akce?pohled=seznam&nove=1' }),
+      pill(n.meetings, ['zasedání', 'zasedání', 'zasedání'], { href: '#/samosprava?nove=1' }),
       h('span', { class: 'newsbar__acts' },
         n.items ? h('button', { type: 'button', class: 'linkish', onclick: () => setFilter({ nove: true }) }, 'Ukázat jen nové') : null,
         h('button', {
@@ -658,7 +676,7 @@ function filtered() {
   const mine = moje ? getMine() : null;
   return state.data.items.filter((it) => {
     if (obec && it.o !== obec) return false;
-    if (nove && !isFresh(it.fs)) return false;
+    if (nove && !itemFresh(it)) return false;
     if (mine?.size && !mine.has(it.o)) return false;
     if (tema && it.s?.cat !== tema) return false;
     if (lhuta && !(isIso(it.s?.deadline) && daysTo(it.s.deadline) >= 0 && !it.r)) return false;
@@ -671,7 +689,7 @@ function filtered() {
 function entry(it, w, also = []) {
   const s = it.s || {};
   const meta = entryMeta(it, w);
-  return h('a', { class: `entry entry--${w.kind}${isFresh(it.fs) ? ' is-fresh' : ''}`, href: detailHref(it) },
+  return h('a', { class: `entry entry--${w.kind}${itemFresh(it) ? ' is-fresh' : ''}`, href: detailHref(it) },
     h('span', { class: 'entry__meta' }, obecTags([it.o, ...also.map((x) => x.o)]),
       h('span', { class: w.type === 'deadline' ? 'entry__when--warn' : null }, meta ? ` · ${meta}` : ''), ` · ${label(it)}`, badges(it)),
     h('h3', { class: 'entry__title' }, s.tldr || it.t),
@@ -680,7 +698,7 @@ function entry(it, w, also = []) {
 
 function row(it, dateIso, dateNote, datePrefix, also = []) {
   const s = it.s || {};
-  return h('li', {}, h('a', { class: `row${isFresh(it.fs) ? ' is-fresh' : ''}`, href: detailHref(it) },
+  return h('li', {}, h('a', { class: `row${itemFresh(it) ? ' is-fresh' : ''}`, href: detailHref(it) },
     h('span', { class: 'row__date' }, datePrefix ? h('span', { class: 'row__pre' }, datePrefix) : null, isIso(dateIso) ? dm(dateIso) : '–'),
     h('span', { class: 'row__body' },
       h('span', { class: 'row__title' }, s.tldr || it.t),
@@ -1157,7 +1175,7 @@ function meetingNode(mt, { compact = false } = {}) {
   const doc = safeUrl(mt.url);
   return h('article', { class: 'meeting' },
     h('span', { class: 'entry__meta' }, obecTag(mt.o), ` · ${BODY[mt.body] || mt.body}`, mt.no ? ` · č. ${mt.no}` : '',
-      mt.kind === 'zapis' ? ' · zápis' : '', isFresh(mt.fs) ? [' ', freshBadge()] : null),
+      mt.kind === 'zapis' ? ' · zápis' : '', meetingFresh(mt) ? [' ', freshBadge()] : null),
     h('h3', { class: 'meeting__title' }, mt.tldr ? withLinks(czDates(mt.tldr), mt) : (mt.t || 'Usnesení')),
     shown.length ? h('ul', { class: 'points' }, shown.map(point)) : null,
     rest.length ? h('details', { class: 'more-details' }, h('summary', {}, `Další body (${rest.length})`),
@@ -1172,20 +1190,22 @@ function renderCouncil(params) {
   const all = (c.meetings || []).filter((m) => m.o);
   const bySlug = (s) => (state.data.members || []).find((m) => m.slug === s)?.name || '';
   const f = { obec: bySlug(params.get('obec') || ''), organ: BODY[params.get('organ')] ? params.get('organ') : '',
-    jen: params.get('jen') === 'dulezite' };
+    jen: params.get('jen') === 'dulezite', nove: params.get('nove') === '1' && !!visit.last };
   const go = (patch) => {
     const n = { ...f, ...patch };
     const p = new URLSearchParams();
     if (n.obec) p.set('obec', obecOf(n.obec).slug || n.obec);
     if (n.organ) p.set('organ', n.organ);
     if (n.jen) p.set('jen', 'dulezite');
+    if (n.nove) p.set('nove', '1');
     history.replaceState(null, '', p.toString() ? `#/samosprava?${p}` : '#/samosprava');
     renderCouncil(p);
   };
   const counts = new Map();
   for (const m of all) counts.set(m.o, (counts.get(m.o) || 0) + 1);
   const list = all.filter((m) => (!f.obec || m.o === f.obec) && (!f.organ || m.body === f.organ)
-    && (!f.jen || (m.points || []).some((p) => p.imp === 'vysoka')))
+    && (!f.jen || (m.points || []).some((p) => p.imp === 'vysoka'))
+    && (!f.nove || (meetingFresh(m) && inMine(m.o))))
     .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   const months = [];
   for (const m of list) {
@@ -1214,7 +1234,8 @@ function renderCouncil(params) {
           h('button', { type: 'button', class: 'topic', 'aria-pressed': String(!f.obec), onclick: () => go({ obec: '' }) }, 'Všechny obce'),
           names.map((n) => h('button', { type: 'button', class: 'topic topic--obec', 'aria-pressed': String(f.obec === n), onclick: () => go({ obec: f.obec === n ? '' : n }) },
             crest(n, 16), n, h('span', { class: 'topic__n' }, String(counts.get(n))))))),
-      h('div', { class: 'summary' }, h('span', {}, h('strong', {}, String(list.length)), ` ${plural(list.length, 'zasedání', 'zasedání', 'zasedání')}`)),
+      h('div', { class: 'summary' }, h('span', {}, h('strong', {}, String(list.length)), ` ${plural(list.length, 'zasedání', 'zasedání', 'zasedání')}`),
+        f.nove ? freshFilterChip(() => go({ nove: false })) : null),
       h('div', { class: 'main' },
         h('div', { class: 'timeline' },
           months.length ? months.map((g) => [
@@ -1520,6 +1541,7 @@ function renderEvents(params) {
     kdy: params.get('kdy') || '',
     mesic: /^\d{4}-\d{2}$/.test(params.get('mesic') || '') ? params.get('mesic') : TODAY.slice(0, 7),
     den: isIso(params.get('den')) ? params.get('den') : '',
+    nove: params.get('nove') === '1' && !!visit.last, // z lišty novinek: jen akce nové od minulé návštěvy
   };
   const all = (ev.items || []).filter((e) => isIso(e.d) && (e.end || e.d) >= TODAY);
   const counts = new Map();
@@ -1532,6 +1554,7 @@ function renderEvents(params) {
     if (n.pohled === 'seznam' && n.kdy) p.set('kdy', n.kdy);
     if (n.pohled === 'mesic' && n.mesic !== TODAY.slice(0, 7)) p.set('mesic', n.mesic);
     if (n.pohled === 'mesic' && n.den) p.set('den', n.den);
+    if (n.nove) p.set('nove', '1');
     history.replaceState(null, '', p.toString() ? `#/akce?${p}` : '#/akce');
     renderEvents(p);
   };
@@ -1541,7 +1564,7 @@ function renderEvents(params) {
     go({ skryt: next });
   };
   const only = (name) => go({ skryt: new Set([...counts.keys()].filter((n) => n !== name)) });
-  const visible = all.filter((e) => !hidden.has(e.o));
+  const visible = all.filter((e) => !hidden.has(e.o) && (!f.nove || (isFresh(e.fs) && inMine(e.o))));
 
   // akce po dnech; vícedenní akce je v každém svém dni (nejvýš 31 dní)
   const byDay = new Map();
@@ -1658,6 +1681,7 @@ function renderEvents(params) {
             h('button', { type: 'button', class: 'chip__only', onclick: () => only(name), 'aria-label': `Jen ${name}` }, 'jen')))))),
       h('div', { class: 'summary' }, h('span', {}, h('strong', {}, String(shown)), ` ${plural(shown, 'akce', 'akce', 'akcí')}`,
         f.pohled === 'mesic' ? ` v měsíci ${MONTHS[+f.mesic.slice(5, 7) - 1]}` : ''),
+        f.nove ? freshFilterChip(() => go({ nove: false })) : null,
         h('button', { type: 'button', class: 'linkish summary__sub', onclick: () => document.getElementById('h-sub')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) },
           icon(ICON_CAL_ADD, 16), 'Odebírat v kalendáři')),
       h('div', { class: f.pohled === 'mesic' ? 'main main--wide' : 'main' },
