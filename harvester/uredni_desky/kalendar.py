@@ -4,12 +4,13 @@ dialog kalendáře) – web zná uid z pole „cal“ u akce a oznámení.
 
 Obsahují akce z kalendářů obcí a oznámení s termínem jednání nebo akce (zasedání, odstávka, uzavírka).
 Aplikace kalendáře (Apple, Outlook, Google) si soubor po přihlášení odběru samy obnovují.
-UID je stálé (akce: obec|odkaz|datum, oznámení: id), takže aktualizace akci přepíše a nezdvojí.
+UID vychází z obce, odkazu a data akce nebo z ID oznámení. Sdílené odkazy rozlišují údaje o akci.
 """
 from __future__ import annotations
 
 import hashlib
 import shutil
+from collections import Counter
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
@@ -120,14 +121,22 @@ def entries(data: dict, now: datetime, site_url: str = SITE_URL) -> list[tuple[s
     """(obec, klíč řazení, VEVENT) pro akce obcí a oznámení s termínem akce; zahrnutým doplní „cal“ (uid)."""
     lo = now.date() - timedelta(days=PAST_DAYS)
     out = []
-    for e in (data.get("events") or {}).get("items", []):
+    events = (data.get("events") or {}).get("items", [])
+    keys = Counter((e["o"], e.get("url") or e.get("t"), e.get("d")) for e in events)
+    seen = set()
+    for e in events:
         start, end = _iso(e.get("d")), _iso(e.get("end"))
         if not start or not e.get("t") or (end or start) < lo:
             continue
         url = e.get("url") if str(e.get("url", "")).startswith("http") else None
         desc = "\n".join(x for x in [f"Akce obce {e['o']}.", url and f"Podrobnosti: {url}",
                                      f"Kalendář akcí: {site_url}#/akce"] if x)
-        e["cal"] = _uid("akce", e["o"], e.get("url") or e["t"], e["d"])
+        key = (e["o"], e.get("url") or e["t"], e["d"])
+        details = (e["t"], e.get("time"), e.get("place"), e.get("end")) if keys[key] > 1 else ()
+        e["cal"] = _uid("akce", *key, *details)
+        if e["cal"] in seen:
+            continue
+        seen.add(e["cal"])
         ev = vevent(e["cal"], e["t"], start, end=end, time=e.get("time"), place=e.get("place"), url=url, desc=desc, stamp=now)
         out.append((e["o"], (start, e.get("time") or "", e["t"]), ev))
     for it in data.get("items", []):
