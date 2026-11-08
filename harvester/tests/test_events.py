@@ -1,6 +1,6 @@
 import asyncio
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import httpx
 
@@ -207,3 +207,32 @@ def test_linklist_brezova_olesko():
     assert got == [{"t": "Pozvánka Sv. Martin", "d": "2026-11-13", "time": "17:00", "place": "v 17.00 hodin na Jezírka",
                     "url": "https://www.brezova-olesko.cz/pozvanka%2Dsv%2Dmartin/a-1289"}]
     assert "{od}" in cfg["range_url"] and "{do}" in cfg["range_url"]
+
+
+def test_collect_preserves_events_on_vismo_error_payload(tmp_path):
+    payload = VISMO
+
+    def handler(req):
+        if req.url.path.startswith("/api/"):
+            return httpx.Response(200, json=payload)
+        return httpx.Response(200, text='<meta data-id-object="99">')
+
+    members = [{"name": "A", "events": {"url": "https://obec.cz/kalendar", "fmt": "vismo"}}]
+    now = datetime(2026, 11, 7, 8, tzinfo=timezone.utc)
+
+    async def collect(at):
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            return await events.collect(client, members, tmp_path, at)
+
+    first = asyncio.run(collect(now))
+    assert first["items"]
+    payload = {"success": False, "error": {"message": "Unavailable"}, "result": None}
+    later = now + timedelta(hours=events.REFRESH_HOURS, seconds=1)
+    failed = asyncio.run(collect(later))
+    assert any(e["d"] == "2026-11-13" for e in failed["items"])
+    assert failed["sources"][0]["ok"] is False
+
+    payload = {"success": True, "result": {"items": []}}
+    recovered = asyncio.run(collect(later + timedelta(hours=events.REFRESH_HOURS, seconds=1)))
+    assert recovered["items"] == []
+    assert recovered["sources"][0]["ok"] is True

@@ -91,7 +91,11 @@ def parse_vismo(data: dict, base_url: str) -> list[dict]:
     opakovaná akce (týž objekt další víkend) je nový výskyt."""
     out: list[dict] = []
     open_: dict[str, dict] = {}
-    for day in (data.get("result") or {}).get("items") or []:
+    result = data.get("result") if isinstance(data, dict) else None
+    days = result.get("items") if isinstance(result, dict) else None
+    if not isinstance(days, list) or data.get("success") is False:
+        raise ValueError("Vismo response has no event day list")
+    for day in days:
         d = (day.get("date") or "")[:10]
         for e in day.get("events") or []:
             if e.get("IsCanceled"):
