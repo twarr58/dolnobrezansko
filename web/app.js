@@ -192,7 +192,8 @@ function isNewFor(fs, date, days) {
   return !isIso(date) || Date.parse(fs) - Date.parse(date) <= days * 86400e3;
 }
 const itemFresh = (it) => !it.r && isNewFor(it.fs, it.p, FRESH_ITEM_DAYS);
-const meetingFresh = (m) => isNewFor(m.fs, m.date, FRESH_MEETING_DAYS);
+// zasedání bez data nejde posoudit – radši ho za novinku nepovažovat (bývá to dohnaný starší dokument)
+const meetingFresh = (m) => isIso(m.date) && isNewFor(m.fs, m.date, FRESH_MEETING_DAYS);
 const inMine = (o) => { const mine = getMine(); return !mine.size || mine.has(o); };
 
 function markAllRead() {
@@ -1243,7 +1244,7 @@ function renderCouncil(params) {
             g.items.map((m) => h('section', { class: 'daygroup' },
               h('div', { class: 'daygroup__date' },
                 h('span', { class: 'daygroup__wd' }, isIso(m.date) ? weekday(m.date) : ''),
-                h('span', { class: 'daygroup__d' }, isIso(m.date) ? dm(m.date) : '–')),
+                h('span', { class: 'daygroup__d' }, isIso(m.date) ? dm(m.date) : '')),
               h('div', { class: 'daygroup__items' }, meetingNode(m))))])
             : h('p', { class: 'empty' }, all.length ? 'V tomto výběru nic.' : 'Usnesení se zatím načítají – zkus to později.')),
         h('section', { class: 'villages' },

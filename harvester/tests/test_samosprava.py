@@ -251,3 +251,12 @@ def test_zip_bomb_is_refused(monkeypatch):
         except ValueError as exc:
             assert "po rozbalení" in str(exc)
     assert len(buf.getvalue()) < 100_000  # 5 MB textu se zabalí do pár kB
+
+
+def test_meeting_date_falls_back_to_ai_date():
+    from uredni_desky.samosprava import build_meeting
+    d = {"o": "Dolní Břežany", "body": "rada", "url": "https://x/1", "title": "34-R-26 usnesení", "date": "",
+         "ai": {"date": "2026-08-17", "number": "34/R/2026", "points": []}, "found": "2026-11-07T00:56:51+00:00"}
+    assert build_meeting("a", d)["date"] == "2026-08-17"
+    assert build_meeting("a", {**d, "date": "2026-08-18"})["date"] == "2026-08-18"  # datum z webu má přednost
+    assert "date" not in build_meeting("a", {**d, "ai": {"date": "neznámé"}})
