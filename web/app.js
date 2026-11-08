@@ -1536,10 +1536,11 @@ function renderEvents(params) {
   const ev = state.data.events || { sources: [], items: [] };
   // obce, jejichž akce jsou skryté (výchozí: vidět vše); v adrese ?skryt=Obec1,Obec2
   const hidden = new Set((params.get('skryt') || '').split(',').map((x) => x.trim()).filter(Boolean));
+  const month = params.get('mesic') || '';
   const f = {
     pohled: params.get('pohled') === 'seznam' ? 'seznam' : 'mesic', // výchozí je měsíc jako v kalendáři
     kdy: params.get('kdy') || '',
-    mesic: /^\d{4}-\d{2}$/.test(params.get('mesic') || '') ? params.get('mesic') : TODAY.slice(0, 7),
+    mesic: /^\d{4}-(?:0[1-9]|1[0-2])$/.test(month) ? month : TODAY.slice(0, 7),
     den: isIso(params.get('den')) ? params.get('den') : '',
     nove: params.get('nove') === '1' && !!visit.last, // z lišty novinek: jen akce nové od minulé návštěvy
   };
