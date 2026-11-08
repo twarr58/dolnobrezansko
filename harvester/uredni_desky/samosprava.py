@@ -461,8 +461,10 @@ def build_meeting(did: str, d: dict) -> dict:
     points = [{k: v for k, v in {"v": p.get("verb"), "t": p.get("text"), "cat": p.get("category"),
                                   "amt": p.get("amount"), "imp": p.get("importance")}.items() if v}
               for p in a.get("points", []) if p.get("text")]
+    # web obce datum často neuvádí (Dolní Břežany: jen „34-R-26 usnesení“) – pak datum zasedání z textu (AI)
+    ai_date = a.get("date") if re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(a.get("date") or "")) else None
     return {k: v for k, v in {
-        "id": did, "o": d["o"], "body": d["body"], "kind": d.get("kind"), "date": d.get("date"),
+        "id": did, "o": d["o"], "body": d["body"], "kind": d.get("kind"), "date": d.get("date") or ai_date,
         "no": a.get("number"), "t": d.get("title"), "url": d["url"], "page": d.get("page"),
         "x": d.get("ext"), "tldr": a.get("tldr"), "points": points, "src": "claude" if a else None,
         "fs": d.get("found"),
