@@ -1244,7 +1244,7 @@ function renderCouncil(params) {
             g.items.map((m) => h('section', { class: 'daygroup' },
               h('div', { class: 'daygroup__date' },
                 h('span', { class: 'daygroup__wd' }, isIso(m.date) ? weekday(m.date) : ''),
-                h('span', { class: 'daygroup__d' }, isIso(m.date) ? dm(m.date) : '–')),
+                h('span', { class: 'daygroup__d' }, isIso(m.date) ? dm(m.date) : '')),
               h('div', { class: 'daygroup__items' }, meetingNode(m))))])
             : h('p', { class: 'empty' }, all.length ? 'V tomto výběru nic.' : 'Usnesení se zatím načítají – zkus to později.')),
         h('section', { class: 'villages' },
