@@ -39,7 +39,9 @@ log = logging.getLogger(__name__)
 
 REFRESH_HOURS = 12
 RETRY_DELAY = 3.0
-_SKIP = re.compile(r"facebook\.com|twitter\.com|x\.com/|linkedin\.com|/AA/index\.asp|mailto:|sharer|intent/tweet", re.I)
+# sdílení, e-mail a přihlášení do webu obce („/Account/Login?returnUrl=…“ s textem „Zápis rady“) – nejsou dokumenty
+_SKIP = re.compile(r"facebook\.com|twitter\.com|x\.com/|linkedin\.com|/AA/index\.asp|mailto:|sharer|intent/tweet"
+                   r"|/account/login|/login\b|[?&]returnurl=|prihlaseni|přihlášení", re.I)
 DOC_BUDGET = 80  # nejvýš nově stažených dokumentů za běh
 PARSER_VERSION = 3  # 3: jeden dokument na stránku zasedání, jen odkazy z webu obce
 VERSION = 1  # verze shrnutí bodů; zvýšení je přepočítá
@@ -452,7 +454,8 @@ async def collect(client: httpx.AsyncClient, members: list[dict], state_dir: Pat
         docs.pop(did)
     state_dir.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(state, ensure_ascii=False, indent=1), "utf-8")
-    meetings = [build_meeting(did, docs[did]) for did in order if docs[did].get("sha") or docs[did].get("ai")]
+    meetings = [build_meeting(did, docs[did]) for did in order
+                if (docs[did].get("sha") or docs[did].get("ai")) and not _SKIP.search(docs[did]["url"])]
     return {"sources": sources, "meetings": meetings}
 
 
