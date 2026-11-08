@@ -70,3 +70,19 @@ def test_single_event_files_and_cal_ids(tmp_path):
     assert files == sorted([ids[0], ids[1], ids[3]])  # stará akce smazaná
     one = (tmp_path / "kalendar" / "u" / f"{ids[0]}.ics").read_bytes().decode("utf-8")
     assert one.count("BEGIN:VEVENT") == 1 and "X-WR-CALNAME:Lampionový průvod" in one
+
+
+def test_events_sharing_calendar_url_get_separate_files(tmp_path):
+    first = {"o": "Zvole", "t": "Koncert", "d": "2026-11-11", "url": "https://obec.cz/akce"}
+    second = {**first, "t": "Výstava"}
+    data = {"events": {"items": [first, second]}}
+    assert K.write(data, tmp_path, NOW) == 2
+    ids = first["cal"], second["cal"]
+    assert ids[0] != ids[1]
+    root = tmp_path / "kalendar"
+    assert (root / "vse.ics").read_text("utf-8").count("BEGIN:VEVENT") == 2
+    for event in (first, second):
+        assert f'SUMMARY:{event["t"]}' in (root / "u" / f'{event["cal"]}.ics').read_text("utf-8")
+    data["events"]["items"].reverse()
+    assert K.write(data, tmp_path, NOW) == 2
+    assert (first["cal"], second["cal"]) == ids
