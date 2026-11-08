@@ -260,3 +260,10 @@ def test_meeting_date_falls_back_to_ai_date():
     assert build_meeting("a", d)["date"] == "2026-08-17"
     assert build_meeting("a", {**d, "date": "2026-08-18"})["date"] == "2026-08-18"  # datum z webu má přednost
     assert "date" not in build_meeting("a", {**d, "ai": {"date": "neznámé"}})
+
+
+def test_login_links_are_not_documents():
+    from uredni_desky.samosprava import _SKIP
+    assert _SKIP.search("https://www.dolnibrezany.cz/Account/Login?returnUrl=%2Fusneseni-ze-zasedani-2026-1")
+    assert not _SKIP.search("https://www.dolnibrezany.cz/file/4598586")
+    assert not _SKIP.search("https://www.psary.cz/usneseni-zastupitelstva-5-2026.pdf")
