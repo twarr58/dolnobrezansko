@@ -601,3 +601,8 @@ details.removed summary { cursor: pointer; font-family: var(--mono); font-size: 
 .fresh-filter { display: inline-flex; align-items: center; min-height: 32px; padding: 0 10px; border: 1px solid var(--fresh); border-radius: 999px;
   background: var(--fresh-soft); color: var(--fresh); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
 .fresh-filter:hover { text-decoration: line-through; }
+.badge--foreign { background: var(--surface); color: var(--muted); border: 1px solid var(--rule-strong); }
+.foreign-note { border-left: 3px solid var(--rule-strong); background: var(--surface); padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 15px; }
+.foreign-note p { margin: 0; }
+.foreign-note p + p { margin-top: 4px; }
+.removed__note { margin: 8px 0 0; font-size: 14px; }

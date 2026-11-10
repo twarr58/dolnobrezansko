@@ -86,3 +86,12 @@ def test_events_sharing_calendar_url_get_separate_files(tmp_path):
     data["events"]["items"].reverse()
     assert K.write(data, tmp_path, NOW) == 2
     assert (first["cal"], second["cal"]) == ids
+
+
+def test_foreign_issuer_not_in_calendar(tmp_path):
+    import copy
+    data = copy.deepcopy(DATA)
+    data["items"][0]["s"]["foreign"] = "Obec Průhonice"
+    data["items"][0].pop("cal", None)  # sdílená DATA mohou mít „cal“ z předchozích testů
+    K.write(data, tmp_path, NOW)
+    assert "cal" not in data["items"][0]

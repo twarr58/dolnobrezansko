@@ -96,6 +96,34 @@ SCHEMA = {
 }
 SCHEMA["required"] = list(SCHEMA["properties"])
 
+# Kdo oznámení vydal a jestli se týká obce, na jejíž desce visí. Obce vyvěšují i písemnosti jiných úřadů
+# (veřejné vyhlášky Kladna o dlužnících, výběrové řízení obce Průhonice) – web je označí a odsune.
+ISSUER_VERSION = 1
+ISSUER_SYSTEM = """Dostaneš oznámení z úřední desky obce (název, číslo jednací a shrnutí). Urči:
+- issuer: kdo písemnost vydal, krátce a v 1. pádě („Obec Průhonice“, „Magistrát města Kladna“,
+  „Městský úřad Černošice, stavební úřad“, „ČEZ Distribuce“, „Krajský úřad Středočeského kraje“).
+- local: true, pokud se písemnost týká území nebo obyvatel obce, na jejíž desce visí (nebo širšího okolí
+  včetně této obce – stavba, uzavírka, odstávka, územní plán, volby, krajská silnice, EIA v okolí, oznámení
+  vlastní obce). false, pokud jde o věc jiného místa nebo jiného úřadu, kterou obec jen vyvěšuje ze zákona
+  nebo z ochoty: veřejná vyhláška jiného města pro jeho dlužníky či adresáty, výběrové řízení nebo prodej
+  jiné obce, rozhodnutí o stavbě v jiné obci. Když si nejsi jistý, true.
+- why: jedna krátká věta proč."""
+ISSUER_SCHEMA = {
+    "type": "object",
+    "properties": {"issuer": {"type": "string"}, "local": {"type": "boolean"}, "why": {"type": "string"}},
+    "required": ["issuer", "local", "why"],
+    "additionalProperties": False,
+}
+
+
+def issuer_content(obec: str, it: dict, a: dict) -> list[dict]:
+    """Krátký textový vstup pro ISSUER_SYSTEM: obec desky, název, č. j. a hlavní údaje z hotového shrnutí."""
+    facts = "; ".join(f"{f.get('label')}: {f.get('value')}" for f in (a.get("facts") or [])[:10])
+    lines = [f"Úřední deska obce: {obec}", f"Název: {it.get('title')}", f"Číslo jednací: {it.get('cj') or ''}",
+             f"Shrnutí: {a.get('tldr') or ''}", f"Koho se týká: {a.get('affects') or ''}",
+             f"Místo: {a.get('where') or ''}", f"Kontakt: {a.get('contact') or ''}", f"Údaje: {facts}"]
+    return [{"type": "text", "text": "\n".join(lines)}]
+
 
 GHA_AUDIENCE = "https://api.anthropic.com"
 GHA_REFRESH_SECONDS = 240  # token GitHubu platí ~5 min a jde použít jen jednou

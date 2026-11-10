@@ -182,7 +182,8 @@ def _signature(item: dict, doc_cache: dict[str, dict] | None = None) -> str:
 
 async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, ai_limit: int,
                  now: datetime, fallback: httpx.AsyncClient | None = None,
-                 proxy_hosts: set[str] | None = None) -> tuple[dict[str, dict], dict[str, dict]]:
+                 proxy_hosts: set[str] | None = None, board_obec: dict[str, str] | None = None,
+                 ) -> tuple[dict[str, dict], dict[str, dict]]:
     """Přílohy a popisy aktivních oznámení. Vrátí (přílohy podle URL, popisy podle id oznámení).
 
     fallback: klient přes proxy v ČR pro servery, které z runneru GitHubu nejdou (timeout, 401/403/451);
@@ -355,8 +356,27 @@ async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, 
         summaries[it["id"]] = result
         it["_sig"] = sig
 
+    async def classify(it: dict, who: "ai.Summarizer") -> None:
+        """Kdo oznámení vydal a jestli se týká obce desky (malé textové volání nad hotovým shrnutím)."""
+        res = summaries.get(it["id"]) or {}
+        obec = (board_obec or {}).get(it["board"])
+        known = res.get("issuer") or {}
+        if not res.get("ai") or not obec or (known.get("v") == ai.ISSUER_VERSION and known.get("sig") == res.get("sig")):
+            return
+        async with ai_sem:
+            out = await who.summarize_custom(ai.issuer_content(obec, it, res["ai"]), ai.ISSUER_SYSTEM, ai.ISSUER_SCHEMA)
+        if out and isinstance(out.get("local"), bool):
+            res["issuer"] = {"by": str(out.get("issuer") or "")[:120], "local": out["local"],
+                             "why": str(out.get("why") or "")[:300], "v": ai.ISSUER_VERSION, "sig": res.get("sig")}
+
     try:
         await asyncio.gather(*(process(it) for it in active))
+        if summarizer is not None and board_obec and not getattr(summarizer, "stopped", False):
+            issuers = ai.Summarizer(ISSUER_LIMIT)  # vlastní limit – nebere místo shrnutím
+            await asyncio.gather(*(classify(it, issuers) for it in active))
+            if issuers.used:
+                log.info("Claude: vydavatel u %d oznámení, tokeny %d vstup / %d výstup",
+                         issuers.used, issuers.tokens_in, issuers.tokens_out)
     finally:
         if refresher:
             refresher.cancel()
@@ -370,6 +390,9 @@ async def enrich(client: httpx.AsyncClient, items: list[dict], state_dir: Path, 
     _write_gz(state_dir / "docs.json.gz", doc_cache)
     _write_gz(state_dir / "summaries.json.gz", summaries)
     return doc_cache, summaries
+
+
+ISSUER_LIMIT = int(os.environ.get("ISSUER_LIMIT", "300"))  # rozpoznání vydavatele za běh (krátký text, levné)
 
 
 def _valid_date(s) -> str | None:
@@ -402,6 +425,11 @@ def item_description(it: dict, docs: list[dict], summary: dict | None) -> dict:
         if dates := [{"date": d, "what": x["what"]} for x in a.get("dates", [])
                      if (d := _valid_date(x.get("date"))) and x.get("what")]:
             s["dates"] = sorted(dates, key=lambda x: x["date"])[:12]
+    issuer = (summary or {}).get("issuer") or {}
+    if a and issuer.get("local") is False and issuer.get("by"):
+        # vyvěsila obec za jiný úřad a obce se netýká – web označí a odsune (bez lhůt, novinek a důležitosti)
+        s["foreign"] = issuer["by"]
+        s["foreign_why"] = issuer.get("why") or None
     if a and summary:
         s["summarized"] = (summary.get("at") or "")[:10] or None
         s["updated"] = (summary.get("updated_at") or "")[:10] or None
@@ -511,7 +539,9 @@ async def run(out_dir: Path, state_dir: Path, ai_limit: int = 100, concurrency: 
             # přílohy ze serverů, jejichž deska šla jen přes proxy, se stahují rovnou přes ni
             proxy_hosts = {urlsplit(s.access_url).hostname or "" for s in sources
                            if results.get(s.id) and results[s.id].via_proxy}
-            doc_cache, summaries = await enrich(client, items, state_dir, ai_limit, now, fallback, proxy_hosts)
+            board_obec = {m["board"]: m["name"] for m in members if m.get("board")}
+            doc_cache, summaries = await enrich(client, items, state_dir, ai_limit, now, fallback, proxy_hosts,
+                                                board_obec)
             news = await newsletters.collect(client, region["members"], state_dir, now, fallback)
             event_data = await events.collect(client, region["members"], state_dir, now, fallback)
             council = await collect_council(client, region["members"], state_dir, now, fallback)

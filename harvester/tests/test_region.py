@@ -301,3 +301,61 @@ def test_contacts_for_every_member_and_in_output():
     members = [{"name": "Psáry", "publisher": "Obec Psáry", "board": "b1"}]
     out = region.build_output(reg, members, [{"id": "b1", "ok": True}], [], {}, {}, NOW)
     assert out["members"][0]["contact"]["ds"] == "rvhbuxe"
+
+
+def test_foreign_issuer_marked_in_description():
+    from uredni_desky import ai
+    from uredni_desky.region import item_description
+    it = {"id": "x", "board": "b", "title": "Výběrové řízení – tajemník OÚ Průhonice", "posted": "2026-11-10"}
+    a = {"tldr": "Obec Průhonice hledá tajemníka.", "importance": "stredni", "deadline": "2026-11-30"}
+    foreign = {"ai": a, "issuer": {"by": "Obec Průhonice", "local": False, "why": "Inzerát jiné obce.", "v": 1}}
+    s = item_description(it, [], foreign)
+    assert s["foreign"] == "Obec Průhonice" and s["foreign_why"] == "Inzerát jiné obce."
+    local = {"ai": a, "issuer": {"by": "Obec Dolní Břežany", "local": True, "v": 1}}
+    assert "foreign" not in item_description(it, [], local)
+    text = ai.issuer_content("Dolní Břežany", {**it, "cj": "SMKL/1/2026"}, a)[0]["text"]
+    assert "Úřední deska obce: Dolní Břežany" in text and "SMKL/1/2026" in text
+
+
+def test_enrich_classifies_issuer_once(tmp_path, monkeypatch):
+    from uredni_desky import ai
+
+    calls = []
+
+    class FakeSummarizer:
+        used = tokens_in = tokens_out = 0
+        stopped = False
+
+        def __init__(self, limit):
+            pass
+
+        def available(self):
+            return True
+
+        async def summarize(self, meta, docs):
+            return {"tldr": "x"}
+
+        async def summarize_custom(self, content, system, schema):
+            assert system == ai.ISSUER_SYSTEM
+            calls.append(content[0]["text"])
+            return {"issuer": "Obec Průhonice", "local": False, "why": "Inzerát jiné obce."}
+
+    async def no_federation():
+        return None
+
+    monkeypatch.setattr(ai, "enabled", lambda: True)
+    monkeypatch.setattr(ai, "Summarizer", FakeSummarizer)
+    monkeypatch.setattr(ai, "prepare_github_federation", no_federation)
+    items = [{"id": "p", "board": "b1", "title": "Tajemník OÚ Průhonice", "posted": "2026-11-10"}]
+    sig = region._signature(items[0])
+    region._write_gz(tmp_path / "summaries.json.gz", {"p": {"sig": sig, "ai": {"tldr": "hotové"}, "v": ai.VERSION}})
+
+    async def go():
+        async with _client(lambda req: httpx.Response(404)) as c:
+            return await region.enrich(c, items, tmp_path, ai_limit=5, now=NOW, board_obec={"b1": "Dolní Břežany"})
+
+    _, summaries = asyncio.run(go())
+    assert len(calls) == 1 and "Úřední deska obce: Dolní Břežany" in calls[0]
+    assert summaries["p"]["issuer"]["by"] == "Obec Průhonice" and summaries["p"]["issuer"]["local"] is False
+    asyncio.run(go())  # další běh: už rozpoznáno, žádné volání
+    assert len(calls) == 1
