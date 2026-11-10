@@ -102,9 +102,10 @@ const label = (it) => (it.s?.label || 'Ostatní').toLowerCase();
  * Nejbližší budoucí termín oznámení: {date, kind, type, until?}.
  * kind = barva (warn: lhůta/omezení, event: jednání/akce, start: probíhá), type = co to je.
  */
-function when(it) {
+function when(it, { all = false } = {}) {
   const s = it.s || {};
   if (it.r) return null;
+  if (s.foreign && !all) return null; // písemnost jiného úřadu: v přehledu bez lhůt a termínů (detail je ukáže)
   const c = [];
   if (isIso(s.deadline) && daysTo(s.deadline) >= 0) c.push({ date: s.deadline, kind: 'warn', type: 'deadline' });
   if (isIso(s.event)) {
@@ -135,12 +136,16 @@ function entryMeta(it, w) {
   return [s.time, w.until && w.until !== w.date ? `až ${dm(w.until)}` : null].filter(Boolean).join(' · ');
 }
 
+/** „Magistrát města Kladna“ → „Kladno“ by bylo hádání; jen zkrátit dlouhé názvy. */
+const shortIssuer = (x) => (x.length > 40 ? `${x.slice(0, 38)}…` : x);
+
 function badges(it) {
   const s = it.s || {};
   return [
-    s.importance === 'vysoka' ? h('span', { class: 'badge badge--hot', title: s.importance_why || null }, 'důležité') : null,
+    s.foreign ? h('span', { class: 'badge badge--foreign', title: s.foreign_why || 'Obec oznámení jen vyvěšuje za jiný úřad' }, `jiný úřad: ${shortIssuer(s.foreign)}`)
+      : s.importance === 'vysoka' ? h('span', { class: 'badge badge--hot', title: s.importance_why || null }, 'důležité') : null,
     visit.last ? (itemFresh(it) ? freshBadge() : null)
-      : isIso(it.p) && daysTo(it.p) >= -NEW_DAYS && !it.r ? h('span', { class: 'badge' }, 'nové') : null,
+      : isIso(it.p) && daysTo(it.p) >= -NEW_DAYS && !it.r && !s.foreign ? h('span', { class: 'badge' }, 'nové') : null,
     (isIso(s.updated) && daysTo(s.updated) >= -7) || s.pending
       ? h('span', { class: 'badge badge--hot', title: 'Úřad oznámení upravil (příloha nebo termín)' }, 'změna') : null,
   ];
@@ -191,7 +196,7 @@ function isNewFor(fs, date, days) {
   if (!isFresh(fs)) return false;
   return !isIso(date) || Date.parse(fs) - Date.parse(date) <= days * 86400e3;
 }
-const itemFresh = (it) => !it.r && isNewFor(it.fs, it.p, FRESH_ITEM_DAYS);
+const itemFresh = (it) => !it.r && !it.s?.foreign && isNewFor(it.fs, it.p, FRESH_ITEM_DAYS); // za jiný úřad není novinka
 // zasedání bez data nejde posoudit – radši ho za novinku nepovažovat (bývá to dohnaný starší dokument)
 const meetingFresh = (m) => isIso(m.date) && isNewFor(m.fs, m.date, FRESH_MEETING_DAYS);
 const inMine = (o) => { const mine = getMine(); return !mine.size || mine.has(o); };
@@ -270,12 +275,12 @@ function newsBar(setFilter) {
   return h('aside', { class: 'newsbar', 'aria-label': 'Novinky od vaší poslední návštěvy' },
     h('p', {}, 'Od vaší poslední návštěvy ', h('strong', {}, `(${when})`), n.mine.size ? ' ve vašich obcích' : '', ' přibylo:'),
     h('div', { class: 'newsbar__row' },
-      pill(n.items, ['oznámení', 'oznámení', 'oznámení'], { type: 'button', class: 'pill pill--solid', onclick: () => setFilter({ nove: true }) }),
+      pill(n.items, ['oznámení', 'oznámení', 'oznámení'], { type: 'button', class: 'pill pill--solid', onclick: () => setFilter({ nove: true, moje: n.mine.size > 0 }) }),
       pill(n.issues, ['zpravodaj', 'zpravodaje', 'zpravodajů'], { href: '#/zpravodaje' }),
       pill(n.events, ['akce', 'akce', 'akcí'], { href: '#/akce?pohled=seznam&nove=1' }),
       pill(n.meetings, ['zasedání', 'zasedání', 'zasedání'], { href: '#/samosprava?nove=1' }),
       h('span', { class: 'newsbar__acts' },
-        n.items ? h('button', { type: 'button', class: 'linkish', onclick: () => setFilter({ nove: true }) }, 'Ukázat jen nové') : null,
+        n.items ? h('button', { type: 'button', class: 'linkish', onclick: () => setFilter({ nove: true, moje: n.mine.size > 0 }) }, 'Ukázat jen nové') : null,
         h('button', {
           type: 'button', class: 'linkish',
           onclick: () => { markAllRead(); gc({ path: 'novinky: mám přečteno', title: 'Lišta novinek', event: true }); state.filter.nove = false; writeFilter(); route(); },
@@ -767,8 +772,10 @@ function renderHome() {
     const later = [];
     const undated = [];
     const running = [];
+    const foreign = []; // vyvěšeno za jiný úřad (Kladno, Průhonice…) – sbalené až na konci
     for (const it of items) {
       if (it.r) continue;
+      if (it.s?.foreign) { foreign.push(it); continue; }
       const w = when(it);
       if (!w) undated.push(it);
       else if (w.type === 'running') running.push({ it, w }); // už platí (uzavírka): zvlášť, ne každý den „dnes“
@@ -837,6 +844,10 @@ function renderHome() {
       undated.length ? h('h2', { class: 'section-title' }, 'BEZ TERMÍNU · NEJNOVĚJŠÍ NAHOŘE') : null,
       undated.length ? undatedList : null,
       undated.length ? more : null,
+      foreign.length ? h('details', { class: 'removed' },
+        h('summary', {}, `VYVĚŠENO ZA JINÉ ÚŘADY (${foreign.length})`),
+        h('p', { class: 'muted removed__note' }, 'Obce na desky vyvěšují i písemnosti jiných úřadů, které se jich netýkají – např. veřejné vyhlášky jiných měst pro jejich dlužníky nebo výběrová řízení sousedních obcí.'),
+        h('ul', { class: 'rows' }, foreign.sort((a, b) => (b.p || '').localeCompare(a.p || '')).map((it) => row(it, it.p, 'vyvěšeno')))) : null,
       removed.length ? h('details', { class: 'removed' },
         h('summary', {}, `SEJMUTO ZA POSLEDNÍCH 30 DNÍ (${removed.length})`),
         h('ul', { class: 'rows' }, removed.map((it) => row(it, (it.r || '').slice(0, 10), 'sejmuto')))) : null,
@@ -1265,7 +1276,7 @@ function villageData(name) {
   const live = items.filter((it) => !it.r);
   const dated = live.map((it) => ({ it, w: when(it) })).filter((x) => x.w)
     .sort((a, b) => (a.w.type === 'running' ? a.w.until : a.w.date).localeCompare(b.w.type === 'running' ? b.w.until : b.w.date));
-  const undated = live.filter((it) => !when(it)).sort((a, b) => (b.p || '').localeCompare(a.p || ''));
+  const undated = live.filter((it) => !when(it) && !it.s?.foreign).sort((a, b) => (b.p || '').localeCompare(a.p || ''));
   const events = (state.data.events?.items || []).filter((e) => e.o === name && isIso(e.d) && (e.end || e.d) >= TODAY);
   const news = (state.data.newsletters || []).find((n) => n.obec === name && n.name);
   const evSource = (state.data.events?.sources || []).find((s) => s.obec === name);
@@ -1719,7 +1730,7 @@ function renderDetail(id) {
   }
   const twins = twinsOf(it);
   const s = it.s || {};
-  const w = when(it);
+  const w = when(it, { all: true });
   const docs = (it.docs || []).map((x) => ({ ...x, url: safeUrl(x.url) })).filter((x) => x.url);
   const original = safeUrl(it.url);
   const bullets = Array.isArray(s.bullets) ? s.bullets : [];
@@ -1728,7 +1739,7 @@ function renderDetail(id) {
       : `${dateCz(w.date, { wd: true })}${s.time && w.type === 'event' ? ` v ${s.time}` : ''} · ${relDay(w.date)}`;
 
   // oranžová jen pro lhůtu nebo omezení, modrá pro jednání a akce, jinak neutrální
-  const tone = !w ? 'todo todo--calm' : w.kind === 'warn' ? 'todo' : w.kind === 'event' ? 'todo todo--event' : 'todo todo--calm';
+  const tone = !w || s.foreign ? 'todo todo--calm' : w.kind === 'warn' ? 'todo' : w.kind === 'event' ? 'todo todo--event' : 'todo todo--calm';
 
   const ai = aiInfo(it, s, docs.length, original);
   // budoucí nebo probíhající akce/jednání z oznámení → přidat do kalendáře
@@ -1745,6 +1756,9 @@ function renderDetail(id) {
           ` · ${label(it)} · vyvěšeno ${dateCz(it.p, { year: true })}`, badges(it), ai.chip),
         ai.panel,
         h('h1', {}, withLinks(s.tldr || it.t, it))),
+      s.foreign ? h('section', { class: 'foreign-note', 'aria-label': 'Vyvěšeno za jiný úřad' },
+        h('p', {}, h('strong', {}, `Vydal jiný úřad: ${s.foreign}. `), `Obec ${it.o} oznámení jen vyvěšuje na své desce.`),
+        s.foreign_why ? h('p', { class: 'muted' }, s.foreign_why) : null) : null,
       s.action
         ? h('section', { class: tone, 'aria-label': 'Co můžeš udělat' },
           h('p', { class: 'todo__main' }, withLinks(s.action, it)),
@@ -1758,7 +1772,7 @@ function renderDetail(id) {
         h('h2', { id: 'h-mean', class: 'h2' }, 'CO TO ZNAMENÁ'),
         s.impact ? h('p', { class: 'meaning__lead' }, withLinks(czDates(s.impact), it)) : null,
         s.affects ? h('p', { class: 'muted' }, h('strong', {}, 'Týká se: '), withLinks(s.affects, it)) : null,
-        s.importance === 'vysoka' && s.importance_why ? h('p', { class: 'muted' }, h('strong', {}, 'Proč je to důležité: '), s.importance_why) : null) : null,
+        s.importance === 'vysoka' && s.importance_why && !s.foreign ? h('p', { class: 'muted' }, h('strong', {}, 'Proč je to důležité: '), s.importance_why) : null) : null,
       bullets.length ? section('h-gist', s.src === 'claude' ? 'CO PŘESNĚ' : 'VE ZKRATCE',
         h('ul', { class: 'bullets' }, bullets.slice(0, 5).map((b) => h('li', {}, withLinks(czDates(b), it)))),
         bullets.length > 5 ? h('details', { class: 'more-details' },

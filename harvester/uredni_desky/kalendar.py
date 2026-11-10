@@ -142,7 +142,7 @@ def entries(data: dict, now: datetime, site_url: str = SITE_URL) -> list[tuple[s
     for it in data.get("items", []):
         s = it.get("s") or {}
         start, end = _iso(s.get("event")), _iso(s.get("event_end"))
-        if it.get("r") or not start or (end or start) < lo:
+        if it.get("r") or s.get("foreign") or not start or (end or start) < lo:
             continue
         detail = f"{site_url}#/o/{it['id']}"
         desc = "\n".join(x for x in [s.get("tldr"), s.get("action"), f"Oznámení na úřední desce obce {it['o']}: {detail}"] if x)

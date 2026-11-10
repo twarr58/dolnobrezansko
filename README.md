@@ -15,6 +15,7 @@ zpravodaje a stránku každé obce.
 - [Nastavení repozitáře](#nastavení-repozitáře)
 - [Shrnutí od Claude](#shrnutí-od-claude)
 - [Úprava obce v konfiguraci](#úprava-obce-v-konfiguraci)
+- [Oznámení jiných úřadů](#oznámení-jiných-úřadů)
 - [Akce do kalendáře](#akce-do-kalendáře)
 - [Proxy v ČR](#proxy-v-čr)
 - [Formát dat pro web](#formát-dat-pro-web)
@@ -241,6 +242,19 @@ Obec v `harvester/uredni_desky/data/region.json`:
 | `erb` | znak v repozitáři, např. `erby/zvole.svg` (soubor ve `web/erby`) |
 | `erb_commons`, `erb_qid` | soubor znaku na Wikimedia Commons, případně Wikidata ID, podle kterého se znak dohledá (P94); stáhne ho workflow `erby.yml` |
 
+## Oznámení jiných úřadů
+
+Obce vyvěšují i písemnosti jiných úřadů, které se jich netýkají: veřejné vyhlášky jiných měst pro jejich
+dlužníky (Kladno), výběrová řízení sousedních obcí (Průhonice) a podobně.
+- **Rozpoznání:** po shrnutí dostane Claude krátký text (obec desky, název, č. j., shrnutí, kontakt, údaje) a vrátí
+  `issuer` (kdo písemnost vydal) a `local` (týká se obce desky nebo okolí?). Výsledek je v `summaries.json.gz`
+  jako `issuer` a počítá se jednou na oznámení (znovu jen při změně oznámení nebo `ai.ISSUER_VERSION`).
+  Vlastní limit `ISSUER_LIMIT` (300 za běh) nebere místo shrnutím. Při nejistotě `local=true`.
+- **Na webu** (`s.foreign` = vydavatel, `s.foreign_why`):
+  - štítek „jiný úřad: …“ místo „důležité“ a rámeček v detailu;
+  - v přehledu sbalená sekce „Vyvěšeno za jiné úřady“, bez lhůt a termínů, nepočítá se do novinek;
+  - není v odebíraném kalendáři ani mezi novými oznámeními na stránce obce.
+
 ## Akce do kalendáře
 
 - **Jedna akce:** u každé akce v kalendáři akcí a u oznámení s termínem (zasedání, odstávka, uzavírka) je tlačítko
@@ -377,7 +391,8 @@ Repozitář je veřejný, proto ho spouštět jen z `main`, ne z pull requestů.
   `docs[]` (`n` název, `url`, `k` text \| mapa \| sken \| obrazek, `x` přípona, `pg` strany, `ocr`,
   `w` co v ní je, `sum` shrnutí přílohy),
   `s` (popis: `cat`, `label`, `tldr`, `action`, `deadline`, `event`, `event_end`, `time`, `where`,
-  `impact`, `affects`, `bullets[]`, `facts[]`, `dates[]`, `contact`, `importance`, `src` `pravidla` \| `claude` …)
+  `impact`, `affects`, `bullets[]`, `facts[]`, `dates[]`, `contact`, `importance`, `foreign`, `foreign_why`,
+  `src` `pravidla` \| `claude` …)
 - `newsletters[]`: `obec`, `name`, `archive`, `issues[]` (`t`, `url`, `y` rok, `fs` poprvé viděno), `ok`
   nebo `none` (obec zpravodaj nevydává)
 - `events`: `sources[]` (kalendáře obcí), `items[]` (`o`, `t`, `d`, `end`, `time`, `place`, `tags`, `url`, `cal`)
