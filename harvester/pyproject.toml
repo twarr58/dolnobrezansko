@@ -10,7 +10,7 @@ requires-python = ">=3.11"
 dependencies = ["httpx>=0.28.1", "cryptography>=50.0.2", "json-repair>=0.64.5", "lxml>=5", "pypdf>=6.21.4", "fonttools>=4.68.0", "anthropic>=2.6.0", "pillow>=10"]
 
 [project.optional-dependencies]
-dev = ["pytest>=8"]
+dev = ["pytest>=9.2.0"]
 
 [project.scripts]
 uredni-desky = "uredni_desky.__main__:main"
