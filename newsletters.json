@@ -1,0 +1,4455 @@
+{
+ "Dolní Břežany": {
+  "cfg": {
+   "name": "Dolnobřežanský Rozhled",
+   "url": "https://www.dolnibrezany.cz/obecni-zpravodaj",
+   "match": "/dolnobrezansky-ro[a-z]+-cislo-",
+   "page_param": "elparam-5-page",
+   "pages": 4,
+   "detail": {
+    "match": "/file/\\d+",
+    "exclude": "kalend"
+   }
+  },
+  "checked": "2026-11-14T10:28:29+00:00",
+  "issues": [
+   {
+    "t": "Dolnobřežanský Rozhled číslo 96 (září 2026)",
+    "url": "https://www.dolnibrezany.cz/file/4326911",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-96",
+    "y": 2026
+   },
+   {
+    "t": "Dolnobřežanský Rozhled číslo 95 (červen 2026)",
+    "url": "https://www.dolnibrezany.cz/file/3920370",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-95",
+    "y": 2026
+   },
+   {
+    "t": "Dolnobřežanský Rozhled číslo 94 (březen 2026)",
+    "url": "https://www.dolnibrezany.cz/file/3290446",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-94",
+    "y": 2026
+   },
+   {
+    "t": "Dolnobřežanský Rozhled číslo 93 (prosinec 2025)",
+    "url": "https://www.dolnibrezany.cz/file/3209476",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-93",
+    "y": 2025
+   },
+   {
+    "t": "Dolnobřežanský Rozhled číslo 92 (září 2025)",
+    "url": "https://www.dolnibrezany.cz/file/2775569",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-92",
+    "y": 2025
+   },
+   {
+    "t": "Dolnobřežanský Rozhled číslo 91 (červen 2025)",
+    "url": "https://www.dolnibrezany.cz/file/2775567",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-91",
+    "y": 2025
+   },
+   {
+    "t": "Dolnobřežanský Rozhled číslo 90 (březen 2025)",
+    "url": "https://www.dolnibrezany.cz/file/2775565",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-90",
+    "y": 2025
+   },
+   {
+    "t": "Dolnobřežanský Rozhled číslo 89 (prosinec 2024)",
+    "url": "https://www.dolnibrezany.cz/file/2775563",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-89",
+    "y": 2024
+   },
+   {
+    "t": "Dolnobřežanský Rozhled číslo 88 (září 2024)",
+    "url": "https://www.dolnibrezany.cz/file/2775557",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-88",
+    "y": 2024
+   },
+   {
+    "t": "Dolnobřežanský Rozhled číslo 87 (červen 2024)",
+    "url": "https://www.dolnibrezany.cz/file/2775555",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-87",
+    "y": 2024
+   },
+   {
+    "t": "Dolnobřežanský Rozhled číslo 86 (březen 2024)",
+    "url": "https://www.dolnibrezany.cz/file/2775553",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-86",
+    "y": 2024
+   },
+   {
+    "t": "Dolnobřežanský Rozhled číslo 85 (prosinec 2023)",
+    "url": "https://www.dolnibrezany.cz/file/2775549",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-85",
+    "y": 2023
+   },
+   {
+    "t": "Dolnobřežanský Rozhled číslo 84 (září 2023)",
+    "url": "https://www.dolnibrezany.cz/file/2775547",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-84",
+    "y": 2023
+   },
+   {
+    "t": "Dolnobřežanský Rozhled číslo 83 (červen 2023)",
+    "url": "https://www.dolnibrezany.cz/file/2775545",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-83",
+    "y": 2023
+   },
+   {
+    "t": "Dolnobřežanský Rozhled číslo 82 (březen 2023)",
+    "url": "https://www.dolnibrezany.cz/file/2775543",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-82",
+    "y": 2023
+   },
+   {
+    "t": "Dolnobřežanský Rozhled číslo 81 (prosinec 2022)",
+    "url": "https://www.dolnibrezany.cz/file/2775541",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-81",
+    "y": 2022
+   },
+   {
+    "t": "Dolnobřežanský Rozhled číslo 80 (září 2022)",
+    "url": "https://www.dolnibrezany.cz/file/2775539",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-80",
+    "y": 2022
+   },
+   {
+    "t": "Dolnobřežanský Rozhled číslo 79 (červen 2022)",
+    "url": "https://www.dolnibrezany.cz/file/2775537",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-79",
+    "y": 2022
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 78 (březen 2022)",
+    "url": "https://www.dolnibrezany.cz/file/2775535",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-78",
+    "y": 2022
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 77 (prosinec 2021)",
+    "url": "https://www.dolnibrezany.cz/file/2775533",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-77",
+    "y": 2021
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 76 (září 2021)",
+    "url": "https://www.dolnibrezany.cz/file/2775530",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-76",
+    "y": 2021
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 75 (červen 2021)",
+    "url": "https://www.dolnibrezany.cz/file/2775528",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-75",
+    "y": 2021
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 74 (březen 2021)",
+    "url": "https://www.dolnibrezany.cz/file/2775526",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-74",
+    "y": 2021
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 73 (prosinec 2020)",
+    "url": "https://www.dolnibrezany.cz/file/2775524",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-73",
+    "y": 2020
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 72 (září 2020)",
+    "url": "https://www.dolnibrezany.cz/file/2775522",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-72",
+    "y": 2020
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 71 (červen 2020)",
+    "url": "https://www.dolnibrezany.cz/file/2775520",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-71",
+    "y": 2020
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 70 (březen 2020)",
+    "url": "https://www.dolnibrezany.cz/file/2775518",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-70",
+    "y": 2020
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 69 (prosinec 2019)",
+    "url": "https://www.dolnibrezany.cz/file/2775516",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-69",
+    "y": 2019
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 68 (září 2019)",
+    "url": "https://www.dolnibrezany.cz/file/2775514",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-68",
+    "y": 2019
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 67 (červen 2019)",
+    "url": "https://www.dolnibrezany.cz/file/2775512",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-67",
+    "y": 2019
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 66 (březen 2019)",
+    "url": "https://www.dolnibrezany.cz/file/2775510",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-66",
+    "y": 2019
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 65 (prosinec 2018)",
+    "url": "https://www.dolnibrezany.cz/file/2775507",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-65",
+    "y": 2018
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 64 (září 2018)",
+    "url": "https://www.dolnibrezany.cz/file/2775502",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-64",
+    "y": 2018
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 63 (červen 2018)",
+    "url": "https://www.dolnibrezany.cz/file/2775496",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-63",
+    "y": 2018
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 62 (březen 2018)",
+    "url": "https://www.dolnibrezany.cz/file/2775490",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-62",
+    "y": 2018
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 61 (prosinec 2017)",
+    "url": "https://www.dolnibrezany.cz/file/2775486",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-61",
+    "y": 2017
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 60 (září 2017)",
+    "url": "https://www.dolnibrezany.cz/file/2775482",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-60",
+    "y": 2017
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 59 (červen 2017)",
+    "url": "https://www.dolnibrezany.cz/file/2775477",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-59",
+    "y": 2017
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo. 58 (březen 2017)",
+    "url": "https://www.dolnibrezany.cz/file/2775471",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-58",
+    "y": 2017
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 57 (prosinec 2016)",
+    "url": "https://www.dolnibrezany.cz/file/2775465",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-57",
+    "y": 2016
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 56 (září 2016)",
+    "url": "https://www.dolnibrezany.cz/file/2775461",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-56",
+    "y": 2016
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 55 (červen 2016)",
+    "url": "https://www.dolnibrezany.cz/file/2775457",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-55",
+    "y": 2016
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 54 (březen 2016)",
+    "url": "https://www.dolnibrezany.cz/file/2775452",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-54",
+    "y": 2016
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 53 (prosinec 2015)",
+    "url": "https://www.dolnibrezany.cz/file/2775448",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-53",
+    "y": 2015
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 52 (září 2015)",
+    "url": "https://www.dolnibrezany.cz/file/2775443",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-52",
+    "y": 2015
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 51 (červen 2015)",
+    "url": "https://www.dolnibrezany.cz/file/2775439",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-51",
+    "y": 2015
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 50 (březen 2015)",
+    "url": "https://www.dolnibrezany.cz/file/2775433",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-50",
+    "y": 2015
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 49 (prosinec 2014)",
+    "url": "https://www.dolnibrezany.cz/file/2775429",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-49",
+    "y": 2014
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 48 (září 2014)",
+    "url": "https://www.dolnibrezany.cz/file/2775425",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-48",
+    "y": 2014
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 47 (červen 2014)",
+    "url": "https://www.dolnibrezany.cz/file/2775421",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-47",
+    "y": 2014
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 46 (březen 2014)",
+    "url": "https://www.dolnibrezany.cz/file/2775417",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-46",
+    "y": 2014
+   },
+   {
+    "t": "Dolnobřežanský Rozkvět číslo 45 (prosinec 2013)",
+    "url": "https://www.dolnibrezany.cz/file/2775412",
+    "page": "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-45",
+    "y": 2013
+   }
+  ],
+  "ok": true,
+  "resolved": {
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-96": {
+    "pdf": "https://www.dolnibrezany.cz/file/4326911",
+    "when": "září 2026",
+    "y": 2026
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-95": {
+    "pdf": "https://www.dolnibrezany.cz/file/3920370",
+    "when": "červen 2026",
+    "y": 2026
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-94": {
+    "pdf": "https://www.dolnibrezany.cz/file/3290446",
+    "when": "březen 2026",
+    "y": 2026
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-93": {
+    "pdf": "https://www.dolnibrezany.cz/file/3209476",
+    "when": "prosinec 2025",
+    "y": 2025
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-92": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775569",
+    "when": "září 2025",
+    "y": 2025
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-91": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775567",
+    "when": "červen 2025",
+    "y": 2025
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-90": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775565",
+    "when": "březen 2025",
+    "y": 2025
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-89": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775563",
+    "when": "prosinec 2024",
+    "y": 2024
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-88": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775557",
+    "when": "září 2024",
+    "y": 2024
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-87": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775555",
+    "when": "červen 2024",
+    "y": 2024
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-86": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775553",
+    "when": "březen 2024",
+    "y": 2024
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-85": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775549",
+    "when": "prosinec 2023",
+    "y": 2023
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-84": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775547",
+    "when": "září 2023",
+    "y": 2023
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-83": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775545",
+    "when": "červen 2023",
+    "y": 2023
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-82": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775543",
+    "when": "březen 2023",
+    "y": 2023
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-81": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775541",
+    "when": "prosinec 2022",
+    "y": 2022
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-80": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775539",
+    "when": "září 2022",
+    "y": 2022
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozhled-cislo-79": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775537",
+    "when": "červen 2022",
+    "y": 2022
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-78": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775535",
+    "when": "březen 2022",
+    "y": 2022
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-77": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775533",
+    "when": "prosinec 2021",
+    "y": 2021
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-76": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775530",
+    "when": "září 2021",
+    "y": 2021
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-75": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775528",
+    "when": "červen 2021",
+    "y": 2021
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-74": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775526",
+    "when": "březen 2021",
+    "y": 2021
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-73": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775524",
+    "when": "prosinec 2020",
+    "y": 2020
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-72": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775522",
+    "when": "září 2020",
+    "y": 2020
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-71": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775520",
+    "when": "červen 2020",
+    "y": 2020
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-70": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775518",
+    "when": "březen 2020",
+    "y": 2020
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-69": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775516",
+    "when": "prosinec 2019",
+    "y": 2019
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-68": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775514",
+    "when": "září 2019",
+    "y": 2019
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-67": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775512",
+    "when": "červen 2019",
+    "y": 2019
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-66": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775510",
+    "when": "březen 2019",
+    "y": 2019
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-65": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775507",
+    "when": "prosinec 2018",
+    "y": 2018
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-64": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775502",
+    "when": "září 2018",
+    "y": 2018
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-63": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775496",
+    "when": "červen 2018",
+    "y": 2018
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-62": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775490",
+    "when": "březen 2018",
+    "y": 2018
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-61": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775486",
+    "when": "prosinec 2017",
+    "y": 2017
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-60": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775482",
+    "when": "září 2017",
+    "y": 2017
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-59": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775477",
+    "when": "červen 2017",
+    "y": 2017
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-58": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775471",
+    "when": "březen 2017",
+    "y": 2017
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-57": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775465",
+    "when": "prosinec 2016",
+    "y": 2016
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-56": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775461",
+    "when": "září 2016",
+    "y": 2016
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-55": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775457",
+    "when": "červen 2016",
+    "y": 2016
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-54": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775452",
+    "when": "březen 2016",
+    "y": 2016
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-53": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775448",
+    "when": "prosinec 2015",
+    "y": 2015
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-52": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775443",
+    "when": "září 2015",
+    "y": 2015
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-51": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775439",
+    "when": "červen 2015",
+    "y": 2015
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-50": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775433",
+    "when": "březen 2015",
+    "y": 2015
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-49": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775429",
+    "when": "prosinec 2014",
+    "y": 2014
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-48": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775425",
+    "when": "září 2014",
+    "y": 2014
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-47": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775421",
+    "when": "červen 2014",
+    "y": 2014
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-46": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775417",
+    "when": "březen 2014",
+    "y": 2014
+   },
+   "https://www.dolnibrezany.cz/dolnobrezansky-rozkvet-cislo-45": {
+    "pdf": "https://www.dolnibrezany.cz/file/2775412",
+    "when": "prosinec 2013",
+    "y": 2013
+   }
+  },
+  "v": 2,
+  "seen": {
+   "https://www.dolnibrezany.cz/file/4326911": "",
+   "https://www.dolnibrezany.cz/file/3920370": "",
+   "https://www.dolnibrezany.cz/file/3290446": "",
+   "https://www.dolnibrezany.cz/file/3209476": "",
+   "https://www.dolnibrezany.cz/file/2775569": "",
+   "https://www.dolnibrezany.cz/file/2775567": "",
+   "https://www.dolnibrezany.cz/file/2775565": "",
+   "https://www.dolnibrezany.cz/file/2775563": "",
+   "https://www.dolnibrezany.cz/file/2775557": "",
+   "https://www.dolnibrezany.cz/file/2775555": "",
+   "https://www.dolnibrezany.cz/file/2775553": "",
+   "https://www.dolnibrezany.cz/file/2775549": "",
+   "https://www.dolnibrezany.cz/file/2775547": "",
+   "https://www.dolnibrezany.cz/file/2775545": "",
+   "https://www.dolnibrezany.cz/file/2775543": "",
+   "https://www.dolnibrezany.cz/file/2775541": "",
+   "https://www.dolnibrezany.cz/file/2775539": "",
+   "https://www.dolnibrezany.cz/file/2775537": "",
+   "https://www.dolnibrezany.cz/file/2775535": "",
+   "https://www.dolnibrezany.cz/file/2775533": "",
+   "https://www.dolnibrezany.cz/file/2775530": "",
+   "https://www.dolnibrezany.cz/file/2775528": "",
+   "https://www.dolnibrezany.cz/file/2775526": "",
+   "https://www.dolnibrezany.cz/file/2775524": "",
+   "https://www.dolnibrezany.cz/file/2775522": "",
+   "https://www.dolnibrezany.cz/file/2775520": "",
+   "https://www.dolnibrezany.cz/file/2775518": "",
+   "https://www.dolnibrezany.cz/file/2775516": "",
+   "https://www.dolnibrezany.cz/file/2775514": "",
+   "https://www.dolnibrezany.cz/file/2775512": "",
+   "https://www.dolnibrezany.cz/file/2775510": "",
+   "https://www.dolnibrezany.cz/file/2775507": "",
+   "https://www.dolnibrezany.cz/file/2775502": "",
+   "https://www.dolnibrezany.cz/file/2775496": "",
+   "https://www.dolnibrezany.cz/file/2775490": "",
+   "https://www.dolnibrezany.cz/file/2775486": "",
+   "https://www.dolnibrezany.cz/file/2775482": "",
+   "https://www.dolnibrezany.cz/file/2775477": "",
+   "https://www.dolnibrezany.cz/file/2775471": "",
+   "https://www.dolnibrezany.cz/file/2775465": "",
+   "https://www.dolnibrezany.cz/file/2775461": "",
+   "https://www.dolnibrezany.cz/file/2775457": "",
+   "https://www.dolnibrezany.cz/file/2775452": "",
+   "https://www.dolnibrezany.cz/file/2775448": "",
+   "https://www.dolnibrezany.cz/file/2775443": "",
+   "https://www.dolnibrezany.cz/file/2775439": "",
+   "https://www.dolnibrezany.cz/file/2775433": "",
+   "https://www.dolnibrezany.cz/file/2775429": "",
+   "https://www.dolnibrezany.cz/file/2775425": "",
+   "https://www.dolnibrezany.cz/file/2775421": "",
+   "https://www.dolnibrezany.cz/file/2775417": "",
+   "https://www.dolnibrezany.cz/file/2775412": ""
+  }
+ },
+ "Vrané nad Vltavou": {
+  "cfg": {
+   "name": "Zrcadlo",
+   "url": "https://vranenadvltavou.cz/zrcadlo---obecni-zpravodaj/",
+   "match": "/formular/.*zrcadlo",
+   "exclude": "cen[ií]k"
+  },
+  "checked": "2026-11-14T10:28:29+00:00",
+  "issues": [
+   {
+    "t": "Zrcadlo č. 229 (3/2026)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo 229_web_6aa1422b8f632.pdf",
+    "y": 2026
+   },
+   {
+    "t": "Zrcadlo č. 228 (2/2026)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo č. 228_6a1fc51b2dd15.pdf",
+    "y": 2026
+   },
+   {
+    "t": "Zrcadlo č. 227 (1/2026)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo 227 web_69a82135c5b44.pdf",
+    "y": 2026
+   },
+   {
+    "t": "Zrcadlo č. 226 (4/2025)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_226_Web_691c2c4110436.pdf",
+    "y": 2025
+   },
+   {
+    "t": "Zrcadlo č.225 (3/2025)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo 225_68be63abc534c.pdf",
+    "y": 2025
+   },
+   {
+    "t": "Zrcadlo č.224 (2/2025)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_224_web_683d8fe213e2c.pdf",
+    "y": 2025
+   },
+   {
+    "t": "Zrcadlo č.223 (1/2025)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo 223_67c9540b4a9f9.pdf",
+    "y": 2025
+   },
+   {
+    "t": "Zrcadlo č.222 (4/2024)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_222_web_674431687f38e.pdf",
+    "y": 2024
+   },
+   {
+    "t": "Zrcadlo č.221 (3/2024)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo 221 web_66de9da00baff.pdf",
+    "y": 2024
+   },
+   {
+    "t": "Zrcadlo č.220 (2/2024)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_220_web_male_665d75abe26bc.pdf",
+    "y": 2024
+   },
+   {
+    "t": "Zrcadlo č.219 (1/2024)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_219_web_6644a0cf899ec.pdf",
+    "y": 2024
+   },
+   {
+    "t": "Zrcadlo č.218 (4/2023) - kuchařka",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_218_kucharka_web_659c1e4e953a7.pdf",
+    "y": 2023
+   },
+   {
+    "t": "Zrcadlo č.218 (4/2023)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_218_web_659c1e09b0e6f.pdf",
+    "y": 2023
+   },
+   {
+    "t": "Zrcadlo č.217 (3/2023) - kuchařka",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_217_kucharka-web_659c257a29f75.pdf",
+    "y": 2023
+   },
+   {
+    "t": "Zrcadlo č.217 (3/2023)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_217_web_659c256290628.pdf",
+    "y": 2023
+   },
+   {
+    "t": "Zrcadlo č.216 (2/2023)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_216_64c22bc40e06f.pdf",
+    "y": 2023
+   },
+   {
+    "t": "Zrcadlo č.215 (1/2023) - kuchařka",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_215_kucharka_web_641d43ed80ef9.pdf",
+    "y": 2023
+   },
+   {
+    "t": "Zrcadlo č.215 (1/2023)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_215_web_641d43b8da69a.pdf",
+    "y": 2023
+   },
+   {
+    "t": "Zrcadlo č.214 (4/2022)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_214_641d43982dcae.pdf",
+    "y": 2022
+   },
+   {
+    "t": "Zrcadlo č.213 (3/2022)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_213_web_63b7f41353462.pdf",
+    "y": 2022
+   },
+   {
+    "t": "Zrcadlo č.212 (2/2022)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_212_web_63b7f3f14393f.pdf",
+    "y": 2022
+   },
+   {
+    "t": "Zrcadlo č.211 (1/2022)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_211_jaro_2022_WEB_63b7f3de4b9e8.pdf",
+    "y": 2022
+   },
+   {
+    "t": "Zrcadlo č.210 (4/2021)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_210_zima_2021_web_620e26819132c.pdf",
+    "y": 2021
+   },
+   {
+    "t": "Zrcadlo č.209 (3/2021)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_209_web_620e26649376d.pdf",
+    "y": 2021
+   },
+   {
+    "t": "Zrcadlo č.208 (2/2021)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_208_web_620e264f94c54.pdf",
+    "y": 2021
+   },
+   {
+    "t": "Zrcadlo č.207 (1/2021)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_207_web_60b48c7538c0e.pdf",
+    "y": 2021
+   },
+   {
+    "t": "Zrcadlo č.206 (4/2020)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_206_web_60b48c51f0049.pdf",
+    "y": 2020
+   },
+   {
+    "t": "Zrcadlo č.205 (3/2020)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_205_final_nahled_60b48c3b1ef7f.pdf",
+    "y": 2020
+   },
+   {
+    "t": "Zrcadlo č.204 (2/2020)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_204_web_6055ddea6eabc.pdf",
+    "y": 2020
+   },
+   {
+    "t": "Zrcadlo č.203 (1/2020)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_203_06_6055ddde9a6d4.pdf",
+    "y": 2020
+   },
+   {
+    "t": "Zrcadlo č.202 (4/2019)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_202_05[2]_6055ddd47af28.pdf",
+    "y": 2019
+   },
+   {
+    "t": "Zrcadlo č.201 (3/2019)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_201_06_6055ddc475f68.pdf",
+    "y": 2019
+   },
+   {
+    "t": "Zrcadlo č.200 (2/2019)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_200_05_6055ddbb6b4fc.pdf",
+    "y": 2019
+   },
+   {
+    "t": "Zrcadlo č.199 (1/2019)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_199_05_6055dd8e6eb0c.pdf",
+    "y": 2019
+   },
+   {
+    "t": "Zrcadlo č.198 (4/2018)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_198_07_6055dd819accb.pdf",
+    "y": 2018
+   },
+   {
+    "t": "Zrcadlo č.197 (Speciál)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_197_5_6055dd640726e.pdf"
+   },
+   {
+    "t": "Zrcadlo č. 196 (3/2018)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_196_08_6055dd58f39b8.pdf",
+    "y": 2018
+   },
+   {
+    "t": "Zrcadlo č. 195 (2/2018)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo_195_05_6055dd4eaf218.pdf",
+    "y": 2018
+   },
+   {
+    "t": "Zrcadlo č. 194 (1/2018)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo-194_11_6055dd427ce25.pdf",
+    "y": 2018
+   },
+   {
+    "t": "Zrcadlo č. 193 (4/2017)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo-193-webpdf_6055dd175b1d2.pdf",
+    "y": 2017
+   },
+   {
+    "t": "Zrcadlo č. 192 (3/2017)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo-192-02-web_6055dd05b388c.pdf",
+    "y": 2017
+   },
+   {
+    "t": "Zrcadlo č. 191 (2/2017)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo-191-web_6055dcfa65453.pdf",
+    "y": 2017
+   },
+   {
+    "t": "Zrcadlo č. 190 (1/2017)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo-190-web_6055dce7c472d.pdf",
+    "y": 2017
+   },
+   {
+    "t": "Zrcadlo č. 189 (4/2016)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo-189_web_6055dcd704fa7.pdf",
+    "y": 2016
+   },
+   {
+    "t": "Zrcadlo č. 188 (3/2016)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo-188-web_6055dc60bec96.pdf",
+    "y": 2016
+   },
+   {
+    "t": "Zrcadlo č. 187 (2/2016)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo-187-web_6055dc52a9a63.pdf",
+    "y": 2016
+   },
+   {
+    "t": "Zrcadlo č. 186 (1/2016)",
+    "url": "https://vranenadvltavou.cz/formular/Zrcadlo-186-web_6055dc4362c30.pdf",
+    "y": 2016
+   }
+  ],
+  "ok": true,
+  "resolved": {},
+  "v": 2,
+  "seen": {
+   "https://vranenadvltavou.cz/formular/Zrcadlo 229_web_6aa1422b8f632.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo č. 228_6a1fc51b2dd15.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo 227 web_69a82135c5b44.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_226_Web_691c2c4110436.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo 225_68be63abc534c.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_224_web_683d8fe213e2c.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo 223_67c9540b4a9f9.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_222_web_674431687f38e.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo 221 web_66de9da00baff.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_220_web_male_665d75abe26bc.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_219_web_6644a0cf899ec.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_218_kucharka_web_659c1e4e953a7.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_218_web_659c1e09b0e6f.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_217_kucharka-web_659c257a29f75.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_217_web_659c256290628.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_216_64c22bc40e06f.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_215_kucharka_web_641d43ed80ef9.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_215_web_641d43b8da69a.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_214_641d43982dcae.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_213_web_63b7f41353462.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_212_web_63b7f3f14393f.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_211_jaro_2022_WEB_63b7f3de4b9e8.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_210_zima_2021_web_620e26819132c.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_209_web_620e26649376d.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_208_web_620e264f94c54.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_207_web_60b48c7538c0e.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_206_web_60b48c51f0049.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_205_final_nahled_60b48c3b1ef7f.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_204_web_6055ddea6eabc.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_203_06_6055ddde9a6d4.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_202_05[2]_6055ddd47af28.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_201_06_6055ddc475f68.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_200_05_6055ddbb6b4fc.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_199_05_6055dd8e6eb0c.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_198_07_6055dd819accb.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_197_5_6055dd640726e.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_196_08_6055dd58f39b8.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo_195_05_6055dd4eaf218.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo-194_11_6055dd427ce25.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo-193-webpdf_6055dd175b1d2.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo-192-02-web_6055dd05b388c.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo-191-web_6055dcfa65453.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo-190-web_6055dce7c472d.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo-189_web_6055dcd704fa7.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo-188-web_6055dc60bec96.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo-187-web_6055dc52a9a63.pdf": "",
+   "https://vranenadvltavou.cz/formular/Zrcadlo-186-web_6055dc4362c30.pdf": ""
+  }
+ },
+ "Zvole": {
+  "cfg": {
+   "name": "Zvolské noviny",
+   "url": "https://www.zvole.info/aktualne/zvolske-noviny-1/?page=all",
+   "match": "file_storage/download\\.php"
+  },
+  "checked": "2026-11-14T10:28:29+00:00",
+  "issues": [
+   {
+    "t": "číslo 2 2026",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=fdceb57f%7C1544",
+    "y": 2026
+   },
+   {
+    "t": "číslo 1 2026",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=951fa18c%7C1543",
+    "y": 2026
+   },
+   {
+    "t": "číslo 4 2025",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=9509c09e%7C1510",
+    "y": 2025
+   },
+   {
+    "t": "číslo 3 2025",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=54793a77%7C1509",
+    "y": 2025
+   },
+   {
+    "t": "číslo 2 2025",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=431df753%7C1457",
+    "y": 2025
+   },
+   {
+    "t": "číslo 1 2025",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=15e94a14%7C1429",
+    "y": 2025
+   },
+   {
+    "t": "číslo 4 2024",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=5ec44d91%7C1384",
+    "y": 2024
+   },
+   {
+    "t": "číslo 3 2024",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=2d70bada%7C1356",
+    "y": 2024
+   },
+   {
+    "t": "číslo 2 2024",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=28205aa5%7C1357",
+    "y": 2024
+   },
+   {
+    "t": "číslo 1 2024",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=5aeedc4a%7C1310",
+    "y": 2024
+   },
+   {
+    "t": "číslo 4 2023",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=5d5410c9%7C1286",
+    "y": 2023
+   },
+   {
+    "t": "číslo 3 2023",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=2aa8e160%7C1235",
+    "y": 2023
+   },
+   {
+    "t": "číslo 2 2023",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=73f90a2f%7C1236",
+    "y": 2023
+   },
+   {
+    "t": "číslo 1 2023",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=336fcf3d%7C1196",
+    "y": 2023
+   },
+   {
+    "t": "Vánoční číslo 2022",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=1e8df7da%7C1145",
+    "y": 2022
+   },
+   {
+    "t": "číslo 3 2022",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=4444693d%7C1122",
+    "y": 2022
+   },
+   {
+    "t": "číslo 2 2022",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=0de96d80%7C167",
+    "y": 2022
+   },
+   {
+    "t": "číslo 1 2022",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=18d3f3d2%7C164",
+    "y": 2022
+   },
+   {
+    "t": "Vánoční číslo 2021",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=f2a78743%7C163",
+    "y": 2021
+   },
+   {
+    "t": "číslo 4 2021",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=dba2606c%7C162",
+    "y": 2021
+   },
+   {
+    "t": "číslo 3 2021",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=8740b32f%7C147",
+    "y": 2021
+   },
+   {
+    "t": "číslo 2 2021",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=eaf819f4%7C142",
+    "y": 2021
+   },
+   {
+    "t": "číslo 1 2021",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=cf55de5d%7C139",
+    "y": 2021
+   },
+   {
+    "t": "vánoční číslo 2020",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=7b32ca6c%7C122",
+    "y": 2020
+   },
+   {
+    "t": "číslo 3 2020",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=441b0a61%7C115",
+    "y": 2020
+   },
+   {
+    "t": "číslo 2 2020",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=1c3e3376%7C108",
+    "y": 2020
+   },
+   {
+    "t": "číslo 1 2020",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=1e66e2a4%7C106",
+    "y": 2020
+   },
+   {
+    "t": "vánoční číslo 2019",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=378df81c%7C107",
+    "y": 2019
+   },
+   {
+    "t": "číslo 3 2019",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=68d36906%7C86",
+    "y": 2019
+   },
+   {
+    "t": "číslo 2 2019",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=003f1dfd%7C82",
+    "y": 2019
+   },
+   {
+    "t": "číslo 1 2019",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=2f999e1f%7C42",
+    "y": 2019
+   },
+   {
+    "t": "vánoční číslo 2018",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=c03b7feb%7C46",
+    "y": 2018
+   },
+   {
+    "t": "číslo 3 2018",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=4ddc20eb%7C45",
+    "y": 2018
+   },
+   {
+    "t": "číslo 2 2018",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=c288bcb5%7C44",
+    "y": 2018
+   },
+   {
+    "t": "číslo 1 2018",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=cba6a018%7C43",
+    "y": 2018
+   },
+   {
+    "t": "vánoční číslo 2017",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=ccfa53f6%7C49",
+    "y": 2017
+   },
+   {
+    "t": "číslo 3 2017",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=e26ac87f%7C48",
+    "y": 2017
+   },
+   {
+    "t": "číslo 2 2017",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=955ce843%7C47",
+    "y": 2017
+   },
+   {
+    "t": "číslo 1 2017",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=e7c56677%7C109",
+    "y": 2017
+   },
+   {
+    "t": "vánoční číslo 2016",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=3d435d77%7C53",
+    "y": 2016
+   },
+   {
+    "t": "číslo 3 2016",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=3a44e812%7C52",
+    "y": 2016
+   },
+   {
+    "t": "číslo 2 2016",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=0c09a967%7C51",
+    "y": 2016
+   },
+   {
+    "t": "číslo 1 2016",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=d2eac3cd%7C50",
+    "y": 2016
+   },
+   {
+    "t": "vánoční číslo 2015",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=033dde75%7C111",
+    "y": 2015
+   },
+   {
+    "t": "číslo 3 2015",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=58dc6d88%7C56",
+    "y": 2015
+   },
+   {
+    "t": "číslo 2 2015",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=d9dd62a5%7C55",
+    "y": 2015
+   },
+   {
+    "t": "číslo 1 2015",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=1aeac123%7C54",
+    "y": 2015
+   },
+   {
+    "t": "vánoční číslo 2014",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=461c5c54%7C58",
+    "y": 2014
+   },
+   {
+    "t": "číslo 2 2014",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=17b98953%7C59",
+    "y": 2014
+   },
+   {
+    "t": "číslo 1 2014",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=6001f008%7C60",
+    "y": 2014
+   },
+   {
+    "t": "číslo 2 2013",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=20f19bc6%7C61",
+    "y": 2013
+   },
+   {
+    "t": "číslo 1 2013",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=4fe103af%7C62",
+    "y": 2013
+   },
+   {
+    "t": "vánoční číslo 2012",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=f9255ed8%7C63",
+    "y": 2012
+   },
+   {
+    "t": "číslo 3 2012",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=f8afc859%7C64",
+    "y": 2012
+   },
+   {
+    "t": "číslo 2 2012",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=b910b270%7C65",
+    "y": 2012
+   },
+   {
+    "t": "číslo 1 2012",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=6bd112ce%7C66",
+    "y": 2012
+   },
+   {
+    "t": "vánoční číslo 2011",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=a34a29a6%7C67",
+    "y": 2011
+   },
+   {
+    "t": "číslo 4 2011",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=3fda6c2b%7C68",
+    "y": 2011
+   },
+   {
+    "t": "číslo 3 2011",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=ee8d9871%7C69",
+    "y": 2011
+   },
+   {
+    "t": "číslo 2 2011",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=10ef5898%7C70",
+    "y": 2011
+   },
+   {
+    "t": "číslo 1 2011",
+    "url": "https://www.zvole.info/modules/file_storage/download.php?file=326f43f9%7C71",
+    "y": 2011
+   }
+  ],
+  "ok": true,
+  "resolved": {},
+  "v": 2,
+  "seen": {
+   "https://www.zvole.info/modules/file_storage/download.php?file=fdceb57f%7C1544": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=951fa18c%7C1543": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=9509c09e%7C1510": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=54793a77%7C1509": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=431df753%7C1457": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=15e94a14%7C1429": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=5ec44d91%7C1384": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=2d70bada%7C1356": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=28205aa5%7C1357": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=5aeedc4a%7C1310": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=5d5410c9%7C1286": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=2aa8e160%7C1235": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=73f90a2f%7C1236": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=336fcf3d%7C1196": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=1e8df7da%7C1145": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=4444693d%7C1122": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=0de96d80%7C167": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=18d3f3d2%7C164": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=f2a78743%7C163": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=dba2606c%7C162": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=8740b32f%7C147": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=eaf819f4%7C142": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=cf55de5d%7C139": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=7b32ca6c%7C122": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=441b0a61%7C115": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=1c3e3376%7C108": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=1e66e2a4%7C106": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=378df81c%7C107": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=68d36906%7C86": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=003f1dfd%7C82": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=2f999e1f%7C42": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=c03b7feb%7C46": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=4ddc20eb%7C45": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=c288bcb5%7C44": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=cba6a018%7C43": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=ccfa53f6%7C49": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=e26ac87f%7C48": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=955ce843%7C47": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=e7c56677%7C109": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=3d435d77%7C53": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=3a44e812%7C52": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=0c09a967%7C51": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=d2eac3cd%7C50": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=033dde75%7C111": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=58dc6d88%7C56": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=d9dd62a5%7C55": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=1aeac123%7C54": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=461c5c54%7C58": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=17b98953%7C59": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=6001f008%7C60": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=20f19bc6%7C61": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=4fe103af%7C62": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=f9255ed8%7C63": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=f8afc859%7C64": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=b910b270%7C65": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=6bd112ce%7C66": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=a34a29a6%7C67": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=3fda6c2b%7C68": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=ee8d9871%7C69": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=10ef5898%7C70": "",
+   "https://www.zvole.info/modules/file_storage/download.php?file=326f43f9%7C71": ""
+  }
+ },
+ "Psáry": {
+  "cfg": {
+   "name": "Psárský zpravodaj",
+   "url": "https://psary.cz/psarsky-zpravodaj/",
+   "match": "psary\\.cz/psarsky-zpravodaj/[a-z0-9-]+/? ",
+   "exclude": "o-psarskem",
+   "detail": {
+    "match": "\\.pdf"
+   }
+  },
+  "checked": "2026-11-14T10:28:29+00:00",
+  "issues": [
+   {
+    "t": "Psárský zpravodaj 5/2026",
+    "url": "https://psary.cz/wp-content/uploads/2026/10/Psarsky-zpravodaj-rijen-2026-web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2026/",
+    "y": 2026
+   },
+   {
+    "t": "Psárský zpravodaj 4/2026",
+    "url": "https://psary.cz/wp-content/uploads/2026/10/Psarsky-zpravodaj-srpen-2026-web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2026/",
+    "y": 2026
+   },
+   {
+    "t": "Psárský zpravodaj 3/2026",
+    "url": "https://psary.cz/wp-content/uploads/2026/06/Psarsky-zpravodaj-cerven-2026-web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2026/",
+    "y": 2026
+   },
+   {
+    "t": "Psárský zpravodaj 2/2026",
+    "url": "https://psary.cz/wp-content/uploads/2026/04/Psarsky-zpravodaj-duben-2026-web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2026/",
+    "y": 2026
+   },
+   {
+    "t": "Psárský zpravodaj 1/2026",
+    "url": "https://psary.cz/wp-content/uploads/2026/03/Psarsky-zpravodaj-unor-2026-web-1.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2026/",
+    "y": 2026
+   },
+   {
+    "t": "Psárský zpravodaj 6/2025",
+    "url": "https://psary.cz/wp-content/uploads/2025/12/Psarsky-zpravodaj-prosinec-2025-web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2025/",
+    "y": 2025
+   },
+   {
+    "t": "Psárský zpravodaj 5/2025",
+    "url": "https://psary.cz/wp-content/uploads/2025/10/Psarsky-zpravodaj-rijen-2025-web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2025/",
+    "y": 2025
+   },
+   {
+    "t": "Psárský zpravodaj 4/2025",
+    "url": "https://psary.cz/wp-content/uploads/2025/09/Psarsky-zpravodaj-srpen-2025-web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2025/",
+    "y": 2025
+   },
+   {
+    "t": "Psárský zpravodaj 3/2025",
+    "url": "https://psary.cz/wp-content/uploads/2025/07/Psarsky-zpravodaj-cerven-2025-web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2025/",
+    "y": 2025
+   },
+   {
+    "t": "Psárský zpravodaj 2/2025",
+    "url": "https://psary.cz/wp-content/uploads/2025/04/Psarsky-zpravodaj-duben-2025-web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2025/",
+    "y": 2025
+   },
+   {
+    "t": "Psárský zpravodaj 1/2025",
+    "url": "https://psary.cz/wp-content/uploads/2025/03/Psarsky-zpravodaj-unor-2025-web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2025/",
+    "y": 2025
+   },
+   {
+    "t": "Psárský zpravodaj 6/2024",
+    "url": "https://psary.cz/wp-content/uploads/2024/12/Psarsky-zpravodaj-prosinec-2024-web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2024/",
+    "y": 2024
+   },
+   {
+    "t": "Psárský zpravodaj 5/2024",
+    "url": "https://psary.cz/wp-content/uploads/2024/11/Psarsky-zpravodaj-rijen-2024-web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2024/",
+    "y": 2024
+   },
+   {
+    "t": "Psárský zpravodaj 4/2024",
+    "url": "https://psary.cz/wp-content/uploads/2024/10/psarskyzpravodajsrpen2024web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2024/",
+    "y": 2024
+   },
+   {
+    "t": "Psárský zpravodaj 3/2024",
+    "url": "https://psary.cz/wp-content/uploads/2024/10/psarskyzpravodajcerven2024web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2024/",
+    "y": 2024
+   },
+   {
+    "t": "Psárský zpravodaj 2/2024",
+    "url": "https://psary.cz/wp-content/uploads/2024/10/psarskyzpravodajduben2024web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2024/",
+    "y": 2024
+   },
+   {
+    "t": "Psárský zpravodaj 1/2024",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2024web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2024/",
+    "y": 2024
+   },
+   {
+    "t": "Psárský zpravodaj 6/2023",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2023web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2023/",
+    "y": 2023
+   },
+   {
+    "t": "Psárský zpravodaj 5/2023",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2023webverze2.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2023/",
+    "y": 2023
+   },
+   {
+    "t": "Psárský zpravodaj 4/2023",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2023web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2023/",
+    "y": 2023
+   },
+   {
+    "t": "Psárský zpravodaj 3/2023",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2023web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2023/",
+    "y": 2023
+   },
+   {
+    "t": "Psárský zpravodaj 2/2023",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2023web2.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2023/",
+    "y": 2023
+   },
+   {
+    "t": "Psárský zpravodaj 1/2023",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2023web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2023/",
+    "y": 2023
+   },
+   {
+    "t": "Psárský zpravodaj 6/2022",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2022web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2022/",
+    "y": 2022
+   },
+   {
+    "t": "Psárský zpravodaj 5/2022",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2022web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2022/",
+    "y": 2022
+   },
+   {
+    "t": "Psárský zpravodaj 4/2022",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2022web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2022/",
+    "y": 2022
+   },
+   {
+    "t": "Psárský zpravodaj 3/2022",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2022web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2022/",
+    "y": 2022
+   },
+   {
+    "t": "Psárský zpravodaj 2/2022",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2022web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2022/",
+    "y": 2022
+   },
+   {
+    "t": "Psárský zpravodaj 1/2022",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2022web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2022/",
+    "y": 2022
+   },
+   {
+    "t": "Psárský zpravodaj 6/2021",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2021web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2021/",
+    "y": 2021
+   },
+   {
+    "t": "Psárský zpravodaj 5/2021",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2021web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2021/",
+    "y": 2021
+   },
+   {
+    "t": "Psárský zpravodaj 4/2021",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2021web2.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2021/",
+    "y": 2021
+   },
+   {
+    "t": "Psárský zpravodaj 3/2021",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/cerven8web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2021/",
+    "y": 2021
+   },
+   {
+    "t": "Psárský zpravodaj 2/2021",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2021web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2021/",
+    "y": 2021
+   },
+   {
+    "t": "Psárský zpravodaj 1/2021",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2021web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2021/",
+    "y": 2021
+   },
+   {
+    "t": "Psárský zpravodaj 6/2020",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2020webverze2.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2020/",
+    "y": 2020
+   },
+   {
+    "t": "Psárský zpravodaj 5/2020",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2020web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2020/",
+    "y": 2020
+   },
+   {
+    "t": "Psárský zpravodaj 4/2020",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2020web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2020/",
+    "y": 2020
+   },
+   {
+    "t": "Psárský zpravodaj 3/2020",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2020web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2020/",
+    "y": 2020
+   },
+   {
+    "t": "Psárský zpravodaj 2/2020",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2020web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2020/",
+    "y": 2020
+   },
+   {
+    "t": "Psárský zpravodaj 1/2020",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2020web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2020/",
+    "y": 2020
+   },
+   {
+    "t": "Psárský zpravodaj 6/2019",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2019web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2019/",
+    "y": 2019
+   },
+   {
+    "t": "Psárský zpravodaj 5/2019",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2019web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2019/",
+    "y": 2019
+   },
+   {
+    "t": "Psárský zpravodaj 4/2019",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2019web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2019/",
+    "y": 2019
+   },
+   {
+    "t": "Psárský zpravodaj 3/2019",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2019web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2019/",
+    "y": 2019
+   },
+   {
+    "t": "Psárský zpravodaj 2/2019",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2019web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2019/",
+    "y": 2019
+   },
+   {
+    "t": "Psárský zpravodaj 1/2019",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2019web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2019/",
+    "y": 2019
+   },
+   {
+    "t": "Psárský zpravodaj 6/2018",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2018web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2018/",
+    "y": 2018
+   },
+   {
+    "t": "Psárský zpravodaj 5/2018",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2018web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2018/",
+    "y": 2018
+   },
+   {
+    "t": "Psárský zpravodaj 4/2018",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2018web_0.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2018/",
+    "y": 2018
+   },
+   {
+    "t": "Psárský zpravodaj 3/2018",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2018web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2018/",
+    "y": 2018
+   },
+   {
+    "t": "Psárský zpravodaj 2/2018",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2018web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2018/",
+    "y": 2018
+   },
+   {
+    "t": "Psárský zpravodaj 1/2018",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/unor11web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2018/",
+    "y": 2018
+   },
+   {
+    "t": "Psárský zpravodaj 6/2017",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2017web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2017/",
+    "y": 2017
+   },
+   {
+    "t": "Psárský zpravodaj 5/2017",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2017web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2017/",
+    "y": 2017
+   },
+   {
+    "t": "Psárský zpravodaj 4/2017",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2017web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2017/",
+    "y": 2017
+   },
+   {
+    "t": "Psárský zpravodaj 3/2017",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2017web_0.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2017/",
+    "y": 2017
+   },
+   {
+    "t": "Psárský zpravodaj 2/2017",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2017web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2017/",
+    "y": 2017
+   },
+   {
+    "t": "Psárský zpravodaj 1/2017",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2017web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2017/",
+    "y": 2017
+   },
+   {
+    "t": "Psárský zpravodaj 6/2016",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2016web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2016/",
+    "y": 2016
+   },
+   {
+    "t": "Psárský zpravodaj 5/2016",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2016web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2016/",
+    "y": 2016
+   },
+   {
+    "t": "Psárský zpravodaj 4/2016",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2016web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2016/",
+    "y": 2016
+   },
+   {
+    "t": "Psárský zpravodaj 3/2016",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2016web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2016/",
+    "y": 2016
+   },
+   {
+    "t": "Psárský zpravodaj 2/2016",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2016web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2016/",
+    "y": 2016
+   },
+   {
+    "t": "Psárský zpravodaj 1/2016",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2016web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2016/",
+    "y": 2016
+   },
+   {
+    "t": "Psárský zpravodaj 6/2015",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2015web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2015/",
+    "y": 2015
+   },
+   {
+    "t": "Psárský zpravodaj 5/2015",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2015web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2015/",
+    "y": 2015
+   },
+   {
+    "t": "Psárský zpravodaj 4/2015",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2015web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2015/",
+    "y": 2015
+   },
+   {
+    "t": "Psárský zpravodaj 3/2015",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2015web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2015/",
+    "y": 2015
+   },
+   {
+    "t": "Psárský zpravodaj 2/2015",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2015web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2015/",
+    "y": 2015
+   },
+   {
+    "t": "Psárský zpravodaj 1/2015",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2015web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2015/",
+    "y": 2015
+   },
+   {
+    "t": "Psárský zpravodaj 6/2014",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2014web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2014/",
+    "y": 2014
+   },
+   {
+    "t": "Psárský zpravodaj 5/2014",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/rijen9web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2014/",
+    "y": 2014
+   },
+   {
+    "t": "Psárský zpravodaj 4/2014",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2014web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2014/",
+    "y": 2014
+   },
+   {
+    "t": "Psárský zpravodaj 3/2014",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2014web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2014/",
+    "y": 2014
+   },
+   {
+    "t": "Psárský zpravodaj 2/2014",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2014web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2014/",
+    "y": 2014
+   },
+   {
+    "t": "Psárský zpravodaj 1/2014",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2014web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2014/",
+    "y": 2014
+   },
+   {
+    "t": "Psárský zpravodaj 6/2013",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2013web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2013/",
+    "y": 2013
+   },
+   {
+    "t": "Psárský zpravodaj 5/2013",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2013web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2013/",
+    "y": 2013
+   },
+   {
+    "t": "Psárský zpravodaj 4/2013",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2013web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2013/",
+    "y": 2013
+   },
+   {
+    "t": "Psárský zpravodaj 3/2013",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2013web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2013/",
+    "y": 2013
+   },
+   {
+    "t": "Psárský zpravodaj 2/2013",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2013web2.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2013/",
+    "y": 2013
+   },
+   {
+    "t": "Psárský zpravodaj 1/2013",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodaj2013-02web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2013/",
+    "y": 2013
+   },
+   {
+    "t": "Psárský zpravodaj 6/2012",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodaj2012-12web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2012/",
+    "y": 2012
+   },
+   {
+    "t": "Psárský zpravodaj 5/2012",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodaj2012-10web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2012/",
+    "y": 2012
+   },
+   {
+    "t": "Psárský zpravodaj 4/2012",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/zpravodaj_srpen_web__0.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2012/",
+    "y": 2012
+   },
+   {
+    "t": "Psárský zpravodaj 3/2012",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/pzcerven9web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2012/",
+    "y": 2012
+   },
+   {
+    "t": "Psárský zpravodaj 2/2012",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodaj2012-04web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2012/",
+    "y": 2012
+   },
+   {
+    "t": "Psárský zpravodaj 1/2012",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodaj2012-02web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2012/",
+    "y": 2012
+   },
+   {
+    "t": "Prosinec 2011",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodaj2011-12web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/prosinec-2011/",
+    "y": 2011
+   },
+   {
+    "t": "Říjen 2011",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodaj2011-10web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/rijen-2011/",
+    "y": 2011
+   },
+   {
+    "t": "Srpen 2011",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodaj2011-08web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/srpen-2011/",
+    "y": 2011
+   },
+   {
+    "t": "Červen 2011",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/pz2011-06-10web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/cerven-2011/",
+    "y": 2011
+   },
+   {
+    "t": "Duben 2011",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarsky-zpravodaj-2011-04web.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/duben-2011/",
+    "y": 2011
+   },
+   {
+    "t": "Únor 2011",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psary12011.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/unor-2011/",
+    "y": 2011
+   },
+   {
+    "t": "Psárský zpravodaj 6/2010",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psary6oprosinec2010.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2010/",
+    "y": 2010
+   },
+   {
+    "t": "Psárský zpravodaj 5/2010",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psary5rijen2010.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2010/",
+    "y": 2010
+   },
+   {
+    "t": "Psárský zpravodaj 4/2010",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psary4srpen2010.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2010/",
+    "y": 2010
+   },
+   {
+    "t": "Psárský zpravodaj 3/2010",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psary3cerven2010.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2010/",
+    "y": 2010
+   },
+   {
+    "t": "Psárský zpravodaj 2/2010",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psary2duben2010.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2010/",
+    "y": 2010
+   },
+   {
+    "t": "Psárský zpravodaj 1/2010",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psary1unor.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2010/",
+    "y": 2010
+   },
+   {
+    "t": "Psárský zpravodaj 6/2009",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/091214prosineci09.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2009/",
+    "y": 2009
+   },
+   {
+    "t": "Psárský zpravodaj 5/2009",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/091001rijen09.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2009/",
+    "y": 2009
+   },
+   {
+    "t": "Psárský zpravodaj 4/2009",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/090824psarysrpen09.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2009/",
+    "y": 2009
+   },
+   {
+    "t": "Psárský zpravodaj 3/2009",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/090602cerven09.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2009/",
+    "y": 2009
+   },
+   {
+    "t": "Psárský zpravodaj 2/2009",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/090414duben2009.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2009/",
+    "y": 2009
+   },
+   {
+    "t": "Psárský zpravodaj 1/2009",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/090216unor2009.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2009/",
+    "y": 2009
+   },
+   {
+    "t": "Psárský zpravodaj 6/2008",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/prosinec2008.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2008/",
+    "y": 2008
+   },
+   {
+    "t": "Psárský zpravodaj 5/2008",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psaryrijen08.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2008/",
+    "y": 2008
+   },
+   {
+    "t": "Psárský zpravodaj 4/2008",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarysrpen08.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2008/",
+    "y": 2008
+   },
+   {
+    "t": "Psárský zpravodaj 3/2008",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psarycerven08.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2008/",
+    "y": 2008
+   },
+   {
+    "t": "Psárský zpravodaj 2/2008",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psaryduben2008.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2008/",
+    "y": 2008
+   },
+   {
+    "t": "Psárský zpravodaj 1/2008",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/psaryunor2008.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2008/",
+    "y": 2008
+   },
+   {
+    "t": "Psárský zpravodaj 6/2007",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/zpravodajprosinec20072.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2007/",
+    "y": 2007
+   },
+   {
+    "t": "Psárský zpravodaj 5/2007",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/zpravodajrijen20072.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2007/",
+    "y": 2007
+   },
+   {
+    "t": "Psárský zpravodaj 4/2007",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/zpravodajsrpen20072.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2007/",
+    "y": 2007
+   },
+   {
+    "t": "Psárský zpravodaj 3/2007",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/zpravodajcerven20072.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2007/",
+    "y": 2007
+   },
+   {
+    "t": "Psárský zpravodaj 2/2007",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/zpravodajduben20072.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2007/",
+    "y": 2007
+   },
+   {
+    "t": "Psárský zpravodaj 1/2007",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/zpravodajunor20072.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2007/",
+    "y": 2007
+   },
+   {
+    "t": "Psárský zpravodaj 5/2006",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/zpravodajrijen20062.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2006/",
+    "y": 2006
+   },
+   {
+    "t": "Psárský zpravodaj 6/2006",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/zpravodajprosinec20062.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2006/",
+    "y": 2006
+   },
+   {
+    "t": "Psárský zpravodaj 4/2006",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/zpravodajsrpen20062.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2006/",
+    "y": 2006
+   },
+   {
+    "t": "Psárský zpravodaj 3/2006",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/zpravodajcerven20062.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2006/",
+    "y": 2006
+   },
+   {
+    "t": "Psárský zpravodaj 2/2006",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/zpravodajduben20062.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2006/",
+    "y": 2006
+   },
+   {
+    "t": "Psárský zpravodaj 1/2006",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/zpravodajunor20062.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2006/",
+    "y": 2006
+   },
+   {
+    "t": "Psárský zpravodaj 5/2005",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/zpravodajprosinec20052.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2005/",
+    "y": 2005
+   },
+   {
+    "t": "Psárský zpravodaj 3/2005",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/zpravodajkveten20051.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2005/",
+    "y": 2005
+   },
+   {
+    "t": "Psárský zpravodaj 2/2005",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/zpravodajbrezen20051.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2005/",
+    "y": 2005
+   },
+   {
+    "t": "Psárský zpravodaj 4/2005",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/zpravodajzari20051.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2005/",
+    "y": 2005
+   },
+   {
+    "t": "Psárský zpravodaj 1/2005",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/zpravodajleden20052.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2005/",
+    "y": 2005
+   },
+   {
+    "t": "Psárský zpravodaj 3/2004",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/zpravodajlistopad20042.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2004/",
+    "y": 2004
+   },
+   {
+    "t": "Psárský zpravodaj 2/2004",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/zpravodajzari20042.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2004/",
+    "y": 2004
+   },
+   {
+    "t": "Psárský zpravodaj 1/2004",
+    "url": "https://psary.cz/wp-content/uploads/2024/04/zpravodajcerven20042.pdf",
+    "page": "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2004/",
+    "y": 2004
+   }
+  ],
+  "ok": true,
+  "resolved": {
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2026/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2026/10/Psarsky-zpravodaj-rijen-2026-web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2026/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2026/10/Psarsky-zpravodaj-srpen-2026-web.pdf",
+    "when": "podzim 2026",
+    "y": 2026
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2026/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2026/06/Psarsky-zpravodaj-cerven-2026-web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2026/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2026/04/Psarsky-zpravodaj-duben-2026-web.pdf",
+    "when": "duben 2026",
+    "y": 2026
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2026/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2026/03/Psarsky-zpravodaj-unor-2026-web-1.pdf",
+    "when": "jaro 2026",
+    "y": 2026
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2025/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2025/12/Psarsky-zpravodaj-prosinec-2025-web.pdf",
+    "when": "prosinec 2025",
+    "y": 2025
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2025/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2025/10/Psarsky-zpravodaj-rijen-2025-web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2025/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2025/09/Psarsky-zpravodaj-srpen-2025-web.pdf",
+    "when": "podzim 2025",
+    "y": 2025
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2025/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2025/07/Psarsky-zpravodaj-cerven-2025-web.pdf",
+    "when": "květen 1945",
+    "y": 1945
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2025/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2025/04/Psarsky-zpravodaj-duben-2025-web.pdf",
+    "when": "duben 2025",
+    "y": 2025
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2025/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2025/03/Psarsky-zpravodaj-unor-2025-web.pdf",
+    "when": "jaro 2025",
+    "y": 2025
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2024/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/12/Psarsky-zpravodaj-prosinec-2024-web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2024/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/11/Psarsky-zpravodaj-rijen-2024-web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2024/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/10/psarskyzpravodajsrpen2024web.pdf",
+    "when": "podzim 2024",
+    "y": 2024
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2024/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/10/psarskyzpravodajcerven2024web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2024/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/10/psarskyzpravodajduben2024web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2024/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2024web.pdf",
+    "when": "jaro 2024",
+    "y": 2024
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2023/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2023web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2023/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2023webverze2.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2023/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2023web.pdf",
+    "when": "podzim 2023",
+    "y": 2023
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2023/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2023web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2023/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2023web2.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2023/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2023web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2022/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2022web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2022/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2022web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2022/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2022web.pdf",
+    "when": "podzim 2022",
+    "y": 2022
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2022/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2022web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2022/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2022web.pdf",
+    "when": "červen 2022",
+    "y": 2022
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2022/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2022web.pdf",
+    "when": "jaro 2022",
+    "y": 2022
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2021/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2021web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2021/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2021web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2021/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2021web2.pdf",
+    "when": "podzim 2021",
+    "y": 2021
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2021/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/cerven8web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2021/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2021web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2021/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2021web.pdf",
+    "when": "jaro 2021",
+    "y": 2021
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2020/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2020webverze2.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2020/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2020web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2020/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2020web.pdf",
+    "when": "podzim 2020",
+    "y": 2020
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2020/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2020web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2020/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2020web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2020/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2020web.pdf",
+    "when": "jaro 2020",
+    "y": 2020
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2019/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2019web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2019/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2019web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2019/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2019web.pdf",
+    "when": "podzim 2019",
+    "y": 2019
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2019/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2019web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2019/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2019web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2019/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2019web.pdf",
+    "when": "jaro 2019",
+    "y": 2019
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2018/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2018web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2018/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2018web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2018/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2018web_0.pdf",
+    "when": "podzim 2018",
+    "y": 2018
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2018/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2018web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2018/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2018web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2018/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/unor11web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2017/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2017web.pdf",
+    "when": "září 2018",
+    "y": 2018
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2017/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2017web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2017/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2017web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2017/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2017web_0.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2017/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2017web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2017/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2017web.pdf",
+    "when": "jaro 2017",
+    "y": 2017
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2016/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2016web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2016/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2016web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2016/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2016web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2016/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2016web.pdf",
+    "when": "květen 2016",
+    "y": 2016
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2016/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2016web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2016/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2016web.pdf",
+    "when": "jaro 2016",
+    "y": 2016
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2015/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2015web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2015/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2015web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2015/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2015web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2015/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2015web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2015/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2015web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2015/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2015web.pdf",
+    "when": "jaro 2015",
+    "y": 2015
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2014/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2014web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2014/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/rijen9web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2014/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2014web.pdf",
+    "when": "podzim 2014",
+    "y": 2014
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2014/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2014web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2014/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2014web.pdf",
+    "when": "květen 1945",
+    "y": 1945
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2014/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2014web.pdf",
+    "when": "jaro 2014",
+    "y": 2014
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2013/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2013web.pdf",
+    "when": "listopad 2013",
+    "y": 2013
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2013/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2013web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2013/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2013web.pdf",
+    "when": "podzim 2013",
+    "y": 2013
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2013/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2013web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2013/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2013web2.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2013/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodaj2013-02web.pdf",
+    "when": "prosinec 2012",
+    "y": 2012
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2012/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodaj2012-12web.pdf",
+    "when": "listopad 2012",
+    "y": 2012
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2012/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodaj2012-10web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2012/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/zpravodaj_srpen_web__0.pdf",
+    "when": "podzim 2012",
+    "y": 2012
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2012/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/pzcerven9web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2012/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodaj2012-04web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2012/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodaj2012-02web.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/prosinec-2011/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodaj2011-12web.pdf",
+    "when": "prosinec 2011",
+    "y": 2011
+   },
+   "https://psary.cz/psarsky-zpravodaj/rijen-2011/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodaj2011-10web.pdf",
+    "when": "říjen 2011",
+    "y": 2011
+   },
+   "https://psary.cz/psarsky-zpravodaj/srpen-2011/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodaj2011-08web.pdf",
+    "when": "srpen 2011",
+    "y": 2011
+   },
+   "https://psary.cz/psarsky-zpravodaj/cerven-2011/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/pz2011-06-10web.pdf",
+    "when": "červen 2011",
+    "y": 2011
+   },
+   "https://psary.cz/psarsky-zpravodaj/duben-2011/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarsky-zpravodaj-2011-04web.pdf",
+    "when": "duben 2011",
+    "y": 2011
+   },
+   "https://psary.cz/psarsky-zpravodaj/unor-2011/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psary12011.pdf",
+    "when": "únor 2011",
+    "y": 2011
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2010/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psary6oprosinec2010.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2010/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psary5rijen2010.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2010/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psary4srpen2010.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2010/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psary3cerven2010.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2010/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psary2duben2010.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2010/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psary1unor.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2009/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/091214prosineci09.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2009/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/091001rijen09.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2009/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/090824psarysrpen09.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2009/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/090602cerven09.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2009/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/090414duben2009.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2009/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/090216unor2009.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2008/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/prosinec2008.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2008/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psaryrijen08.pdf",
+    "when": "září 2008",
+    "y": 2008
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2008/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarysrpen08.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2008/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psarycerven08.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2008/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psaryduben2008.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2008/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/psaryunor2008.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2007/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/zpravodajprosinec20072.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2007/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/zpravodajrijen20072.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2007/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/zpravodajsrpen20072.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2007/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/zpravodajcerven20072.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2007/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/zpravodajduben20072.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2007/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/zpravodajunor20072.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2006/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/zpravodajrijen20062.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2006/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/zpravodajprosinec20062.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2006/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/zpravodajsrpen20062.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2006/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/zpravodajcerven20062.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2006/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/zpravodajduben20062.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2006/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/zpravodajunor20062.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2005/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/zpravodajprosinec20052.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2005/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/zpravodajkveten20051.pdf",
+    "when": "květen 1945",
+    "y": 1945
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2005/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/zpravodajbrezen20051.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2005/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/zpravodajzari20051.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2005/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/zpravodajleden20052.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2004/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/zpravodajlistopad20042.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2004/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/zpravodajzari20042.pdf"
+   },
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2004/": {
+    "pdf": "https://psary.cz/wp-content/uploads/2024/04/zpravodajcerven20042.pdf"
+   }
+  },
+  "v": 2,
+  "seen": {
+   "https://psary.cz/wp-content/uploads/2026/10/Psarsky-zpravodaj-rijen-2026-web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2026/10/Psarsky-zpravodaj-srpen-2026-web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2026/06/Psarsky-zpravodaj-cerven-2026-web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2026/04/Psarsky-zpravodaj-duben-2026-web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2026/03/Psarsky-zpravodaj-unor-2026-web-1.pdf": "",
+   "https://psary.cz/wp-content/uploads/2025/12/Psarsky-zpravodaj-prosinec-2025-web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2025/10/Psarsky-zpravodaj-rijen-2025-web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2025/09/Psarsky-zpravodaj-srpen-2025-web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2025/07/Psarsky-zpravodaj-cerven-2025-web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2025/04/Psarsky-zpravodaj-duben-2025-web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2025/03/Psarsky-zpravodaj-unor-2025-web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/12/Psarsky-zpravodaj-prosinec-2024-web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/11/Psarsky-zpravodaj-rijen-2024-web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/10/psarskyzpravodajsrpen2024web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/10/psarskyzpravodajcerven2024web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/10/psarskyzpravodajduben2024web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2024web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2023web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2023webverze2.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2023web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2023web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2023web2.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2023web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2022web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2022web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2022web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2022web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2022web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2022web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2021web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2021web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2021web2.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/cerven8web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2021web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2021web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2020webverze2.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2020web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2020web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2020web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2020web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2020web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2019web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2019web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2019web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2019web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2019web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2019web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2018web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2018web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2018web_0.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2018web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2018web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/unor11web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2017web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2017web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2017web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2017web_0.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2017web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2017web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2016web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2016web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2016web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2016web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2016web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2016web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2015web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2015web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2015web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2015web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2015web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2015web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2014web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/rijen9web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2014web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2014web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2014web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajunor2014web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajprosinec2013web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajrijen2013web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajsrpen2013web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajcerven2013web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodajduben2013web2.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodaj2013-02web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodaj2012-12web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodaj2012-10web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/zpravodaj_srpen_web__0.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/pzcerven9web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodaj2012-04web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodaj2012-02web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodaj2011-12web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodaj2011-10web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarskyzpravodaj2011-08web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/pz2011-06-10web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarsky-zpravodaj-2011-04web.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psary12011.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psary6oprosinec2010.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psary5rijen2010.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psary4srpen2010.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psary3cerven2010.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psary2duben2010.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psary1unor.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/091214prosineci09.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/091001rijen09.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/090824psarysrpen09.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/090602cerven09.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/090414duben2009.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/090216unor2009.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/prosinec2008.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psaryrijen08.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarysrpen08.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psarycerven08.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psaryduben2008.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/psaryunor2008.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/zpravodajprosinec20072.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/zpravodajrijen20072.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/zpravodajsrpen20072.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/zpravodajcerven20072.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/zpravodajduben20072.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/zpravodajunor20072.pdf": "",
+   "https://psary.cz/wp-content/uploads/2024/04/zpravodajrijen20062.pdf": "",
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-6-2006/": "",
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2006/": "",
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2006/": "",
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2006/": "",
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2006/": "",
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-5-2005/": "",
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2005/": "",
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2005/": "",
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-4-2005/": "",
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2005/": "",
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-3-2004/": "",
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-2-2004/": "",
+   "https://psary.cz/psarsky-zpravodaj/psarsky-zpravodaj-1-2004/": "",
+   "https://psary.cz/wp-content/uploads/2024/04/zpravodajprosinec20062.pdf": "2026-11-06T10:58:15+00:00",
+   "https://psary.cz/wp-content/uploads/2024/04/zpravodajsrpen20062.pdf": "2026-11-06T10:58:15+00:00",
+   "https://psary.cz/wp-content/uploads/2024/04/zpravodajcerven20062.pdf": "2026-11-06T10:58:15+00:00",
+   "https://psary.cz/wp-content/uploads/2024/04/zpravodajduben20062.pdf": "2026-11-06T10:58:15+00:00",
+   "https://psary.cz/wp-content/uploads/2024/04/zpravodajunor20062.pdf": "2026-11-06T10:58:15+00:00",
+   "https://psary.cz/wp-content/uploads/2024/04/zpravodajprosinec20052.pdf": "2026-11-06T10:58:15+00:00",
+   "https://psary.cz/wp-content/uploads/2024/04/zpravodajkveten20051.pdf": "2026-11-06T10:58:15+00:00",
+   "https://psary.cz/wp-content/uploads/2024/04/zpravodajbrezen20051.pdf": "2026-11-06T10:58:15+00:00",
+   "https://psary.cz/wp-content/uploads/2024/04/zpravodajzari20051.pdf": "2026-11-06T10:58:15+00:00",
+   "https://psary.cz/wp-content/uploads/2024/04/zpravodajleden20052.pdf": "2026-11-06T10:58:15+00:00",
+   "https://psary.cz/wp-content/uploads/2024/04/zpravodajlistopad20042.pdf": "2026-11-06T10:58:15+00:00",
+   "https://psary.cz/wp-content/uploads/2024/04/zpravodajzari20042.pdf": "2026-11-06T10:58:15+00:00",
+   "https://psary.cz/wp-content/uploads/2024/04/zpravodajcerven20042.pdf": "2026-11-06T10:58:15+00:00"
+  }
+ },
+ "Ohrobec": {
+  "cfg": {
+   "name": "Ohrobecký zpravodaj",
+   "url": "https://www.ohrobec.cz/obec/ohrobecky-obcasnik",
+   "match": "/tiskoviny/.*zpravodaj"
+  },
+  "checked": "2026-11-14T10:28:29+00:00",
+  "issues": [
+   {
+    "t": "Ohrobecký zpravodaj č. 2/2026",
+    "url": "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%202-2026.pdf",
+    "y": 2026
+   },
+   {
+    "t": "Ohrobecký zpravodaj č. 1/2026",
+    "url": "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%201-2026.pdf",
+    "y": 2026
+   },
+   {
+    "t": "Ohrobecký zpravodaj - předvolební vydání",
+    "url": "https://www.ohrobec.cz/www/files/tiskoviny/zpravodaj-p%C5%99edvolebn%C3%AD%20vyd%C3%A1n%C3%AD.pdf"
+   },
+   {
+    "t": "Ohrobecký zpravodaj č. 3/2025",
+    "url": "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%203%202025.pdf",
+    "y": 2025
+   },
+   {
+    "t": "Ohrobecký zpravodaj 2/2025",
+    "url": "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%202%202025.pdf",
+    "y": 2025
+   },
+   {
+    "t": "Ohrobecký zpravodaj 1/2025",
+    "url": "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%201%202025.pdf",
+    "y": 2025
+   },
+   {
+    "t": "Ohrobecký zpravodaj 3/2024",
+    "url": "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%203%202024.pdf",
+    "y": 2024
+   },
+   {
+    "t": "Ohrobecký zpravodaj 2/2024",
+    "url": "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%202%202024.pdf",
+    "y": 2024
+   },
+   {
+    "t": "Ohrobecký zpravodaj 1/2024",
+    "url": "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%201%202024.pdf",
+    "y": 2024
+   },
+   {
+    "t": "Ohrobecký zpravodaj 3/2023",
+    "url": "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%203%202023.pdf",
+    "y": 2023
+   },
+   {
+    "t": "Ohrobecký zpravodaj 2/2023",
+    "url": "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%202%202023.pdf",
+    "y": 2023
+   },
+   {
+    "t": "Ohrobecký zpravodaj 1/2023",
+    "url": "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%201%202023.pdf",
+    "y": 2023
+   },
+   {
+    "t": "Ohrobecký zpravodaj 4/2022",
+    "url": "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%204%202022.pdf",
+    "y": 2022
+   },
+   {
+    "t": "Ohrobecký zpravodaj- volební speciál září 2022",
+    "url": "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobecky%20zpravodaj-%20volebn%C3%AD%20speci%C3%A1l%20za%C5%99%C3%AD%202022.pdf",
+    "y": 2022
+   },
+   {
+    "t": "Ohrobecký zpravodaj 2/2022",
+    "url": "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%202%202022.pdf",
+    "y": 2022
+   },
+   {
+    "t": "Ohrobecký zpravodaj 1/2022",
+    "url": "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%201%202022.pdf",
+    "y": 2022
+   },
+   {
+    "t": "Ohrobecký zpravodaj 3/2021",
+    "url": "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%203%202021.pdf",
+    "y": 2021
+   },
+   {
+    "t": "Ohrobecký zpravodaj 2/2021",
+    "url": "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%202%202021.pdf",
+    "y": 2021
+   },
+   {
+    "t": "Ohrobecký zpravodaj 1/2021",
+    "url": "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%201%202021.pdf",
+    "y": 2021
+   }
+  ],
+  "ok": true,
+  "resolved": {},
+  "v": 2,
+  "seen": {
+   "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%202-2026.pdf": "",
+   "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%201-2026.pdf": "",
+   "https://www.ohrobec.cz/www/files/tiskoviny/zpravodaj-p%C5%99edvolebn%C3%AD%20vyd%C3%A1n%C3%AD.pdf": "",
+   "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%203%202025.pdf": "",
+   "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%202%202025.pdf": "",
+   "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%201%202025.pdf": "",
+   "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%203%202024.pdf": "",
+   "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%202%202024.pdf": "",
+   "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%201%202024.pdf": "",
+   "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%203%202023.pdf": "",
+   "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%202%202023.pdf": "",
+   "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%201%202023.pdf": "",
+   "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%204%202022.pdf": "",
+   "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobecky%20zpravodaj-%20volebn%C3%AD%20speci%C3%A1l%20za%C5%99%C3%AD%202022.pdf": "",
+   "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%202%202022.pdf": "",
+   "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%201%202022.pdf": "",
+   "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%203%202021.pdf": "",
+   "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%202%202021.pdf": "",
+   "https://www.ohrobec.cz/www/files/tiskoviny/Ohrobeck%C3%BD%20zpravodaj%201%202021.pdf": ""
+  }
+ },
+ "Vestec": {
+  "cfg": {
+   "name": "Vestecké listy",
+   "url": "https://vestec.cz/vestecke-listy/",
+   "browser": true,
+   "match": "/vl_\\d",
+   "num_re": "vl_(?P<num>\\d{1,2})[-_](?P<year>\\d{4}|\\d{2})"
+  },
+  "checked": "2026-11-14T10:28:29+00:00",
+  "issues": [
+   {
+    "t": "č. 11/2026",
+    "url": "https://vestec.cz/wp-content/uploads/2026/11/VL_11-26_web.pdf",
+    "y": 2026
+   },
+   {
+    "t": "č. 10/2026",
+    "url": "https://vestec.cz/wp-content/uploads/2026/10/VL_10-26_web.pdf",
+    "y": 2026
+   },
+   {
+    "t": "č. 9/2026",
+    "url": "https://vestec.cz/wp-content/uploads/2026/09/VL_09-26_web.pdf",
+    "y": 2026
+   },
+   {
+    "t": "č. 6/2026",
+    "url": "https://vestec.cz/wp-content/uploads/2026/06/VL_06-26_web.pdf",
+    "y": 2026
+   },
+   {
+    "t": "č. 5/2026",
+    "url": "https://vestec.cz/wp-content/uploads/2026/05/VL_05-26_web.pdf",
+    "y": 2026
+   },
+   {
+    "t": "č. 4/2026",
+    "url": "https://vestec.cz/wp-content/uploads/2026/04/VL_04-26_web.pdf",
+    "y": 2026
+   },
+   {
+    "t": "č. 3/2026",
+    "url": "https://vestec.cz/wp-content/uploads/2026/03/VL_03-26_web.pdf",
+    "y": 2026
+   },
+   {
+    "t": "č. 2/2026",
+    "url": "https://vestec.cz/wp-content/uploads/2026/02/VL_02-26_web.pdf",
+    "y": 2026
+   },
+   {
+    "t": "č. 1/2026",
+    "url": "https://vestec.cz/wp-content/uploads/2026/01/VL_01-26_web.pdf",
+    "y": 2026
+   },
+   {
+    "t": "č. 12/2025",
+    "url": "https://vestec.cz/wp-content/uploads/2025/12/VL_12-25_web.pdf",
+    "y": 2025
+   },
+   {
+    "t": "č. 11/2025",
+    "url": "https://vestec.cz/wp-content/uploads/2025/11/VL_11-25_web.pdf",
+    "y": 2025
+   },
+   {
+    "t": "č. 10/2025",
+    "url": "https://vestec.cz/wp-content/uploads/2025/10/VL_10-25_web.pdf",
+    "y": 2025
+   },
+   {
+    "t": "č. 9/2025",
+    "url": "https://vestec.cz/wp-content/uploads/2025/09/VL_09-25_web.pdf",
+    "y": 2025
+   },
+   {
+    "t": "č. 6/2025",
+    "url": "https://vestec.cz/wp-content/uploads/2025/07/VL_06-25_web.pdf",
+    "y": 2025
+   },
+   {
+    "t": "č. 5/2025",
+    "url": "https://vestec.cz/wp-content/uploads/2025/05/VL_05-25_web.pdf",
+    "y": 2025
+   },
+   {
+    "t": "č. 4/2025",
+    "url": "https://vestec.cz/wp-content/uploads/2025/04/VL_04-25_web_final.pdf",
+    "y": 2025
+   },
+   {
+    "t": "č. 3/2025",
+    "url": "https://vestec.cz/wp-content/uploads/2025/03/VL_03-25_web.pdf",
+    "y": 2025
+   },
+   {
+    "t": "č. 2/2025",
+    "url": "https://vestec.cz/wp-content/uploads/2025/03/VL_02-25_web.pdf",
+    "y": 2025
+   },
+   {
+    "t": "č. 1/2025",
+    "url": "https://vestec.cz/wp-content/uploads/2025/01/VL_01-25_web.pdf",
+    "y": 2025
+   },
+   {
+    "t": "č. 12/2024",
+    "url": "https://vestec.cz/wp-content/uploads/2024/12/VL_12-24_web.pdf",
+    "y": 2024
+   },
+   {
+    "t": "č. 11/2024",
+    "url": "https://vestec.cz/wp-content/uploads/2024/11/VL_11-24_web.pdf",
+    "y": 2024
+   },
+   {
+    "t": "č. 10/2024",
+    "url": "https://vestec.cz/wp-content/uploads/2024/10/VL_10-24_web.pdf",
+    "y": 2024
+   },
+   {
+    "t": "č. 9/2024",
+    "url": "https://vestec.cz/wp-content/uploads/2024/10/VL_09-24_web.pdf",
+    "y": 2024
+   },
+   {
+    "t": "č. 6/2024",
+    "url": "https://vestec.cz/wp-content/uploads/2024/06/VL_06-24_web.pdf",
+    "y": 2024
+   },
+   {
+    "t": "č. 5/2024",
+    "url": "https://vestec.cz/wp-content/uploads/2024/05/VL_05-24_web.pdf",
+    "y": 2024
+   },
+   {
+    "t": "č. 4/2024",
+    "url": "https://vestec.cz/wp-content/uploads/2024/04/VL_04-24_web_new.pdf",
+    "y": 2024
+   },
+   {
+    "t": "č. 3/2024",
+    "url": "https://vestec.cz/wp-content/uploads/2024/03/VL_03-24_web.pdf",
+    "y": 2024
+   },
+   {
+    "t": "č. 2/2024",
+    "url": "https://vestec.cz/wp-content/uploads/2024/03/VL_02-24_web.pdf",
+    "y": 2024
+   },
+   {
+    "t": "č. 1/2024",
+    "url": "https://vestec.cz/wp-content/uploads/2024/01/VL_01-24_web.pdf",
+    "y": 2024
+   },
+   {
+    "t": "č. 12/2023",
+    "url": "https://vestec.cz/wp-content/uploads/2023/12/VL_12-23_web.pdf",
+    "y": 2023
+   },
+   {
+    "t": "č. 11/2023",
+    "url": "https://vestec.cz/wp-content/uploads/2023/11/VL_11-23_web.pdf",
+    "y": 2023
+   },
+   {
+    "t": "č. 10/2023",
+    "url": "https://vestec.cz/wp-content/uploads/2023/11/VL_10-23_web.pdf",
+    "y": 2023
+   },
+   {
+    "t": "č. 9/2023",
+    "url": "https://vestec.cz/wp-content/uploads/2023/09/VL_09-23_web-1.pdf",
+    "y": 2023
+   },
+   {
+    "t": "č. 7/2023",
+    "url": "https://vestec.cz/wp-content/uploads/2023/09/VL_07-23_web.pdf",
+    "y": 2023
+   },
+   {
+    "t": "č. 6/2023",
+    "url": "https://vestec.cz/wp-content/uploads/2023/06/VL_06-23_web.pdf",
+    "y": 2023
+   },
+   {
+    "t": "č. 5/2023",
+    "url": "https://vestec.cz/wp-content/uploads/2023/05/VL_05-23_web.pdf",
+    "y": 2023
+   },
+   {
+    "t": "č. 4/2023",
+    "url": "https://vestec.cz/wp-content/uploads/2023/04/VL_04-23_web.pdf",
+    "y": 2023
+   },
+   {
+    "t": "č. 3/2023",
+    "url": "https://vestec.cz/wp-content/uploads/2023/03/VL_03-23_web.pdf",
+    "y": 2023
+   },
+   {
+    "t": "č. 2/2023",
+    "url": "https://vestec.cz/wp-content/uploads/2023/02/VL_02-23_web.pdf",
+    "y": 2023
+   },
+   {
+    "t": "č. 1/2023",
+    "url": "https://vestec.cz/wp-content/uploads/2023/01/VL_01-23_fin_LR_web.pdf",
+    "y": 2023
+   },
+   {
+    "t": "č. 12/2008",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/VL_12_08_www.pdf",
+    "y": 2008
+   },
+   {
+    "t": "č. 11/2008",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/VL_11_08_www.pdf",
+    "y": 2008
+   },
+   {
+    "t": "č. 10/2008",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/VL_10_2008_www.pdf",
+    "y": 2008
+   },
+   {
+    "t": "č. 9/2008",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/VL_09_2008_www.pdf",
+    "y": 2008
+   },
+   {
+    "t": "č. 8/2008",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/VL_08_2008_www.pdf",
+    "y": 2008
+   },
+   {
+    "t": "č. 7/2008",
+    "url": "https://vestec.cz/wp-content/uploads/2026/08/VL_07-08-26_web.pdf",
+    "y": 2008
+   },
+   {
+    "t": "č. 6/2008",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/VL_06_2008_www.pdf",
+    "y": 2008
+   },
+   {
+    "t": "č. 5/2008",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/VL_05_2008_www_0.pdf",
+    "y": 2008
+   },
+   {
+    "t": "č. 4/2008",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/vl_04_2008.pdf",
+    "y": 2008
+   },
+   {
+    "t": "č. 3/2008",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/VL_03_2008_www_0.pdf",
+    "y": 2008
+   },
+   {
+    "t": "č. 2/2008",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/vl_02_2008.pdf",
+    "y": 2008
+   },
+   {
+    "t": "č. 1/2008",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/vl_01_2008.pdf",
+    "y": 2008
+   },
+   {
+    "t": "č. 12/2007",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/vl_12_2007.pdf",
+    "y": 2007
+   },
+   {
+    "t": "č. 11/2007",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/vl_11_2007.pdf",
+    "y": 2007
+   },
+   {
+    "t": "č. 10/2007",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/vl_10_2007.pdf",
+    "y": 2007
+   },
+   {
+    "t": "č. 9/2007",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/vl_09_2007.pdf",
+    "y": 2007
+   },
+   {
+    "t": "č. 8/2007",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/vl_08_2007.pdf",
+    "y": 2007
+   },
+   {
+    "t": "č. 7/2007",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/vl_07_2007.pdf",
+    "y": 2007
+   },
+   {
+    "t": "č. 6/2007",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/vl_06_2007.pdf",
+    "y": 2007
+   },
+   {
+    "t": "č. 5/2007",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/vl_05_2007.pdf",
+    "y": 2007
+   },
+   {
+    "t": "č. 3/2007",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/vl_03_2007.pdf",
+    "y": 2007
+   },
+   {
+    "t": "č. 2/2007",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/vl_02_2007.pdf",
+    "y": 2007
+   },
+   {
+    "t": "č. 11/2006",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/vl_11-2006.pdf",
+    "y": 2006
+   },
+   {
+    "t": "č. 10/2006",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/vl_10_2006.pdf",
+    "y": 2006
+   },
+   {
+    "t": "č. 9/2006",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/vl_09_2006.pdf",
+    "y": 2006
+   },
+   {
+    "t": "č. 6/2006",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/vl_06_2006.pdf",
+    "y": 2006
+   },
+   {
+    "t": "č. 5/2006",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/vl_05_2006.pdf",
+    "y": 2006
+   },
+   {
+    "t": "č. 4/2006",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/vl_04_2006.pdf",
+    "y": 2006
+   },
+   {
+    "t": "č. 3/2006",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/vl_03_2006.pdf",
+    "y": 2006
+   },
+   {
+    "t": "č. 1/2006",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/vl_01_2006.pdf",
+    "y": 2006
+   },
+   {
+    "t": "č. 12/2005",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/vl_12_2005.pdf",
+    "y": 2005
+   },
+   {
+    "t": "č. 3/2004",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/vl_03_04_2010.pdf",
+    "y": 2004
+   },
+   {
+    "t": "č. 12/2001",
+    "url": "https://vestec.cz/wp-content/uploads/2021/04/vl_12-01_2007-1.pdf",
+    "y": 2001
+   }
+  ],
+  "ok": true,
+  "resolved": {},
+  "v": 2,
+  "seen": {
+   "https://vestec.cz/wp-content/uploads/2026/11/VL_11-26_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2026/10/VL_10-26_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2026/09/VL_09-26_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2026/06/VL_06-26_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2026/05/VL_05-26_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2026/04/VL_04-26_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2026/03/VL_03-26_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2026/02/VL_02-26_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2026/01/VL_01-26_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2025/12/VL_12-25_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2025/11/VL_11-25_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2025/10/VL_10-25_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2025/09/VL_09-25_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2025/07/VL_06-25_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2025/05/VL_05-25_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2025/04/VL_04-25_web_final.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2025/03/VL_03-25_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2025/03/VL_02-25_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2025/01/VL_01-25_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2024/12/VL_12-24_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2024/11/VL_11-24_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2024/10/VL_10-24_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2024/10/VL_09-24_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2024/06/VL_06-24_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2024/05/VL_05-24_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2024/04/VL_04-24_web_new.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2024/03/VL_03-24_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2024/03/VL_02-24_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2024/01/VL_01-24_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2023/12/VL_12-23_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2023/11/VL_11-23_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2023/11/VL_10-23_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2023/09/VL_09-23_web-1.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2023/09/VL_07-23_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2023/06/VL_06-23_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2023/05/VL_05-23_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2023/04/VL_04-23_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2023/03/VL_03-23_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2023/02/VL_02-23_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2023/01/VL_01-23_fin_LR_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/VL_12_08_www.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/VL_11_08_www.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/VL_10_2008_www.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/VL_09_2008_www.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/VL_08_2008_www.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2026/08/VL_07-08-26_web.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/VL_06_2008_www.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/VL_05_2008_www_0.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/vl_04_2008.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/VL_03_2008_www_0.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/vl_02_2008.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/vl_01_2008.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/vl_12_2007.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/vl_11_2007.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/vl_10_2007.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/vl_09_2007.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/vl_08_2007.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/vl_07_2007.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/vl_06_2007.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/vl_05_2007.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/vl_03_2007.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/vl_02_2007.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/vl_11-2006.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/vl_10_2006.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/vl_09_2006.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/vl_06_2006.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/vl_05_2006.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/vl_04_2006.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/vl_03_2006.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/vl_01_2006.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/vl_12_2005.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/vl_03_04_2010.pdf": "",
+   "https://vestec.cz/wp-content/uploads/2021/04/vl_12-01_2007-1.pdf": ""
+  }
+ },
+ "Jesenice": {
+  "cfg": {
+   "name": "Jesenický kurýr",
+   "url": "https://www.mujesenice.cz/vydana%2Dcisla%2Darchiv/ms-4030/p1=4030",
+   "also": [
+    "https://www.mujesenice.cz/aktualni%2Dcislo/ms-4192/p1=4192"
+   ],
+   "year_headings": true,
+   "match": "zpravodaj\\.(munipolis|mobilnirozhlas)\\.cz/jesenice/|\\.pdf|file\\.ashx"
+  },
+  "checked": "2026-11-14T10:28:29+00:00",
+  "issues": [
+   {
+    "t": "Listopad 2026",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=19143",
+    "y": 2026
+   },
+   {
+    "t": "Říjen 2026",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/rijen-2026/",
+    "y": 2026
+   },
+   {
+    "t": "Září 2026",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/zari-2026/",
+    "y": 2026
+   },
+   {
+    "t": "Červenec, srpen 2026",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/cervenec-srpen-2026/",
+    "y": 2026
+   },
+   {
+    "t": "Červen 2026",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/cerven-2026/",
+    "y": 2026
+   },
+   {
+    "t": "Květen 2026",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/kveten-2026/",
+    "y": 2026
+   },
+   {
+    "t": "Duben 2026",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/duben-2026/",
+    "y": 2026
+   },
+   {
+    "t": "Březen 2026",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/brezen-2026/",
+    "y": 2026
+   },
+   {
+    "t": "Únor 2026",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=17562",
+    "y": 2026
+   },
+   {
+    "t": "Leden 2026",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/leden-2026/",
+    "y": 2026
+   },
+   {
+    "t": "Prosinec 2025",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/prosinec-2025/",
+    "y": 2025
+   },
+   {
+    "t": "Listopad 2025",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/listopad-2025/",
+    "y": 2025
+   },
+   {
+    "t": "Říjen 2025",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/rijen-2025/",
+    "y": 2025
+   },
+   {
+    "t": "Září 2025",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=16696",
+    "y": 2025
+   },
+   {
+    "t": "Červenec - srpen 2025",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/cervenec-srpen-2025/",
+    "y": 2025
+   },
+   {
+    "t": "Červen 2025",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/cerven-2025/",
+    "y": 2025
+   },
+   {
+    "t": "Květen 2025",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/kveten-2025/",
+    "y": 2025
+   },
+   {
+    "t": "Duben 2025",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/duben-2025/",
+    "y": 2025
+   },
+   {
+    "t": "Březen 2025",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/brezen-2025/",
+    "y": 2025
+   },
+   {
+    "t": "Únor 2025",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/unor-2025/",
+    "y": 2025
+   },
+   {
+    "t": "Leden 2025",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/leden-2025/",
+    "y": 2025
+   },
+   {
+    "t": "Prosinec 2024",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/prosinec-2024/",
+    "y": 2024
+   },
+   {
+    "t": "Listopad 2024",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/listopad-2024/",
+    "y": 2024
+   },
+   {
+    "t": "Říjen 2024",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/rijen-2024/",
+    "y": 2024
+   },
+   {
+    "t": "Září 2024",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/zari-2024/?fbclid=IwY2xjawFD699leHRuA2FlbQIxMAABHWtD2qqzyQiKTQVLSlhJKJDE6zjrvOV31iRV-EbpWYwnHhYNdSnAFTrn4Q_aem_U4PpWJATJCV5yut4IEK_bg",
+    "y": 2024
+   },
+   {
+    "t": "Červenec-srpen 2024",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/cervenec-srpen-2024/",
+    "y": 2024
+   },
+   {
+    "t": "Červen 2024",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/cerven-2024/",
+    "y": 2024
+   },
+   {
+    "t": "Květen 2024",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/kveten-2024/?fbclid=IwZXh0bgNhZW0CMTAAAR07_iIsvRdsO5DpHfULPiR2_6VumtbiI4MmJUXz8LjvQVvejF-Hc9_UNp4_aem_AbE8kqlzIBYmWA426LrpO1U-eEHo3CQezcnUpUXWPwtFMlnaiyixzUgxp1ez_swcxMDzxwljBrCnxDTKzEiidLef",
+    "y": 2024
+   },
+   {
+    "t": "Duben 2024",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/duben-2024/",
+    "y": 2024
+   },
+   {
+    "t": "Březen 2024",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/brezen-2024/",
+    "y": 2024
+   },
+   {
+    "t": "Únor 2024",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/unor-2024/",
+    "y": 2024
+   },
+   {
+    "t": "Leden 2024",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/leden-2024/",
+    "y": 2024
+   },
+   {
+    "t": "Prosinec 2023",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/prosinec-2023/",
+    "y": 2023
+   },
+   {
+    "t": "Listopad 2023",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/listopad-2023/",
+    "y": 2023
+   },
+   {
+    "t": "Říjen 2023",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/rijen-2023/",
+    "y": 2023
+   },
+   {
+    "t": "Září 2023",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/zari-2023/",
+    "y": 2023
+   },
+   {
+    "t": "Červenec-srpen 2023",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/cervenec-srpen-2023/",
+    "y": 2023
+   },
+   {
+    "t": "Červen 2023",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/cerven-2023/",
+    "y": 2023
+   },
+   {
+    "t": "Květen 2023",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/kveten-2023/",
+    "y": 2023
+   },
+   {
+    "t": "Duben 2023",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/duben-2023/",
+    "y": 2023
+   },
+   {
+    "t": "Březen 2023",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/brezen-2023/",
+    "y": 2023
+   },
+   {
+    "t": "Únor 2023",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/unor-2023/",
+    "y": 2023
+   },
+   {
+    "t": "Leden 2023",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/leden-2023/",
+    "y": 2023
+   },
+   {
+    "t": "Prosinec 2022",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/prosinec-2022/",
+    "y": 2022
+   },
+   {
+    "t": "Listopad 2022",
+    "url": "https://zpravodaj.mobilnirozhlas.cz/jesenice/listopad-2022/",
+    "y": 2022
+   },
+   {
+    "t": "Říjen 2022",
+    "url": "https://zpravodaj.mobilnirozhlas.cz/jesenice/rijen-2022/",
+    "y": 2022
+   },
+   {
+    "t": "Září 2022",
+    "url": "https://zpravodaj.mobilnirozhlas.cz/jesenice/zari-2022/",
+    "y": 2022
+   },
+   {
+    "t": "Červenec - srpen 2022",
+    "url": "https://zpravodaj.mobilnirozhlas.cz/jesenice/cervenec-srpen-2022/",
+    "y": 2022
+   },
+   {
+    "t": "Červen 2022",
+    "url": "https://zpravodaj.mobilnirozhlas.cz/jesenice/cerven-2022/",
+    "y": 2022
+   },
+   {
+    "t": "Květen 2022",
+    "url": "https://zpravodaj.mobilnirozhlas.cz/jesenice/kveten-2022/",
+    "y": 2022
+   },
+   {
+    "t": "Duben 2022",
+    "url": "https://zpravodaj.mobilnirozhlas.cz/jesenice/duben-2022/",
+    "y": 2022
+   },
+   {
+    "t": "Březen 2022",
+    "url": "https://zpravodaj.mobilnirozhlas.cz/jesenice/brezen-2022/",
+    "y": 2022
+   },
+   {
+    "t": "Únor 2022",
+    "url": "https://zpravodaj.mobilnirozhlas.cz/jesenice/unor-2022/",
+    "y": 2022
+   },
+   {
+    "t": "Leden 2022",
+    "url": "https://zpravodaj.mobilnirozhlas.cz/jesenice/leden-2022/",
+    "y": 2022
+   },
+   {
+    "t": "Listopad 2021",
+    "url": "https://zpravodaj.mobilnirozhlas.cz/jesenice/listopad-2021/",
+    "y": 2021
+   },
+   {
+    "t": "Říjen 2021",
+    "url": "https://zpravodaj.mobilnirozhlas.cz/jesenice/rijen-2021/",
+    "y": 2021
+   },
+   {
+    "t": "Září 2021",
+    "url": "https://zpravodaj.mobilnirozhlas.cz/jesenice/zari-2021/",
+    "y": 2021
+   },
+   {
+    "t": "Červenec - srpen 2021",
+    "url": "https://zpravodaj.mobilnirozhlas.cz/jesenice/cervenec-srpen-2021/",
+    "y": 2021
+   },
+   {
+    "t": "Červen 2021",
+    "url": "https://zpravodaj.mobilnirozhlas.cz/jesenice/cerven-2021/",
+    "y": 2021
+   },
+   {
+    "t": "Květen 2021",
+    "url": "https://zpravodaj.mobilnirozhlas.cz/jesenice/kveten-2021/",
+    "y": 2021
+   },
+   {
+    "t": "Duben 2021",
+    "url": "https://zpravodaj.mobilnirozhlas.cz/jesenice/duben-2021/",
+    "y": 2021
+   },
+   {
+    "t": "Březen 2021",
+    "url": "https://zpravodaj.mobilnirozhlas.cz/jesenice/brezen-2021/",
+    "y": 2021
+   },
+   {
+    "t": "Únor 2021",
+    "url": "https://zpravodaj.mobilnirozhlas.cz/jesenice/unor-2021/",
+    "y": 2021
+   },
+   {
+    "t": "Leden 2021",
+    "url": "https://zpravodaj.mobilnirozhlas.cz/jesenice/leden-2021/",
+    "y": 2021
+   },
+   {
+    "t": "Prosinec 2020",
+    "url": "https://zpravodaj.mobilnirozhlas.cz/jesenice/prosinec-2020/",
+    "y": 2020
+   },
+   {
+    "t": "Listopad 2020",
+    "url": "https://zpravodaj.mobilnirozhlas.cz/jesenice/listopad2020/",
+    "y": 2020
+   },
+   {
+    "t": "Říjen 2020",
+    "url": "https://zpravodaj.mobilnirozhlas.cz/jesenice/rijen-2020/",
+    "y": 2020
+   },
+   {
+    "t": "Září 2020",
+    "url": "https://zpravodaj.mobilnirozhlas.cz/jesenice/zari-2020/",
+    "y": 2020
+   },
+   {
+    "t": "Červenec - srpen 2020",
+    "url": "https://zpravodaj.mobilnirozhlas.cz/jesenice/cervenec-2020/",
+    "y": 2020
+   },
+   {
+    "t": "Červen 2020",
+    "url": "https://zpravodaj.mobilnirozhlas.cz/jesenice/cerven-2020/",
+    "y": 2020
+   },
+   {
+    "t": "Květen 2020",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=5948",
+    "y": 2020
+   },
+   {
+    "t": "Duben 2020",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=5754",
+    "y": 2020
+   },
+   {
+    "t": "Březen 2020",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=5452",
+    "y": 2020
+   },
+   {
+    "t": "Únor 2020",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=5285",
+    "y": 2020
+   },
+   {
+    "t": "Leden 2020",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=5034",
+    "y": 2020
+   },
+   {
+    "t": "Prosinec 2019",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4765",
+    "y": 2019
+   },
+   {
+    "t": "Listopad 2019",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4510",
+    "y": 2019
+   },
+   {
+    "t": "Říjen 2019",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=3776",
+    "y": 2019
+   },
+   {
+    "t": "Září 2019",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4218",
+    "y": 2019
+   },
+   {
+    "t": "Červenec - Srpen 2019",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4217",
+    "y": 2019
+   },
+   {
+    "t": "Červen 2019",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4215",
+    "y": 2019
+   },
+   {
+    "t": "Květen 2019",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4214",
+    "y": 2019
+   },
+   {
+    "t": "Duben 2019",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4213",
+    "y": 2019
+   },
+   {
+    "t": "Březen 2019",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4211",
+    "y": 2019
+   },
+   {
+    "t": "Únor 2019",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4325",
+    "y": 2019
+   },
+   {
+    "t": "Leden 2019",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4210",
+    "y": 2019
+   },
+   {
+    "t": "Prosinec 2018",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4230",
+    "y": 2018
+   },
+   {
+    "t": "Listopad 2018",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4229",
+    "y": 2018
+   },
+   {
+    "t": "Říjen 2018",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4228",
+    "y": 2018
+   },
+   {
+    "t": "Září 2018",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4226",
+    "y": 2018
+   },
+   {
+    "t": "Červenec - Srpen 2018",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4225",
+    "y": 2018
+   },
+   {
+    "t": "Červen 2018",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4224",
+    "y": 2018
+   },
+   {
+    "t": "Květen 2018",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4223",
+    "y": 2018
+   },
+   {
+    "t": "Duben 2018",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4222",
+    "y": 2018
+   },
+   {
+    "t": "Březen 2018",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4221",
+    "y": 2018
+   },
+   {
+    "t": "Únor 2018",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4220",
+    "y": 2018
+   },
+   {
+    "t": "Leden 2018",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4219",
+    "y": 2018
+   },
+   {
+    "t": "Prosinec 2017",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4335",
+    "y": 2017
+   },
+   {
+    "t": "Listopad 2017",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4334",
+    "y": 2017
+   },
+   {
+    "t": "Říjen 2017",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4333",
+    "y": 2017
+   },
+   {
+    "t": "Září 2017",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4332",
+    "y": 2017
+   },
+   {
+    "t": "Červenec - Srpen 2017",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4331",
+    "y": 2017
+   },
+   {
+    "t": "Červen 2017",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4330",
+    "y": 2017
+   },
+   {
+    "t": "Květen 2017",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4329",
+    "y": 2017
+   },
+   {
+    "t": "Duben 2017",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4328",
+    "y": 2017
+   },
+   {
+    "t": "Březen 2017",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4327",
+    "y": 2017
+   },
+   {
+    "t": "Únor 2017",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4326",
+    "y": 2017
+   },
+   {
+    "t": "eden 2017",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4322",
+    "y": 2017
+   },
+   {
+    "t": "Prosinec 2016",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4347",
+    "y": 2016
+   },
+   {
+    "t": "Listopad 2016",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4346",
+    "y": 2016
+   },
+   {
+    "t": "Říjen 2016",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4345",
+    "y": 2016
+   },
+   {
+    "t": "Září 2016",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4344",
+    "y": 2016
+   },
+   {
+    "t": "Červenec - Srpen 2016",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4343",
+    "y": 2016
+   },
+   {
+    "t": "Červen 2016",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4342",
+    "y": 2016
+   },
+   {
+    "t": "Květen 2016",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4341",
+    "y": 2016
+   },
+   {
+    "t": "Duben 2016",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4340",
+    "y": 2016
+   },
+   {
+    "t": "Březen 2016",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4339",
+    "y": 2016
+   },
+   {
+    "t": "Únor 2016",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4338",
+    "y": 2016
+   },
+   {
+    "t": "Leden 2016",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4337",
+    "y": 2016
+   },
+   {
+    "t": "Prosinec 2015",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4358",
+    "y": 2015
+   },
+   {
+    "t": "Listopad 2015",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4357",
+    "y": 2015
+   },
+   {
+    "t": "Říjen 2015",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4356",
+    "y": 2015
+   },
+   {
+    "t": "Září 2015",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4355",
+    "y": 2015
+   },
+   {
+    "t": "Červenec - Srpen 2015",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4354",
+    "y": 2015
+   },
+   {
+    "t": "Červen 2015",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4353",
+    "y": 2015
+   },
+   {
+    "t": "Květen 2015",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4352",
+    "y": 2015
+   },
+   {
+    "t": "Duben 2015",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4351",
+    "y": 2015
+   },
+   {
+    "t": "Březen 2015",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4350",
+    "y": 2015
+   },
+   {
+    "t": "Únor 2015",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4349",
+    "y": 2015
+   },
+   {
+    "t": "Leden 2015",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4348",
+    "y": 2015
+   },
+   {
+    "t": "Prosinec 2014",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4368",
+    "y": 2014
+   },
+   {
+    "t": "Listopad 2014",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4367",
+    "y": 2014
+   },
+   {
+    "t": "Říjen 2014",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4366",
+    "y": 2014
+   },
+   {
+    "t": "Září 2014",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4365",
+    "y": 2014
+   },
+   {
+    "t": "Červenec - Srpen 2014",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4364",
+    "y": 2014
+   },
+   {
+    "t": "Červen 2014",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4363",
+    "y": 2014
+   },
+   {
+    "t": "Květen 2014",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4362",
+    "y": 2014
+   },
+   {
+    "t": "Duben 2014",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4361",
+    "y": 2014
+   },
+   {
+    "t": "Březen 2014",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4360",
+    "y": 2014
+   },
+   {
+    "t": "Prosinec 2013",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4379",
+    "y": 2013
+   },
+   {
+    "t": "Listopad 2013",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4378",
+    "y": 2013
+   },
+   {
+    "t": "Říjen 2013",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4377",
+    "y": 2013
+   },
+   {
+    "t": "Září 2013",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4376",
+    "y": 2013
+   },
+   {
+    "t": "Červenec - Srpen 2013",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4375",
+    "y": 2013
+   },
+   {
+    "t": "Červen 2013",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4374",
+    "y": 2013
+   },
+   {
+    "t": "Květen 2013",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4373",
+    "y": 2013
+   },
+   {
+    "t": "Duben 2013",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4372",
+    "y": 2013
+   },
+   {
+    "t": "Březen 2013",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4371",
+    "y": 2013
+   },
+   {
+    "t": "Únor 2013",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4370",
+    "y": 2013
+   },
+   {
+    "t": "Leden 2013",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4369",
+    "y": 2013
+   },
+   {
+    "t": "Prosinec 2012",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4390",
+    "y": 2012
+   },
+   {
+    "t": "Listopad 2012",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4389",
+    "y": 2012
+   },
+   {
+    "t": "Říjen 2012",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4388",
+    "y": 2012
+   },
+   {
+    "t": "Září 2012",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4387",
+    "y": 2012
+   },
+   {
+    "t": "Červenec - Srpen 2012",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4386",
+    "y": 2012
+   },
+   {
+    "t": "Červen 2012",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4385",
+    "y": 2012
+   },
+   {
+    "t": "Květen 2012",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4384",
+    "y": 2012
+   },
+   {
+    "t": "Duben 2012",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4383",
+    "y": 2012
+   },
+   {
+    "t": "Březen 2012",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4382",
+    "y": 2012
+   },
+   {
+    "t": "Únor 2012",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4381",
+    "y": 2012
+   },
+   {
+    "t": "Leden 2012",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4380",
+    "y": 2012
+   },
+   {
+    "t": "Prosinec 2011",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4402",
+    "y": 2011
+   },
+   {
+    "t": "Listopad 2011",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4401",
+    "y": 2011
+   },
+   {
+    "t": "Říjen 2011",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4400",
+    "y": 2011
+   },
+   {
+    "t": "Září 2011",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4399",
+    "y": 2011
+   },
+   {
+    "t": "Červenec - Srpen 2011",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4398",
+    "y": 2011
+   },
+   {
+    "t": "Červen 2011",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4397",
+    "y": 2011
+   },
+   {
+    "t": "Květen 2011",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4395",
+    "y": 2011
+   },
+   {
+    "t": "Duben 2011",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4394",
+    "y": 2011
+   },
+   {
+    "t": "Březen 2011",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4393",
+    "y": 2011
+   },
+   {
+    "t": "Únor 2011",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4392",
+    "y": 2011
+   },
+   {
+    "t": "Leden 2011",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4391",
+    "y": 2011
+   },
+   {
+    "t": "Říjen 2010",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4409",
+    "y": 2010
+   },
+   {
+    "t": "Září 2010",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4408",
+    "y": 2010
+   },
+   {
+    "t": "Červenec - Srpen 2010",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4407",
+    "y": 2010
+   },
+   {
+    "t": "Červen 2010",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4406",
+    "y": 2010
+   },
+   {
+    "t": "Duben 2010",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4405",
+    "y": 2010
+   },
+   {
+    "t": "Březen 2010",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4404",
+    "y": 2010
+   },
+   {
+    "t": "Leden 2010",
+    "url": "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4403",
+    "y": 2010
+   },
+   {
+    "t": "Listopad 2026",
+    "url": "https://zpravodaj.munipolis.cz/jesenice/listopad-2026/",
+    "y": 2026
+   }
+  ],
+  "ok": true,
+  "resolved": {},
+  "v": 2,
+  "seen": {
+   "https://zpravodaj.munipolis.cz/jesenice/rijen-2026/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/zari-2026/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/cervenec-srpen-2026/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/cerven-2026/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/kveten-2026/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/duben-2026/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/brezen-2026/": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=17562": "",
+   "https://zpravodaj.munipolis.cz/jesenice/leden-2026/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/prosinec-2025/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/listopad-2025/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/rijen-2025/": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=16696": "",
+   "https://zpravodaj.munipolis.cz/jesenice/cervenec-srpen-2025/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/cerven-2025/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/kveten-2025/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/duben-2025/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/brezen-2025/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/unor-2025/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/leden-2025/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/prosinec-2024/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/listopad-2024/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/rijen-2024/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/zari-2024/?fbclid=IwY2xjawFD699leHRuA2FlbQIxMAABHWtD2qqzyQiKTQVLSlhJKJDE6zjrvOV31iRV-EbpWYwnHhYNdSnAFTrn4Q_aem_U4PpWJATJCV5yut4IEK_bg": "",
+   "https://zpravodaj.munipolis.cz/jesenice/cervenec-srpen-2024/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/cerven-2024/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/kveten-2024/?fbclid=IwZXh0bgNhZW0CMTAAAR07_iIsvRdsO5DpHfULPiR2_6VumtbiI4MmJUXz8LjvQVvejF-Hc9_UNp4_aem_AbE8kqlzIBYmWA426LrpO1U-eEHo3CQezcnUpUXWPwtFMlnaiyixzUgxp1ez_swcxMDzxwljBrCnxDTKzEiidLef": "",
+   "https://zpravodaj.munipolis.cz/jesenice/duben-2024/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/brezen-2024/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/unor-2024/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/leden-2024/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/prosinec-2023/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/listopad-2023/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/rijen-2023/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/zari-2023/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/cervenec-srpen-2023/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/cerven-2023/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/kveten-2023/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/duben-2023/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/brezen-2023/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/unor-2023/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/leden-2023/": "",
+   "https://zpravodaj.munipolis.cz/jesenice/prosinec-2022/": "",
+   "https://zpravodaj.mobilnirozhlas.cz/jesenice/listopad-2022/": "",
+   "https://zpravodaj.mobilnirozhlas.cz/jesenice/rijen-2022/": "",
+   "https://zpravodaj.mobilnirozhlas.cz/jesenice/zari-2022/": "",
+   "https://zpravodaj.mobilnirozhlas.cz/jesenice/cervenec-srpen-2022/": "",
+   "https://zpravodaj.mobilnirozhlas.cz/jesenice/cerven-2022/": "",
+   "https://zpravodaj.mobilnirozhlas.cz/jesenice/kveten-2022/": "",
+   "https://zpravodaj.mobilnirozhlas.cz/jesenice/duben-2022/": "",
+   "https://zpravodaj.mobilnirozhlas.cz/jesenice/brezen-2022/": "",
+   "https://zpravodaj.mobilnirozhlas.cz/jesenice/unor-2022/": "",
+   "https://zpravodaj.mobilnirozhlas.cz/jesenice/leden-2022/": "",
+   "https://zpravodaj.mobilnirozhlas.cz/jesenice/listopad-2021/": "",
+   "https://zpravodaj.mobilnirozhlas.cz/jesenice/rijen-2021/": "",
+   "https://zpravodaj.mobilnirozhlas.cz/jesenice/zari-2021/": "",
+   "https://zpravodaj.mobilnirozhlas.cz/jesenice/cervenec-srpen-2021/": "",
+   "https://zpravodaj.mobilnirozhlas.cz/jesenice/cerven-2021/": "",
+   "https://zpravodaj.mobilnirozhlas.cz/jesenice/kveten-2021/": "",
+   "https://zpravodaj.mobilnirozhlas.cz/jesenice/duben-2021/": "",
+   "https://zpravodaj.mobilnirozhlas.cz/jesenice/brezen-2021/": "",
+   "https://zpravodaj.mobilnirozhlas.cz/jesenice/unor-2021/": "",
+   "https://zpravodaj.mobilnirozhlas.cz/jesenice/leden-2021/": "",
+   "https://zpravodaj.mobilnirozhlas.cz/jesenice/prosinec-2020/": "",
+   "https://zpravodaj.mobilnirozhlas.cz/jesenice/listopad2020/": "",
+   "https://zpravodaj.mobilnirozhlas.cz/jesenice/rijen-2020/": "",
+   "https://zpravodaj.mobilnirozhlas.cz/jesenice/zari-2020/": "",
+   "https://zpravodaj.mobilnirozhlas.cz/jesenice/cervenec-2020/": "",
+   "https://zpravodaj.mobilnirozhlas.cz/jesenice/cerven-2020/": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=5948": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=5754": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=5452": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=5285": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=5034": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4765": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4510": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=3776": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4218": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4217": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4215": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4214": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4213": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4211": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4325": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4210": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4230": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4229": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4228": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4226": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4225": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4224": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4223": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4222": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4221": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4220": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4219": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4335": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4334": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4333": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4332": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4331": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4330": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4329": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4328": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4327": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4326": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4322": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4347": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4346": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4345": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4344": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4343": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4342": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4341": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4340": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4339": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4338": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4337": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4358": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4357": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4356": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4355": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4354": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4353": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4352": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4351": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4350": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4349": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4348": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4368": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4367": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4366": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4365": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4364": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4363": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4362": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4361": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4360": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4379": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4378": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4377": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4376": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4375": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4374": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4373": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4372": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4371": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4370": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4369": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4390": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4389": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4388": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4387": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4386": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4385": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4384": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4383": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4382": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4381": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4380": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4402": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4401": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4400": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4399": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4398": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4397": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4395": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4394": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4393": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4392": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4391": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4409": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4408": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4407": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4406": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4405": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4404": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=4403": "",
+   "https://www.mujesenice.cz/assets/File.ashx?id_org=5861&id_dokumenty=19143": "2026-11-07T00:56:51+00:00",
+   "https://zpravodaj.munipolis.cz/jesenice/listopad-2026/": "2026-11-07T00:56:51+00:00"
+  }
+ }
+}

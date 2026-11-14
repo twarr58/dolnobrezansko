@@ -1,0 +1,679 @@
+{
+ "Dolní Břežany": {
+  "cfg": {
+   "url": "https://www.dolnibrezany.cz/kalendar-udalosti",
+   "fmt": "vismo"
+  },
+  "checked": "2026-11-14T17:06:53+00:00",
+  "events": [
+   {
+    "t": "Svoz bioodpadu - Dolní Břežany",
+    "d": "2026-11-14",
+    "url": "https://www.dolnibrezany.cz/svoz-bioodpadu-dolni-brezany-2",
+    "end": "2026-11-15"
+   },
+   {
+    "t": "Svatomartinský lampionový průvod",
+    "d": "2026-11-14",
+    "time": "16:30",
+    "url": "https://www.dolnibrezany.cz/svatomartinsky-lampionovy-pruvod-6"
+   },
+   {
+    "t": "Břežanský biograf - Americký sen",
+    "d": "2026-11-19",
+    "time": "19:00",
+    "url": "https://www.dolnibrezany.cz/brezansky-biograf-americky-sen-1",
+    "tags": [
+     "Kino"
+    ]
+   },
+   {
+    "t": "Svoz bioodpadu - Lhota, Zálepy, Jarov",
+    "d": "2026-11-20",
+    "url": "https://www.dolnibrezany.cz/svoz-bioodpadu-lhota-zalepy-jarov-4",
+    "end": "2026-11-22"
+   },
+   {
+    "t": "Pingpongový turnaj - dospělí",
+    "d": "2026-11-21",
+    "url": "https://www.dolnibrezany.cz/pingpongovy-turnaj-dospeli"
+   },
+   {
+    "t": "Hasičská taneční zábava",
+    "d": "2026-11-21",
+    "time": "18:00",
+    "url": "https://www.dolnibrezany.cz/hasicska-tanecni-zabava-5",
+    "tags": [
+     "Hudba",
+     "Společenské"
+    ]
+   },
+   {
+    "t": "Improvizační večer v Café Oppidum",
+    "d": "2026-11-25",
+    "time": "18:00",
+    "url": "https://www.dolnibrezany.cz/improvizacni-vecer-v-cafe-oppidum-1"
+   },
+   {
+    "t": "Břežanský biograf - Milovaný",
+    "d": "2026-11-26",
+    "time": "19:00",
+    "url": "https://www.dolnibrezany.cz/brezansky-biograf-milovany-1",
+    "tags": [
+     "Kino"
+    ]
+   },
+   {
+    "t": "Rozsvícení vánočního stromu",
+    "d": "2026-11-29",
+    "url": "https://www.dolnibrezany.cz/rozsviceni-vanocniho-stromu"
+   },
+   {
+    "t": "Mikulášské divadlo Centra Břežánek",
+    "d": "2026-12-03",
+    "time": "16:00",
+    "url": "https://www.dolnibrezany.cz/mikulasske-divadlo-centra-brezanek"
+   },
+   {
+    "t": "Vánoční koncert ZUŠ Harmony",
+    "d": "2026-12-12",
+    "url": "https://www.dolnibrezany.cz/vanocni-koncert-zus-harmony-6"
+   },
+   {
+    "t": "Sousedské setkání u betléma ve Lhotě",
+    "d": "2026-12-13",
+    "time": "17:00",
+    "url": "https://www.dolnibrezany.cz/sousedske-setkani-u-betlema-ve-lhote"
+   },
+   {
+    "t": "Cimbálová muzika pro seniory",
+    "d": "2026-12-15",
+    "time": "14:00",
+    "url": "https://www.dolnibrezany.cz/cimbalova-muzika-pro-seniory-1",
+    "tags": [
+     "Hudba"
+    ]
+   },
+   {
+    "t": "Vánoční sousedské setkání v Zálepech",
+    "d": "2026-12-19",
+    "url": "https://www.dolnibrezany.cz/vanocni-sousedske-setkani-v-zalepech"
+   },
+   {
+    "t": "Betlémské světlo",
+    "d": "2026-12-23",
+    "url": "https://www.dolnibrezany.cz/betlemske-svetlo-3",
+    "end": "2026-12-24"
+   }
+  ],
+  "ok": true,
+  "v": 3
+ },
+ "Vrané nad Vltavou": {
+  "cfg": {
+   "url": "https://vranenadvltavou.cz/udalosti/",
+   "fmt": "article"
+  },
+  "checked": "2026-11-14T17:06:53+00:00",
+  "events": [
+   {
+    "t": "Čtenářský klub",
+    "d": "2026-11-20",
+    "place": "Stará škola",
+    "url": "https://vranenadvltavou.cz/udalosti/ctenarsky-klub-6a8eb8b8c811e/"
+   },
+   {
+    "t": "Vranská papírna včera, dnes a zítra",
+    "d": "2026-11-22",
+    "place": "Stará škola",
+    "url": "https://vranenadvltavou.cz/udalosti/vranska-papirna-vcera-dnes-a-zitra/"
+   },
+   {
+    "t": "Adventní věncování (DS U Rybek)",
+    "d": "2026-11-27",
+    "place": "Stará škola",
+    "url": "https://vranenadvltavou.cz/udalosti/adventni-vencovani-ds-u-rybek/"
+   },
+   {
+    "t": "Vernisáž výstavy Markéty Filipové",
+    "d": "2026-11-28",
+    "place": "Stará škola",
+    "url": "https://vranenadvltavou.cz/udalosti/vernisaz-vystavy-markety-filipove/"
+   },
+   {
+    "t": "Rozsvěcení vánočního stromečku",
+    "d": "2026-11-29",
+    "place": "Obec Vrané nad Vltavou",
+    "url": "https://vranenadvltavou.cz/udalosti/rozsveceni-vanocniho-stromecku/"
+   },
+   {
+    "t": "Giving Tuesday - světový den dárcovství",
+    "d": "2026-12-01",
+    "place": "Stará škola",
+    "url": "https://vranenadvltavou.cz/udalosti/giving-tuesday-svetovy-den-darcovstvi/"
+   },
+   {
+    "t": "Relaxační večer - masážní ježek a quasha",
+    "d": "2026-12-04",
+    "place": "Stará škola",
+    "url": "https://vranenadvltavou.cz/udalosti/relaxacni-vecer-masazni-jezek-a-quasha/"
+   },
+   {
+    "t": "Šibřinky - mikulášská zábava",
+    "d": "2026-12-05",
+    "place": "TJ Sokol Vrané nad Vltavou I.",
+    "url": "https://vranenadvltavou.cz/udalosti/sibrinky-mikulasska-zabava/"
+   },
+   {
+    "t": "Adventní koncert",
+    "d": "2026-12-06",
+    "place": "Stará škola",
+    "url": "https://vranenadvltavou.cz/udalosti/adventni-koncert/"
+   },
+   {
+    "t": "Vánoční smyslohrátky (akce DS U Rybek)",
+    "d": "2026-12-08",
+    "place": "Stará škola",
+    "url": "https://vranenadvltavou.cz/udalosti/vanocni-smyslohratky-akce-ds-u-rybek/"
+   },
+   {
+    "t": "Čtenářský klub",
+    "d": "2026-12-18",
+    "place": "Stará škola",
+    "url": "https://vranenadvltavou.cz/udalosti/ctenarsky-klub-6a8eba170161e/"
+   }
+  ],
+  "ok": true,
+  "v": 3
+ },
+ "Psáry": {
+  "cfg": {
+   "url": "https://psary.cz/blizke-udalosti/",
+   "fmt": "linklist",
+   "match": "psary\\.cz/udalosti/[a-z0-9-]+"
+  },
+  "checked": "2026-11-14T17:06:53+00:00",
+  "events": [
+   {
+    "t": "Igor Bareš a jeho literární lásky",
+    "d": "2026-11-18",
+    "time": "18:00",
+    "place": "Knihovna",
+    "url": "https://psary.cz/udalosti/igor-bares-a-jeho-literarni-lasky/"
+   },
+   {
+    "t": "Povídání o čokoládě",
+    "d": "2026-11-25",
+    "time": "17:00",
+    "place": "Knihovna",
+    "url": "https://psary.cz/udalosti/povidani-o-cokolade/"
+   },
+   {
+    "t": "Čtení dětem s tvořivou dílničkou",
+    "d": "2026-11-27",
+    "time": "17:00",
+    "place": "Knihovna",
+    "url": "https://psary.cz/udalosti/cteni-detem-s-tvorivou-dilnickou-4/"
+   },
+   {
+    "t": "Krampus",
+    "d": "2026-11-27",
+    "time": "18:00",
+    "place": "Hřiště Dolní Jirčany, křižovatka Hlavní a Na Vysoké",
+    "url": "https://psary.cz/udalosti/krampus/"
+   },
+   {
+    "t": "Zájezd adventní trhy",
+    "d": "2026-11-28",
+    "url": "https://psary.cz/udalosti/zajezd-adventni-trhy/"
+   },
+   {
+    "t": "Mikulášská Psáry",
+    "d": "2026-11-29",
+    "url": "https://psary.cz/udalosti/mikulasska-psary/"
+   },
+   {
+    "t": "Výroba adventních věnců",
+    "d": "2026-11-29",
+    "url": "https://psary.cz/udalosti/vyroba-adventnich-vencu-2/"
+   },
+   {
+    "t": "Nebeská pošta - Dopis Ježíškovi",
+    "d": "2026-12-05",
+    "place": "Dolnojirčanská náves, Knihovna",
+    "url": "https://psary.cz/udalosti/nebeska-posta-dopis-jeziskovi/"
+   },
+   {
+    "t": "Staročeský advent",
+    "d": "2026-12-05",
+    "time": "12:30",
+    "url": "https://psary.cz/udalosti/starocesky-advent-3/"
+   },
+   {
+    "t": "Vánoční podvečer v knihovně a rozsvícení stromu v ZŠ Amos",
+    "d": "2026-12-10",
+    "time": "16:30",
+    "place": "Knihovna, ZŠ Amos",
+    "url": "https://psary.cz/udalosti/vanocni-podvecer-v-knihovne-a-rozsviceni-stromu-v-zs-amos/"
+   },
+   {
+    "t": "Betlémské světlo",
+    "d": "2026-12-23",
+    "url": "https://psary.cz/udalosti/betlemske-svetlo-2/"
+   },
+   {
+    "t": "Silvestrovský pochod",
+    "d": "2026-12-31",
+    "url": "https://psary.cz/udalosti/silvestrovsky-pochod-2/"
+   }
+  ],
+  "ok": true,
+  "v": 3
+ },
+ "Libeř": {
+  "cfg": {
+   "url": "https://www.liber.cz/kalendar-udalosti",
+   "fmt": "vismo"
+  },
+  "checked": "2026-11-14T17:06:53+00:00",
+  "events": [
+   {
+    "t": "Slavnostní rozsvícení vánočního stromu v Libni",
+    "d": "2026-11-27",
+    "time": "17:00",
+    "url": "https://www.liber.cz/slavnostni-rozsviceni-vanocniho-stromu-v-libni"
+   },
+   {
+    "t": "Slavnostní rozsvícení vánočního stromu v Libři",
+    "d": "2026-11-28",
+    "time": "17:00",
+    "url": "https://www.liber.cz/slavnostni-rozsviceni-vanocniho-stromu-v-libri-1"
+   },
+   {
+    "t": "Revize kotlů, kontrola a čištění komínů",
+    "d": "2026-11-29",
+    "url": "https://www.liber.cz/revize-kotlu-kontrola-a-cisteni-kominu-3"
+   },
+   {
+    "t": "Kostel sv. Jiljí v Libři - vánoční koncert – Česká mše vánoční",
+    "d": "2026-12-21",
+    "time": "18:00",
+    "url": "https://www.liber.cz/kostel-sv-jilji-v-libri-vanocni-koncert-ceska-mse-vanocni"
+   }
+  ],
+  "ok": true,
+  "v": 3
+ },
+ "Ohrobec": {
+  "cfg": {
+   "url": "https://www.ohrobec.cz/volny-cas/udalosti",
+   "fmt": "rdc"
+  },
+  "checked": "2026-11-14T17:06:53+00:00",
+  "events": [
+   {
+    "t": "Velkoobjemový odpad - POZOR ZMĚNA ČASU",
+    "d": "2026-11-27",
+    "url": "https://www.ohrobec.cz/udalost/velkoobjemovy-odpad-pozor-zmena-casu"
+   }
+  ],
+  "ok": true,
+  "v": 3
+ },
+ "Vestec": {
+  "cfg": {
+   "url": "https://vestec.cz/udalosti/",
+   "fmt": "linklist",
+   "match": "vestec\\.cz/events/",
+   "browser": true
+  },
+  "checked": "2026-11-14T17:06:53+00:00",
+  "events": [
+   {
+    "t": "Farmářské trhy",
+    "d": "2026-11-21",
+    "url": "https://vestec.cz/events/farmarske-trhy-24/"
+   },
+   {
+    "t": "Rozsvícení vánočního stromu",
+    "d": "2026-11-28",
+    "url": "https://vestec.cz/events/rozsviceni-vanocniho-stromu-6/"
+   },
+   {
+    "t": "Andělský farmářský trh",
+    "d": "2026-12-05",
+    "url": "https://vestec.cz/events/andelsky-farmarsky-trh/"
+   },
+   {
+    "t": "Mikulášská nadílka ve Vestci",
+    "d": "2026-12-05",
+    "url": "https://vestec.cz/events/mikulasska-nadilka-ve-vestci/"
+   },
+   {
+    "t": "Zasedání zastupitelstva obce",
+    "d": "2026-12-16",
+    "url": "https://vestec.cz/events/zasedani-zastupitelstva-obce-12/"
+   },
+   {
+    "t": "Vánoční farmářský trh",
+    "d": "2026-12-19",
+    "url": "https://vestec.cz/events/vanocni-farmarsky-trh/"
+   },
+   {
+    "t": "Betlémské světlo",
+    "d": "2026-12-23",
+    "url": "https://vestec.cz/events/betlemske-svetlo-6/"
+   }
+  ],
+  "ok": true,
+  "v": 3
+ },
+ "Jesenice": {
+  "cfg": {
+   "url": "https://www.mujesenice.cz/vismo/kalendar-akci.asp?kdy=6",
+   "fmt": "linklist",
+   "range_url": "https://www.mujesenice.cz/vismo/kalendar-akci.asp?hledani=1&id_org=5861&kdy=-1&datum_od={od}&datum_do={do}",
+   "match": "/a-\\d+$"
+  },
+  "checked": "2026-11-14T17:06:53+00:00",
+  "events": [
+   {
+    "t": "Štístko a Poupěnka",
+    "d": "2026-11-20",
+    "time": "17:00",
+    "place": "Společenský sál Jesenice",
+    "url": "https://www.mujesenice.cz/stistko%2Da%2Dpoupenka/a-1645"
+   },
+   {
+    "t": "Kluziště",
+    "d": "2026-11-22",
+    "time": "09:00",
+    "place": "Park u kaple sv.Prokopa",
+    "url": "https://www.mujesenice.cz/kluziste/a-1686"
+   },
+   {
+    "t": "Otevření vánočního kluziště",
+    "d": "2026-11-22",
+    "time": "09:00",
+    "place": "Park u kaple sv.Prokopa",
+    "url": "https://www.mujesenice.cz/otevreni%2Dvanocniho%2Dkluziste/a-1710"
+   },
+   {
+    "t": "Kafe se starostou",
+    "d": "2026-11-23",
+    "time": "16:00",
+    "place": "Obřadní síň",
+    "url": "https://www.mujesenice.cz/kafe%2Dse%2Dstarostou/a-1702"
+   },
+   {
+    "t": "Adventní tvoření pro seniory",
+    "d": "2026-11-25",
+    "time": "10:00",
+    "place": "Společenský sál Jesenice",
+    "url": "https://www.mujesenice.cz/adventni%2Dtvoreni%2Dpro%2Dseniory/a-1705"
+   },
+   {
+    "t": "Advent, rozsvícení stromu, betlémský průvod",
+    "d": "2026-11-29",
+    "place": "MÚ Betlémský průvod, adventní trh park u kaple sv.Prokopa",
+    "url": "https://www.mujesenice.cz/advent%2Drozsviceni%2Dstromu%2Dbetlemsky%2Dpruvod/a-1687"
+   },
+   {
+    "t": "Adventní koncert ZUŠ JESENICE",
+    "d": "2026-12-03",
+    "url": "https://www.mujesenice.cz/adventni%2Dkoncert%2Dzus%2Djesenice/a-1688"
+   },
+   {
+    "t": "Mikulášská a průvod Krampus čertů",
+    "d": "2026-12-06",
+    "place": "MÚ, park u kaple sv. Prokopa",
+    "url": "https://www.mujesenice.cz/mikulasska%2Da%2Dpruvod%2Dkrampus%2Dcertu/a-1689"
+   },
+   {
+    "t": "Akademie MŠ V Úvoze",
+    "d": "2026-12-07",
+    "url": "https://www.mujesenice.cz/akademie%2Dms%2Dv%2Duvoze/a-1690"
+   },
+   {
+    "t": "Veřejné projednání upraveného návrhu nového územního plánu",
+    "d": "2026-12-09",
+    "time": "18:00",
+    "place": "Společenský sál Jesenice",
+    "url": "https://www.mujesenice.cz/verejne%2Dprojednani%2Dupraveneho%2Dnavrhu%2Dnoveho%2Duzemniho%2Dplanu/a-1703"
+   },
+   {
+    "t": "4 TENOŘI – To nejlepší!",
+    "d": "2026-12-10",
+    "time": "19:00",
+    "place": "Společenský sál Jesenice",
+    "url": "https://www.mujesenice.cz/4%2Dtenori%2Dto%2Dnejlepsi/a-1622"
+   },
+   {
+    "t": "Streetbalový předvánoční turnaj",
+    "d": "2026-12-12",
+    "time": "09:00",
+    "place": "ZŠ Zdiměřice",
+    "url": "https://www.mujesenice.cz/streetbalovy%2Dpredvanocni%2Dturnaj/a-1707"
+   },
+   {
+    "t": "Vánoční tenisový turnaj",
+    "d": "2026-12-12",
+    "time": "10:00",
+    "place": "Sportovní areál Jesenice",
+    "url": "https://www.mujesenice.cz/vanocni%2Dtenisovy%2Dturnaj/a-1706"
+   },
+   {
+    "t": "Jak andělíček Koledníček Vánoce prožil",
+    "d": "2026-12-13",
+    "time": "10:00",
+    "place": "Společenský sál Jesenice",
+    "url": "https://www.mujesenice.cz/jak%2Dandelicek%2Dkolednicek%2Dvanoce%2Dprozil/a-1691"
+   },
+   {
+    "t": "Vánoce s Bobem Kleplem",
+    "d": "2026-12-16",
+    "place": "Společenský sál Jesenice",
+    "url": "https://www.mujesenice.cz/vanoce%2Ds%2Dbobem%2Dkleplem/a-1692"
+   },
+   {
+    "t": "Vánoční koncert Hana Holišová",
+    "d": "2026-12-17",
+    "place": "Společenský sál Jesenice",
+    "url": "https://www.mujesenice.cz/vanocni%2Dkoncert%2Dhana%2Dholisova/a-1693"
+   },
+   {
+    "t": "Adventní posezení pro seniory",
+    "d": "2026-12-18",
+    "time": "16:00",
+    "place": "Společenský sál Jesenice",
+    "url": "https://www.mujesenice.cz/adventni%2Dposezeni%2Dpro%2Dseniory/a-1704"
+   },
+   {
+    "t": "Zlatá neděle - Petr Kotvald",
+    "d": "2026-12-20",
+    "place": "Park u kaple sv. Prokopa",
+    "url": "https://www.mujesenice.cz/zlata%2Dnedele%2Dpetr%2Dkotvald/a-1694"
+   },
+   {
+    "t": "Silvestrovská tančírna",
+    "d": "2026-12-29",
+    "url": "https://www.mujesenice.cz/silvestrovska%2Dtancirna/a-1695"
+   }
+  ],
+  "ok": true,
+  "v": 3
+ },
+ "Zvole": {
+  "cfg": {
+   "url": "https://www.zvole.info/aktualne/polyfunkcni-dum/zpravy-z-polydomu/",
+   "fmt": "posts",
+   "match": "/zpravy-z-polydomu/[^/]+\\.html",
+   "place": "Polyfunkční dům Zvole"
+  },
+  "checked": "2026-11-14T17:06:53+00:00",
+  "events": [],
+  "ok": true,
+  "v": 3
+ },
+ "Zlatníky-Hodkovice": {
+  "cfg": {
+   "url": "https://zlatniky-hodkovice.cz/event-calendar",
+   "fmt": "munipolis"
+  },
+  "checked": "2026-11-14T17:06:53+00:00",
+  "events": [
+   {
+    "t": "Zájezd na Svatomartinské trhy do Poděbrad",
+    "d": "2026-11-14",
+    "time": "09:30",
+    "place": "Poděbrady",
+    "url": "https://zlatniky-hodkovice.cz/event-calendar"
+   }
+  ],
+  "ok": true,
+  "v": 3
+ },
+ "Březová-Oleško": {
+  "cfg": {
+   "url": "https://www.brezova-olesko.cz/ap/p1=4188",
+   "fmt": "linklist",
+   "range_url": "https://www.brezova-olesko.cz/vismo/kalendar-akci.asp?hledani=1&id_org=19402&kdy=-1&datum_od={od}&datum_do={do}",
+   "match": "/a-\\d+(/p1=\\d+)?$"
+  },
+  "checked": "2026-11-14T17:06:53+00:00",
+  "events": [
+   {
+    "t": "Rozsvícení obecního vánočního stromku",
+    "d": "2026-11-28",
+    "time": "16:30",
+    "place": "Na Vrškách",
+    "url": "https://www.brezova-olesko.cz/rozsviceni%2Dobecniho%2Dvanocniho%2Dstromku/a-1291"
+   },
+   {
+    "t": "Předvánoční setkání seniorů a jubilantů",
+    "d": "2026-12-04",
+    "time": "15:00",
+    "place": "Pivovar Vlastenec",
+    "url": "https://www.brezova-olesko.cz/predvanocni%2Dsetkani%2Dsenioru%2Da%2Djubilantu/a-1290"
+   },
+   {
+    "t": "Prodej obecních vánočních stromků",
+    "d": "2026-12-05",
+    "time": "09:00",
+    "place": "Na Jezírkách",
+    "url": "https://www.brezova-olesko.cz/prodej%2Dobecnich%2Dvanocnich%2Dstromku/a-1292"
+   },
+   {
+    "t": "VEŘEJNÉ ZASEDÁNÍ ZASTUPITELSTVA OBCE BŘEZOVÁ-OLEŠKO",
+    "d": "2026-12-10",
+    "time": "18:00",
+    "place": "Pivovar Vlastenec, Pražská 11, 252 45 Březová-Oleško, Česko",
+    "url": "https://www.brezova-olesko.cz/verejne%2Dzasedani%2Dzastupitelstva%2Dobce%2Dbrezova%2Dolesko/a-1293"
+   }
+  ],
+  "ok": true,
+  "v": 3
+ },
+ "_seen": {
+  "Dolní Břežany|https://www.dolnibrezany.cz/volejbalovy-turnaj-smisenych-druzstev-5|2026-11-07": "",
+  "Dolní Břežany|https://www.dolnibrezany.cz/brezansky-biograf-pat-a-mat-zpatky-na-venkove-1|2026-11-07": "",
+  "Dolní Břežany|https://www.dolnibrezany.cz/eli-cup-2026-1|2026-11-08": "",
+  "Dolní Břežany|https://www.dolnibrezany.cz/setkavani-s-klasickou-hudbou-22|2026-11-08": "",
+  "Dolní Břežany|https://www.dolnibrezany.cz/ustavujici-zasedani-zastupitelstva-1|2026-11-09": "",
+  "Dolní Břežany|https://www.dolnibrezany.cz/brezansky-biograf-christopherove-1|2026-11-12": "",
+  "Dolní Břežany|https://www.dolnibrezany.cz/svoz-bioodpadu-dolni-brezany-2|2026-11-13": "",
+  "Dolní Břežany|https://www.dolnibrezany.cz/zahradkarska-zabava-3|2026-11-13": "",
+  "Dolní Břežany|https://www.dolnibrezany.cz/svatomartinsky-lampionovy-pruvod-6|2026-11-14": "",
+  "Dolní Břežany|https://www.dolnibrezany.cz/brezansky-biograf-americky-sen-1|2026-11-19": "",
+  "Dolní Břežany|https://www.dolnibrezany.cz/svoz-bioodpadu-lhota-zalepy-jarov-4|2026-11-20": "",
+  "Dolní Břežany|https://www.dolnibrezany.cz/pingpongovy-turnaj-dospeli|2026-11-21": "",
+  "Dolní Břežany|https://www.dolnibrezany.cz/hasicska-tanecni-zabava-5|2026-11-21": "",
+  "Dolní Břežany|https://www.dolnibrezany.cz/improvizacni-vecer-v-cafe-oppidum-1|2026-11-25": "",
+  "Dolní Břežany|https://www.dolnibrezany.cz/brezansky-biograf-milovany-1|2026-11-26": "",
+  "Dolní Břežany|https://www.dolnibrezany.cz/rozsviceni-vanocniho-stromu|2026-11-29": "",
+  "Dolní Břežany|https://www.dolnibrezany.cz/mikulasske-divadlo-centra-brezanek|2026-12-03": "",
+  "Dolní Břežany|https://www.dolnibrezany.cz/vanocni-koncert-zus-harmony-6|2026-12-12": "",
+  "Dolní Břežany|https://www.dolnibrezany.cz/sousedske-setkani-u-betlema-ve-lhote|2026-12-13": "",
+  "Dolní Břežany|https://www.dolnibrezany.cz/cimbalova-muzika-pro-seniory-1|2026-12-15": "",
+  "Dolní Břežany|https://www.dolnibrezany.cz/vanocni-sousedske-setkani-v-zalepech|2026-12-19": "",
+  "Dolní Břežany|https://www.dolnibrezany.cz/betlemske-svetlo-3|2026-12-23": "",
+  "Vrané nad Vltavou|https://vranenadvltavou.cz/udalosti/hackovany-lampion-workshop/|2026-11-07": "",
+  "Vrané nad Vltavou|https://vranenadvltavou.cz/udalosti/yoga-pro-rodice-s-detmi-akce-ds-u-rybek/|2026-11-08": "",
+  "Vrané nad Vltavou|https://vranenadvltavou.cz/udalosti/ctyri-roky-prazdnin-vernisaz-vystavy-markety-filipove/|2026-11-08": "",
+  "Vrané nad Vltavou|https://vranenadvltavou.cz/udalosti/lampionovy-pruvod-6adf10aa707ca/|2026-11-11": "",
+  "Vrané nad Vltavou|https://vranenadvltavou.cz/udalosti/ctenarsky-klub-6a8eb8b8c811e/|2026-11-20": "",
+  "Vrané nad Vltavou|https://vranenadvltavou.cz/udalosti/vranska-papirna-vcera-dnes-a-zitra/|2026-11-22": "",
+  "Vrané nad Vltavou|https://vranenadvltavou.cz/udalosti/adventni-vencovani-ds-u-rybek/|2026-11-27": "",
+  "Vrané nad Vltavou|https://vranenadvltavou.cz/udalosti/rozsveceni-vanocniho-stromecku/|2026-11-29": "",
+  "Vrané nad Vltavou|https://vranenadvltavou.cz/udalosti/giving-tuesday-svetovy-den-darcovstvi/|2026-12-01": "",
+  "Vrané nad Vltavou|https://vranenadvltavou.cz/udalosti/relaxacni-vecer-masazni-jezek-a-quasha/|2026-12-04": "",
+  "Vrané nad Vltavou|https://vranenadvltavou.cz/udalosti/sibrinky-mikulasska-zabava/|2026-12-05": "",
+  "Vrané nad Vltavou|https://vranenadvltavou.cz/udalosti/adventni-koncert/|2026-12-06": "",
+  "Vrané nad Vltavou|https://vranenadvltavou.cz/udalosti/vanocni-smyslohratky-akce-ds-u-rybek/|2026-12-08": "",
+  "Vrané nad Vltavou|https://vranenadvltavou.cz/udalosti/ctenarsky-klub-6a8eba170161e/|2026-12-18": "",
+  "Psáry|https://psary.cz/udalosti/slavnosti-svetel-2/|2026-11-07": "",
+  "Psáry|https://psary.cz/udalosti/jana-poncarova-v-nasi-knihovne/|2026-11-12": "",
+  "Psáry|https://psary.cz/udalosti/igor-bares-a-jeho-literarni-lasky/|2026-11-18": "",
+  "Psáry|https://psary.cz/udalosti/povidani-o-cokolade/|2026-11-25": "",
+  "Psáry|https://psary.cz/udalosti/krampus/|2026-11-27": "",
+  "Psáry|https://psary.cz/udalosti/zajezd-adventni-trhy/|2026-11-28": "",
+  "Psáry|https://psary.cz/udalosti/mikulasska-psary/|2026-11-29": "",
+  "Psáry|https://psary.cz/udalosti/vyroba-adventnich-vencu-2/|2026-11-29": "",
+  "Psáry|https://psary.cz/udalosti/nebeska-posta-dopis-jeziskovi/|2026-12-05": "",
+  "Psáry|https://psary.cz/udalosti/starocesky-advent-3/|2026-12-05": "",
+  "Psáry|https://psary.cz/udalosti/vanocni-podvecer-v-knihovne-a-rozsviceni-stromu-v-zs-amos/|2026-12-10": "",
+  "Psáry|https://psary.cz/udalosti/betlemske-svetlo-2/|2026-12-23": "",
+  "Psáry|https://psary.cz/udalosti/silvestrovsky-pochod-2/|2026-12-31": "",
+  "Libeř|https://www.liber.cz/tanecni-disco-party-v-hostinci-na-stare-v-libri|2026-11-07": "",
+  "Vestec|https://vestec.cz/events/svatomartinsky-farmarsky-trh/|2026-11-07": "",
+  "Vestec|https://vestec.cz/events/farmarske-trhy-24/|2026-11-21": "",
+  "Vestec|https://vestec.cz/events/rozsviceni-vanocniho-stromu-6/|2026-11-28": "",
+  "Vestec|https://vestec.cz/events/andelsky-farmarsky-trh/|2026-12-05": "",
+  "Vestec|https://vestec.cz/events/mikulasska-nadilka-ve-vestci/|2026-12-05": "",
+  "Vestec|https://vestec.cz/events/vanocni-farmarsky-trh/|2026-12-19": "",
+  "Vestec|https://vestec.cz/events/betlemske-svetlo-6/|2026-12-23": "",
+  "Jesenice|https://www.mujesenice.cz/komunitni%2Dvysadba/a-1697|2026-11-07": "",
+  "Jesenice|https://www.mujesenice.cz/turnaj%2Dve%2Dstolnim%2Dtenise/a-1701|2026-11-07": "",
+  "Jesenice|https://www.mujesenice.cz/otevreni%2Dvolnocasoveho%2Darealu%2Dricanska%2Dzmena%2Dterminu%2Dz%2D25%2D10%2Dna%2D7%2D11/a-1700|2026-11-07": "",
+  "Jesenice|https://www.mujesenice.cz/o%2Dstatecnem%2Dkovari%2Dmikesovi/a-1708|2026-11-08": "",
+  "Jesenice|https://www.mujesenice.cz/ustavujici%2Djednani%2Dzastupitelstva/a-1709|2026-11-09": "",
+  "Jesenice|https://www.mujesenice.cz/yes%2Dvoice%2Dpevecka%2Dsoutez/a-1685|2026-11-13": "",
+  "Jesenice|https://www.mujesenice.cz/stistko%2Da%2Dpoupenka/a-1645|2026-11-20": "",
+  "Jesenice|https://www.mujesenice.cz/otevreni%2Dvanocniho%2Dkluziste/a-1710|2026-11-22": "",
+  "Jesenice|https://www.mujesenice.cz/kafe%2Dse%2Dstarostou/a-1702|2026-11-23": "",
+  "Jesenice|https://www.mujesenice.cz/adventni%2Dtvoreni%2Dpro%2Dseniory/a-1705|2026-11-25": "",
+  "Jesenice|https://www.mujesenice.cz/advent%2Drozsviceni%2Dstromu%2Dbetlemsky%2Dpruvod/a-1687|2026-11-29": "",
+  "Jesenice|https://www.mujesenice.cz/adventni%2Dkoncert%2Dzus%2Djesenice/a-1688|2026-12-03": "",
+  "Jesenice|https://www.mujesenice.cz/mikulasska%2Da%2Dpruvod%2Dkrampus%2Dcertu/a-1689|2026-12-06": "",
+  "Jesenice|https://www.mujesenice.cz/verejne%2Dprojednani%2Dupraveneho%2Dnavrhu%2Dnoveho%2Duzemniho%2Dplanu/a-1703|2026-12-09": "",
+  "Jesenice|https://www.mujesenice.cz/4%2Dtenori%2Dto%2Dnejlepsi/a-1622|2026-12-10": "",
+  "Jesenice|https://www.mujesenice.cz/streetbalovy%2Dpredvanocni%2Dturnaj/a-1707|2026-12-12": "",
+  "Jesenice|https://www.mujesenice.cz/vanocni%2Dtenisovy%2Dturnaj/a-1706|2026-12-12": "",
+  "Jesenice|https://www.mujesenice.cz/jak%2Dandelicek%2Dkolednicek%2Dvanoce%2Dprozil/a-1691|2026-12-13": "",
+  "Jesenice|https://www.mujesenice.cz/vanoce%2Ds%2Dbobem%2Dkleplem/a-1692|2026-12-16": "",
+  "Jesenice|https://www.mujesenice.cz/vanocni%2Dkoncert%2Dhana%2Dholisova/a-1693|2026-12-17": "",
+  "Jesenice|https://www.mujesenice.cz/adventni%2Dposezeni%2Dpro%2Dseniory/a-1704|2026-12-18": "",
+  "Jesenice|https://www.mujesenice.cz/zlata%2Dnedele%2Dpetr%2Dkotvald/a-1694|2026-12-20": "",
+  "Jesenice|https://www.mujesenice.cz/silvestrovska%2Dtancirna/a-1695|2026-12-29": "",
+  "Zlatníky-Hodkovice|https://zlatniky-hodkovice.cz/event-calendar|2026-11-07": "",
+  "Zlatníky-Hodkovice|https://zlatniky-hodkovice.cz/event-calendar|2026-11-14": "",
+  "Březová-Oleško|https://www.brezova-olesko.cz/pozvanka%2Dsv%2Dmartin/a-1289|2026-11-13": "",
+  "Dolní Břežany|https://www.dolnibrezany.cz/svoz-bioodpadu-lhota-zalepy-jarov-4|2026-11-07": "2026-11-07T07:09:43+00:00",
+  "Jesenice|https://www.mujesenice.cz/kluziste/a-1686|2026-11-22": "2026-11-07T07:09:43+00:00",
+  "Dolní Břežany|https://www.dolnibrezany.cz/svoz-bioodpadu-lhota-zalepy-jarov-4|2026-11-08": "2026-11-08T10:20:13+00:00",
+  "Jesenice|https://www.mujesenice.cz/akademie%2Dms%2Dv%2Duvoze/a-1690|2026-12-07": "2026-11-08T10:20:13+00:00",
+  "Březová-Oleško|https://www.brezova-olesko.cz/rozsviceni%2Dobecniho%2Dvanocniho%2Dstromku/a-1291|2026-11-28": "2026-11-09T18:48:15+00:00",
+  "Březová-Oleško|https://www.brezova-olesko.cz/predvanocni%2Dsetkani%2Dsenioru%2Da%2Djubilantu/a-1290|2026-12-04": "2026-11-09T18:48:15+00:00",
+  "Březová-Oleško|https://www.brezova-olesko.cz/prodej%2Dobecnich%2Dvanocnich%2Dstromku/a-1292|2026-12-05": "2026-11-09T18:48:15+00:00",
+  "Libeř|https://www.liber.cz/slavnostni-rozsviceni-vanocniho-stromu-v-libri-1|2026-11-28": "2026-11-10T09:49:09+00:00",
+  "Libeř|https://www.liber.cz/kostel-sv-jilji-v-libri-vanocni-koncert-ceska-mse-vanocni|2026-12-21": "2026-11-10T09:49:09+00:00",
+  "Vestec|https://vestec.cz/events/zasedani-zastupitelstva-obce-12/|2026-12-16": "2026-11-10T17:50:11+00:00",
+  "Psáry|https://psary.cz/udalosti/cteni-detem-s-tvorivou-dilnickou-4/|2026-11-27": "2026-11-11T14:33:04+00:00",
+  "Libeř|https://www.liber.cz/slavnostni-rozsviceni-vanocniho-stromu-v-libni|2026-11-27": "2026-11-11T14:33:04+00:00",
+  "Libeř|https://www.liber.cz/revize-kotlu-kontrola-a-cisteni-kominu-3|2026-11-29": "2026-11-11T14:33:04+00:00",
+  "Ohrobec|https://www.ohrobec.cz/udalost/velkoobjemovy-odpad-pozor-zmena-casu|2026-11-27": "2026-11-11T14:33:04+00:00",
+  "Březová-Oleško|https://www.brezova-olesko.cz/verejne%2Dzasedani%2Dzastupitelstva%2Dobce%2Dbrezova%2Dolesko/a-1293|2026-12-10": "2026-11-11T14:33:04+00:00",
+  "Vrané nad Vltavou|https://vranenadvltavou.cz/udalosti/vernisaz-vystavy-markety-filipove/|2026-11-28": "2026-11-12T11:05:26+00:00",
+  "Dolní Břežany|https://www.dolnibrezany.cz/svoz-bioodpadu-dolni-brezany-2|2026-11-14": "2026-11-14T10:28:29+00:00"
+ }
+}
